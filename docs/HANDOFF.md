@@ -28,8 +28,10 @@ git clone https://github.com/RedBeardBkln/alex.git
 cd alex
 git checkout ccr-3d9e4f7e-vongjt
 npm install
-claude
+claude --add-dir "D:\Repos\_agent-team-staging"
 ```
+
+`--add-dir` gives Claude Code access to your agent-team staging folder, which sits outside this project, so it can read the agents there and copy them in.
 
 ## Part 2: Paste this into Claude Code as your first message
 
@@ -91,10 +93,24 @@ You are taking over development of "Alex", my personal executive assistant web a
   - Extracted tasks and meetings go to the approval queue, linked to the source page.
   - Risks: reverse-engineered and has broken before (the 2025 schema-v4 change); the terms of service haven't been read yet. Alert me on sync errors, and keep an email-to-Alex import as a fallback.
 
+## My agent team
+I keep a set of Claude Code agents in D:\Repos\_agent-team-staging. I want them added to this project, so that every new build (each phase, feature and fix) goes through those agents rather than being done ad hoc. You don't know what's in that folder yet, so don't assume anything:
+1. Inspect: list everything in D:\Repos\_agent-team-staging recursively and read each file. Report back with:
+   - each agent's name, its role (from its description) and the tools and model it declares
+   - any other pieces besides agents (skills, slash commands, hooks, settings.json, a CLAUDE.md or a workflow document), and what each one does
+   - any file that isn't a valid Claude Code agent definition (Markdown with YAML frontmatter that has at least `name` and `description`)
+   - anything that must not go into this repo: secrets, API keys, tokens, absolute paths specific to my machine, or references to other projects
+2. Propose: say where each item goes in this project. Project agents go in `.claude/agents/`, skills in `.claude/skills/`, commands in `.claude/commands/`, and hooks or settings in `.claude/settings.json`. Describe the build workflow they imply, meaning which agent handles planning, implementation, testing, review, security and docs, and in what order. Point out gaps or overlaps. Wait for my approval.
+3. Install, after I approve: copy the approved files into this project. Don't change their content unless I agree to an edit. Keep the originals in the staging folder; copy, don't move.
+4. Wire it up: create or update a `CLAUDE.md` at the project root with an "Agent workflow" section. It should state the approved order of agents for each build, make the "draft, then approve" rule and my working preferences above binding on every agent, and require each agent to report what it verified and what it didn't.
+5. Verify: run `/agents` and confirm every copied agent is listed and loads without errors. Report anything that failed to load.
+6. Commit: put these files in one commit on branch `ccr-3d9e4f7e-vongjt`, but only when I say so, and after showing me `git diff --stat`.
+
 ## Your first steps
 1. Read the files listed above and run `npm run typecheck`, `npm test` and `npm run build` to confirm a clean baseline on Windows. Report the results exactly.
-2. Ask me where I am in docs/SETUP.md and help me finish deployment and a first real sign-in before starting Phase 2.
-3. Then propose a detailed Phase 2 plan (data model, API routes, UI, Claude prompt and tool design, tests) and wait for my approval before writing code.
+2. Do the "My agent team" steps 1–2 (inspect and propose), and wait for my approval before installing.
+3. Ask me where I am in docs/SETUP.md and help me finish deployment and a first real sign-in.
+4. Then propose a detailed Phase 2 plan, built around the approved agent workflow (data model, API routes, UI, Claude prompt and tool design, tests). Wait for my approval before writing code.
 ```
 
 ## Notes
