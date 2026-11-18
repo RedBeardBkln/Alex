@@ -1,0 +1,13 @@
+node_modules
+.next
+out
+.env
+.env*.local
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+coverage
+
+# Claude Code agent pipeline: per-task artifacts and agent memory stay local
+.claude/pipeline/
+.claude/agent-memory/
