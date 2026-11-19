@@ -2,6 +2,7 @@ import { asc } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { db, schema } from "@/db";
 import { audit } from "@/lib/audit";
+import { loginDeniedDetail, loginDetail } from "@/lib/audit-details";
 import { env } from "@/lib/env";
 import { googleClient, identityFromTokens, isAllowedEmail } from "@/lib/google";
 import { redirectTo } from "@/lib/http";
@@ -25,7 +26,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (!isAllowedEmail(identity.email, env().ALEX_ALLOWED_EMAILS)) {
-    await audit({ userId: null, action: "login.denied", detail: { email: identity.email } });
+    await audit({ userId: null, action: "login.denied", detail: loginDeniedDetail(identity.email) });
     return redirectTo("/login", { error: "not_allowed" });
   }
 
@@ -38,6 +39,6 @@ export async function GET(request: NextRequest) {
   if (!owner) throw new Error("Could not create owner user");
 
   await createSession(owner.id);
-  await audit({ userId: owner.id, action: "login", detail: { email: identity.email } });
+  await audit({ userId: owner.id, action: "login", detail: loginDetail() });
   return redirectTo("/");
 }

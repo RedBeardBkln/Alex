@@ -147,7 +147,7 @@ Local development uses polling only, because Pub/Sub can't reach `localhost`. Le
 curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/gmail-sync
 ```
 
-Email HTML is rendered at ingest in a background worker. Its bundle, `.alex-build/render-worker.mjs`, is built automatically by `npm run dev`, `npm run build` and `npm test` (or by hand with `npm run build:worker`). If it is missing, HTML mail is stored as plain text and re-rendered by a later cron run once the worker is available.
+Email HTML is rendered at ingest in a background worker. Its bundle, `.alex-build/render-worker.mjs`, is built automatically by `npm run build` and `npm test` (or by hand with `npm run build:worker`). `npm run dev` (`scripts/dev.mjs`) builds it, rebuilds it whenever a file it includes changes (the log shows `render worker rebundled`) and starts `next dev`. A worker that is already running keeps the old code until it is replaced, so restart `npm run dev` to test a sanitizer edit end to end; flags after `--` are passed to `next dev`, for example `npm run dev -- --port 3001`. If it is missing, HTML mail is stored as plain text and re-rendered by a later cron run once the worker is available.
 
 Disconnecting an account stops its Gmail notifications and deletes all of its stored mail.
 
@@ -155,7 +155,7 @@ Disconnecting an account stops its Gmail notifications and deletes all of its st
 
 No preview check is needed, and none of these steps involves Preview environment variables: don't copy production secrets into Preview.
 
-After the merge deploy, wait for the first `gmail-sync` cron run (at most 5 minutes). In the Vercel project's **Logs**, find the line `gmail-sync renders` for that run. It lists content-free counts by kind and reason, for example `{"html":12,"none":3}`. At least one `html` entry means the render worker is running in production. The line only appears when a run processed mail, so if there's none yet, send one of your connected addresses a short HTML email and check the next run.
+After the merge deploy, wait for the first `gmail-sync` cron run (at most 5 minutes). In the Vercel project's **Logs**, find the line `gmail-sync renders` for that run. It lists content-free counts by kind and reason, printed by Node as, for example, `gmail-sync renders { html: 12, none: 3 }`. Vercel's log viewer may show the object differently (not verified); the check is to find the `gmail-sync renders` prefix and look for `html`. At least one `html` entry means the render worker is running in production. The line only appears when a run processed mail, so if there's none yet, send one of your connected addresses a short HTML email and check the next run.
 
 If you only see `text:worker_unavailable`, the worker bundle didn't reach the function. Check that the build log shows `render worker bundled` (from `prebuild`).
 
@@ -163,3 +163,35 @@ If you only see `text:worker_unavailable`, the worker bundle didn't reach the fu
 - HTML mail is stored and shown as plain text in the meantime, flagged "still being prepared".
 - Those rows are stored without a sanitizer version, so the re-render step of a later cron run converts them to HTML once the worker works.
 - `mail.render_worker_unavailable` is recorded once in the audit log.
+
+## 7. Optional: remove email addresses from old audit entries
+
+Since phase-2a-followups, the `login`, `login.denied`, `account.connected` and `account.disconnected` audit entries no longer store an email address (`login.denied` keeps only the domain). Entries written before that still have an `email` key in `detail`. Nothing changes them automatically, and no migration touches them.
+
+Removing the addresses from those old entries is **optional, manual and destructive**: it permanently changes the historical record, and it can't be undone. It's your call. If you do it, run it yourself against the production database (for example in the Neon SQL editor), never from a script or an agent.
+
+1. Count the entries that still hold an address. This only reads:
+
+   ```sql
+   SELECT action, count(*) AS entries
+   FROM audit_log
+   WHERE action IN ('login', 'login.denied', 'account.connected', 'account.disconnected')
+     AND detail ? 'email'
+   GROUP BY action
+   ORDER BY action;
+   ```
+
+2. Remove the `email` key from exactly those entries, inside a transaction:
+
+   ```sql
+   BEGIN;
+
+   UPDATE audit_log
+   SET detail = detail - 'email'
+   WHERE action IN ('login', 'login.denied', 'account.connected', 'account.disconnected')
+     AND detail ? 'email';
+   ```
+
+3. The `UPDATE` reports how many rows it changed. If that equals the total from step 1, run `COMMIT;`. Otherwise run `ROLLBACK;`, and nothing is changed.
+
+Only the `email` key is removed; every other field and every other entry is kept.

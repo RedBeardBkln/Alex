@@ -91,11 +91,34 @@ describe("18l: routing", () => {
     expect(p.dispatched).toBe(1);
   });
 
-  it("void elements, self-closing tags, comments and raw-text contents don't count toward depth", async () => {
+  it("void elements, comments and raw-text contents don't count toward depth", async () => {
     const p = pool({ workerPath: testWorker });
-    const noise = `${"<br><img src=x><hr/><x-y/>".repeat(600)}<!--${"<div>".repeat(600)}--><style>${"<div>".repeat(600)}</style><script>${"<p>".repeat(600)}</script>`;
+    const noise = `${"<br><img src=x><hr/>".repeat(600)}<!--${"<div>".repeat(600)}--><style>${"<div>".repeat(600)}</style><script>${"<p>".repeat(600)}</script>`;
     const r = await renderEmailBody({ html: `${noise}${nested(MAX_HTML_DEPTH)}`, text: null }, { pool: p });
     expect(r.renderKind).toBe("html");
+  });
+
+  // Follow-up F1/H1 (AC1): the depth scan models htmlparser2's open-element stack.
+  it("F1: unclosed <p>, <li> and <tr><td> floods (legacy mail) go to the worker and render as html", async () => {
+    const p = pool({ workerPath: testWorker });
+    for (const html of ["<p>x".repeat(10_000), `<ul>${"<li>x".repeat(10_000)}`, `<table>${"<tr><td>x".repeat(10_000)}`]) {
+      expect((await renderEmailBody({ html, text: null }, { pool: p })).renderKind, html.slice(0, 20)).toBe("html");
+    }
+    expect(p.dispatched).toBe(3);
+  });
+
+  it("F1: <p>x x 10,000 renders as html on the real worker", { timeout: 20_000 }, async () => {
+    const r = await renderEmailBody({ html: "<p>x".repeat(10_000), text: null });
+    expect(r).toMatchObject({ renderKind: "html", renderReason: null });
+  });
+
+  it("W1 and H1 shapes (/> doesn't self-close; stray closes are ignored) are text/too_deep without any job", async () => {
+    const p = pool({ workerPath: testWorker });
+    for (const unit of ["<div>", "<b>", "<x>", "<div><span>", "<div/>", "<x-y/>", "<div></zz>"]) {
+      const r = await renderEmailBody({ html: unit.repeat(600), text: null }, { pool: p });
+      expect(r, unit).toMatchObject({ renderKind: "text", renderReason: "too_deep" });
+    }
+    expect(p.dispatched).toBe(0);
   });
 
   it("an injected structural post-check failure gives text/postcheck", async () => {

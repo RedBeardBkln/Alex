@@ -14,3 +14,6 @@ coverage
 
 # Render-worker bundle built by scripts/build-render-worker.mjs (Revision 4)
 .alex-build/
+
+# Written by `next dev` (Next.js 16); agent rules live in CLAUDE.md and .claude/agents/
+/AGENTS.md

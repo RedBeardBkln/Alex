@@ -6,6 +6,7 @@ import { MessageBody, type BodyMessage } from "@/app/(app)/inbox/[threadId]/mess
 import { htmlNestingDepth, htmlToPlainText, MAX_PLAINTEXT_INPUT, MAX_RENDERED_TEXT, renderPlainText } from "@/lib/email/plain-text";
 import { defaultWorkerPath, MAX_HTML_DEPTH, MAX_RENDER_HTML_CHARS, RENDER_LIMIT_MS, RenderPool, renderEmailBody } from "@/lib/email/render";
 import { MAX_HTML_CHARS } from "@/lib/email-html";
+import { oracleDepth } from "./helpers/tester-oracle";
 
 // Tester round 9 (plan Revision 4, "sanitize at ingest"): attacks on routing, the depth pre-scan,
 // the worker limit, the plain-text scanner, the page path and the version gate.
@@ -39,36 +40,56 @@ describe("routing boundaries (18l)", () => {
     expect(c.count).toBe(1);
   });
 
-  it("depth 512 is dispatched, 513 is too_deep with no dispatch, also with every kind of non-counting noise interleaved", async () => {
+  // Follow-up task (F1/H1): the scan now models htmlparser2's stack exactly, so "non-counting" means
+  // what the parser doesn't count: `/>` does NOT self-close in HTML and is no longer noise here; stray
+  // closes are ignored rather than decremented. Every expectation is checked against the real parser.
+  it("depth 512 is dispatched, 513 is too_deep with no dispatch, with parser-non-counting noise interleaved; scan == parser", async () => {
     const noise = [
       "<!-- <div><div><div> -->",
+      "<!--><!---><!-- --!>",
       "<!DOCTYPE html>",
       "<?xml version='1.0'?>",
-      "<br><hr><img src=x><input><wbr><meta charset=x><link rel=x><area><base><col><embed><param><source><track>",
-      "<span/>",
-      "<div/>",
+      "<![CDATA[ x ]]>", // (CDATA with tags inside is a bogus comment ending at the first ">", so tags after it DO count)
+      "<br><hr><img src=x><input><wbr><meta charset=x><link rel=x><area><base><col><embed><param><source><track><basefont><keygen><br/>",
       "<script><div><div><div></script>",
       "<style>a{}<div><div></style>",
       "<title><div><div></title>",
       "<textarea><div><div></textarea>",
       "<xmp><div><div></xmp>",
       "<iframe><div><div></iframe>",
+      "<noembed><div></noembed><noframes><div></noframes>",
       "< div>",
       "<1div>",
       "</>",
+      "</zz></q></span>", // stray closes: ignored by the parser, so no effect
     ].join("");
     const nested = (d: number) => {
       const parts: string[] = [];
       for (let i = 0; i < d; i++) parts.push(`<div class="c${i}">${noise}`);
       return parts.join("") + "x" + "</div>".repeat(d);
     };
-    for (const html of [nested(512), div(512)]) {
+    // Raw-text elements (script, style, …) are themselves on the parser's stack while open, so noise
+    // at the deepest level adds one: nested(d) has parser depth d + 1. Boundaries are taken from the parser.
+    expect(oracleDepth(nested(10))).toBe(11);
+    for (const html of [nested(511), div(512)]) {
+      expect(oracleDepth(html)).toBe(512);
       expect(htmlNestingDepth(html)).toBe(512);
       const c = countingPool();
       expect((await renderEmailBody({ html, text: null }, { pool: c.pool })).renderKind).toBe("html");
       expect(c.count).toBe(1);
     }
-    for (const html of [nested(513), div(513)]) {
+    for (const html of [nested(512), div(513)]) {
+      expect(oracleDepth(html)).toBe(513);
+      expect(htmlNestingDepth(html)).toBe(513);
+      const c = countingPool();
+      const r = await renderEmailBody({ html, text: null }, { pool: c.pool });
+      expect([r.renderKind, r.renderReason, c.count]).toEqual(["text", "too_deep", 0]);
+    }
+  });
+
+  it("H1: `/>` and stray closes now count as the parser counts them (512 <div/> plus 1 is too_deep)", async () => {
+    for (const html of ["<div/>".repeat(513), "<div></zz>".repeat(513), "<span/>".repeat(513)]) {
+      expect(oracleDepth(html)).toBe(513);
       expect(htmlNestingDepth(html)).toBe(513);
       const c = countingPool();
       const r = await renderEmailBody({ html, text: null }, { pool: c.pool });
@@ -79,18 +100,20 @@ describe("routing boundaries (18l)", () => {
   it("closing tags never go below 0 (</x> floods can't pre-pay depth), and unclosed tags at EOF still count", async () => {
     expect(htmlNestingDepth("</div>".repeat(10_000) + "<div>".repeat(513))).toBe(513);
     expect(htmlNestingDepth("<div>".repeat(513))).toBe(513);
-    expect(htmlNestingDepth("<div>".repeat(513) + "<div")).toBe(513); // unterminated tag stops the scan
+    expect(htmlNestingDepth("<div>".repeat(513) + "<div")).toBe(513); // unterminated tag name stops the scan
+    expect(oracleDepth("<div>".repeat(513) + "<div")).toBe(513);
   });
 
-  it("unterminated raw-text element hides the rest from the scan (documented: the worker limit bounds what it misses)", () => {
-    expect(htmlNestingDepth("<script>" + "<div>".repeat(600))).toBe(0);
+  it("an unterminated raw-text element: the element itself counts (as in the parser), its content doesn't", () => {
+    const html = "<script>" + "<div>".repeat(600);
+    expect(oracleDepth(html)).toBe(1);
+    expect(htmlNestingDepth(html)).toBe(1);
   });
 });
 
-describe("depth pre-scan vs htmlparser2: miscounts and their bounded consequences", () => {
-  // htmlparser2 parses inside <noscript> and <template> (the scan skips them as raw text), and a
-  // comment opener inside a quoted attribute hides markup from the scan. These are UNDERCOUNTS: deep
-  // HTML reaches the worker. The plan's claim is that the worker limit bounds them.
+describe("depth pre-scan vs htmlparser2: the round-9 miscounts are fixed (follow-up F1/H1)", () => {
+  // Round 9 found UNDERCOUNTS (noscript, template, an attribute-hidden comment) that reached the worker,
+  // and an OVERCOUNT (unclosed <p>) that sent legacy mail to text. The scan now matches the parser.
   const pool = new RenderPool();
   afterAll(() => pool.close());
 
@@ -99,40 +122,33 @@ describe("depth pre-scan vs htmlparser2: miscounts and their bounded consequence
     const d = Math.floor(room / 11);
     return wrapperOpen + "<div>".repeat(d) + "x" + "</div>".repeat(d) + wrapperClose;
   };
-  const undercounts: [string, string][] = [
+  const formerUndercounts: [string, string][] = [
     ["noscript", fill("<noscript>", "</noscript>")],
     ["template", fill("<template>", "</template>")],
     ["attribute-hidden comment", fill('<p title="><!--">', "<!-- -->")],
   ];
 
-  for (const [name, html] of undercounts) {
-    it(`${name}: scan sees <= 1, the real worker still ends within RENDER_LIMIT_MS + slack, main thread stays live`, { timeout: 30_000 }, async () => {
+  for (const [name, html] of formerUndercounts) {
+    it(`${name}: scan equals the parser (~23.8K) and the message goes to too_deep in < 100 ms, never reaching the worker`, { timeout: 30_000 }, async () => {
       expect(html.length).toBeLessThanOrEqual(MAX_HTML_CHARS);
-      expect(htmlNestingDepth(html)).toBeLessThanOrEqual(1);
-      let ticks = 0;
-      const t = setInterval(() => ticks++, 10);
+      const real = oracleDepth(html);
+      expect(real).toBeGreaterThan(20_000);
+      expect(htmlNestingDepth(html)).toBe(real);
+      const c = countingPool();
       const t0 = performance.now();
-      const r = await renderEmailBody({ html, text: null }, { pool });
-      const ms = performance.now() - t0;
-      clearInterval(t);
-      console.log(`[tester] undercount ${name}: ${r.renderKind}/${r.renderReason} in ${ms.toFixed(0)} ms (html ${html.length} chars)`);
-      expect(ms, `${name} took ${ms.toFixed(0)} ms`).toBeLessThan(RENDER_LIMIT_MS + SLACK_MS + 200 /* includes first spawn */);
-      expect(["html", "text"]).toContain(r.renderKind);
-      if (r.renderKind === "text") expect(r.renderReason).toBe("timeout");
-      expect(ticks).toBeGreaterThan(ms / 10 / 3);
-      // The next ordinary message works on the (possibly respawned) worker.
-      const ok = await renderEmailBody({ html: "<p>hello</p>", text: null }, { pool });
-      expect(ok.renderKind).toBe("html");
+      const r = await renderEmailBody({ html, text: null }, { pool: c.pool });
+      expect(performance.now() - t0).toBeLessThan(100);
+      expect([r.renderKind, r.renderReason, c.count]).toEqual(["text", "too_deep", 0]);
     });
   }
 
-  it("OVERCOUNT (fidelity): legacy mail with 600 unclosed <p> (htmlparser2 depth 1) is routed to too_deep plain text", async () => {
+  it("F1 fixed (fidelity): legacy mail with 600 unclosed <p> (parser depth ~3) now renders as html on the real worker", { timeout: 30_000 }, async () => {
     const legacy = "<html><body>" + "<p>A paragraph of an old-style newsletter.".repeat(600) + "</body></html>";
-    const c = countingPool();
-    const r = await renderEmailBody({ html: legacy, text: null }, { pool: c.pool });
-    // Recorded behaviour (not a security problem): the message is shown as text, not as HTML.
-    expect([r.renderKind, r.renderReason, c.count]).toEqual(["text", "too_deep", 0]);
-    expect(r.renderedText).toContain("A paragraph of an old-style newsletter.");
+    expect(htmlNestingDepth(legacy)).toBe(oracleDepth(legacy));
+    expect(htmlNestingDepth(legacy)).toBeLessThanOrEqual(3);
+    const r = await renderEmailBody({ html: legacy, text: null }, { pool });
+    expect([r.renderKind, r.renderReason]).toEqual(["html", null]);
+    expect(r.renderedHtml).toContain("A paragraph of an old-style newsletter.");
   });
 });
 

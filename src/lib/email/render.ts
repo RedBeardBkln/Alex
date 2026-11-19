@@ -2,7 +2,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { Worker } from "node:worker_threads";
 import { htmlNestingDepth, renderPlainText } from "./plain-text";
-import { isStructurallySafe } from "./postcheck";
+import { isRenderSafe } from "./postcheck";
 import type { RenderFields, RenderReason } from "./types";
 import { SANITIZER_VERSION } from "./version";
 
@@ -226,9 +226,15 @@ export async function renderEmailBody(
   if (htmlNestingDepth(html, MAX_HTML_DEPTH) > MAX_HTML_DEPTH) return asText("too_deep");
   const outcome = await (opts.pool ?? defaultRenderPool()).run(html);
   if (!outcome.ok) return asText(outcome.reason);
-  // Defence in depth: never store HTML the main thread hasn't checked itself, whatever the worker
-  // (or a stale bundle) replied. Linear, and import-free (postcheck.ts).
-  if (!isStructurallySafe(outcome.html) || (outcome.remote !== null && !isStructurallySafe(outcome.remote))) {
+  // Defence in depth: re-run the post-check on the main thread before storing, whatever the worker
+  // (or a stale bundle) replied: the structural check (tag allowlist, style containment) plus the
+  // render check (attribute allowlist; URL schemes, with img src only data: or, in the remote
+  // variant, https:; no remote images in the default variant; link target/rel exactly as the
+  // sanitizer forces them; CSS charset with no url(, @ other than @media, \, expression or any
+  // function but rgb/rgba/hsl/hsla). It doesn't re-run the sanitizer or
+  // the CSS parser; it relies on how sanitize-html serializes, and the iframe sandbox and CSP still
+  // apply. Linear, reject-only and import-free (postcheck.ts).
+  if (!isRenderSafe(outcome.html, "default") || (outcome.remote !== null && !isRenderSafe(outcome.remote, "remote"))) {
     return asText("postcheck");
   }
   return {

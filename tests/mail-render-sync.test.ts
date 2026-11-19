@@ -181,6 +181,56 @@ describe.skipIf(!testDbUrl)("render at ingest (Postgres + fake Gmail)", () => {
     expect((await rows()).every((r) => r.renderKind === "html" && r.sanitizerVersion === SANITIZER_VERSION)).toBe(true);
   });
 
+  it("follow-up AC6: version 1 rows are re-rendered to version 2 by the cron stage (newest first, never on view); a former too_deep F1 row becomes html", { timeout: 60_000 }, async () => {
+    expect(SANITIZER_VERSION).toBe(2);
+    const f1 = "<p>x".repeat(2_000); // htmlparser2 depth 1; the version 1 scan counted 2,000
+    gmail.seed(msg("f1", 30 * 3600_000, alternative("F1 plain", f1)));
+    for (let i = 0; i < 29; i++) gmail.seed(msg(`m${String(i).padStart(2, "0")}`, (i + 1) * 3600_000));
+    await runUntilEmpty(deps());
+    expect(await byId("f1")).toMatchObject({ renderKind: "html", sanitizerVersion: 2 });
+
+    // Make every row look as version 1 stored it; the F1 row as version 1 routed it (text/too_deep).
+    await database.update(schema.mailMessages).set({ sanitizerVersion: 1 }).where(eq(schema.mailMessages.accountId, account.id));
+    await database
+      .update(schema.mailMessages)
+      .set({ renderKind: "text", renderReason: "too_deep", renderedHtml: null, renderedHtmlRemote: null, renderedText: "F1 plain" })
+      .where(eq(schema.mailMessages.gmailMessageId, "f1"));
+
+    // Viewing never re-renders.
+    const f1Row = await byId("f1");
+    await getThreadView(database, userId, f1Row.threadId);
+    expect(await byId("f1")).toMatchObject({ renderKind: "text", renderReason: "too_deep", sanitizerVersion: 1 });
+
+    const order: string[] = [];
+    const spy: SyncDeps["render"] = async (body, opts) => {
+      order.push(body.html ?? "");
+      return renderEmailBody(body, { version: opts.version }); // the real worker
+    };
+    await syncAccount(deps({ render: spy }), await reload(), "cron");
+    expect(order).toHaveLength(30);
+    expect(order[0]).toContain("Body of m00"); // newest first
+    expect(order[29]).toBe(f1); // the oldest
+    const after = await rows();
+    expect(after.every((r) => r.sanitizerVersion === 2 && r.renderKind === "html")).toBe(true);
+    expect(await byId("f1")).toMatchObject({ renderKind: "html", renderReason: null, renderedText: null });
+    expect((await audits("mail.rerender_progress")).at(-1)!.detail).toEqual({ rendered: 30, remaining: 0 });
+  });
+
+  it("follow-up AC6: the version 1 -> 2 re-render respects the run budget", async () => {
+    for (let i = 0; i < 10; i++) gmail.seed(msg(`m${i}`, (i + 1) * 3600_000));
+    await runUntilEmpty(deps());
+    await database.update(schema.mailMessages).set({ sanitizerVersion: 1 }).where(eq(schema.mailMessages.accountId, account.id));
+    const slow: SyncDeps["render"] = async (body, opts) => {
+      clock += 30_000;
+      return renderEmailBody(body, { version: opts.version });
+    };
+    await syncAccount(deps({ render: slow }), await reload(), "cron");
+    const done = (await rows()).filter((r) => r.sanitizerVersion === 2).length;
+    expect(done).toBeGreaterThan(0);
+    expect(done).toBeLessThan(10);
+    expect((await audits("mail.rerender_progress")).at(-1)!.detail).toEqual({ rendered: done, remaining: 10 - done });
+  });
+
   it("18p: a hostile flood (30 W1-shaped + 30 normal) is all stored, the queue empties, the run stays in budget, no extra Gmail calls", { timeout: 60_000 }, async () => {
     const pool = new RenderPool({ workerPath: testWorker, limitMs: 50 });
     pools.push(pool);

@@ -9,8 +9,6 @@ import type { RenderFields } from "@/lib/email/types";
 import { SANITIZER_VERSION } from "@/lib/email/version";
 import { describeError } from "./errors";
 import { REAUTH_MARK } from "./marks";
-export { describeError } from "./errors";
-export { STOP_OVERALL_TIMEOUT_MS, stopWatchBeforeDisconnect } from "./watch-stop";
 import { GmailApiError, GmailShapeError, type GmailClient, type HistoryRecord } from "./client";
 import { applyFetchedBody, isBodyPart, parseMessage } from "./mime";
 import {
@@ -41,6 +39,10 @@ import {
   PARKED_AT,
   type EnqueueRow,
 } from "./store";
+
+// Re-exported for existing importers.
+export { describeError } from "./errors";
+export { STOP_OVERALL_TIMEOUT_MS, stopWatchBeforeDisconnect } from "./watch-stop";
 
 /**
  * Mail ingestion engine (plan section 6). One-way: Gmail -> Alex. The only Gmail writes are

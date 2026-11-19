@@ -2,6 +2,7 @@ import { after, type NextRequest } from "next/server";
 import { db } from "@/db";
 import { upsertGoogleAccount } from "@/lib/accounts";
 import { audit } from "@/lib/audit";
+import { accountConnectedDetail } from "@/lib/audit-details";
 import { env } from "@/lib/env";
 import { defaultSyncDeps } from "@/lib/gmail/runtime";
 import { syncAfterConnect } from "@/lib/gmail/sync";
@@ -9,6 +10,9 @@ import { googleClient, grantedScopes, identityFromTokens, missingScopes } from "
 import { redirectTo } from "@/lib/http";
 import { finishOAuth } from "@/lib/oauth-state";
 import { currentUser } from "@/lib/session";
+
+// The after() ingestion setup below runs within this route's max duration (follow-up N4).
+export const maxDuration = 300;
 
 export async function GET(request: NextRequest) {
   const user = await currentUser();
@@ -49,7 +53,7 @@ export async function GET(request: NextRequest) {
       scopes,
     },
   });
-  await audit({ userId: user.id, accountId: account.id, action: "account.connected", detail: { email: account.email, label: account.label } });
+  await audit({ userId: user.id, accountId: account.id, action: "account.connected", detail: accountConnectedDetail(account) });
   // Mail ingestion setup (cursor, watch, 30-day backfill) runs after the redirect is sent.
   // If it is cut short, the 5-minute cron carries on from the stored state.
   after(async () => {

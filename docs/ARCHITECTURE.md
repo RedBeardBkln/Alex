@@ -71,6 +71,8 @@ One-way, read-only sync from Gmail into Postgres. The only Gmail calls that chan
 
 **Audit log** (lifecycle and errors only, never content, addresses or tokens): `mail.watch_registered`, `mail.watch_renewed`, `mail.watch_failed`, `mail.watch_stopped`, `mail.backfill_started`, `mail.backfill_completed`, `mail.resync`, `mail.sync_error` (on the first failure after a success, or when the error changes), `mail.sync_skipped_reauth` (once per transition), `mail.rerender_progress {rendered, remaining}` (a cron re-render run that rendered something), and `mail.render_worker_unavailable` (once per process when the render worker can't be started).
 
+**Account and login audit entries** hold no email address (`src/lib/audit-details.ts`): `login` has no detail (`user_id` identifies the owner), `login.denied {domain}` keeps only the refused address's domain, `account.connected {label}` (the account is the entry's `account_id`), `account.label_changed {label}`, and `account.disconnected {accountId, provider, label}` (the row is already deleted, so its uuid goes in `detail`). Entries written before this change are left as they are; `docs/SETUP.md` §7 has an optional manual SQL to remove their addresses.
+
 **Rendering email HTML** (`src/lib/email-html.ts`, `src/lib/email-css.ts`, `src/lib/email/`): bodies are stored raw and sanitized **once, at ingest**, into stored render columns (see "When and where it runs" below).
 
 - **HTML structure:** `sanitize-html` with a tag and attribute allowlist.
@@ -95,7 +97,7 @@ One-way, read-only sync from Gmail into Postgres. The only Gmail calls that chan
   - Each job (both variants) has a hard **2,000 ms** wall-clock limit. Past it, the worker is terminated and respawned for the next job, and the message is stored as plain text with reason `timeout`.
   - A crash gives `crash` and a structural-check failure gives `postcheck`. A missing or non-starting worker gives `worker_unavailable`, with no sanitizer version so it is retried later, plus one `mail.render_worker_unavailable` audit per process.
   - The worker heap is capped at 256 MB.
-  - The worker is prebundled by esbuild (`scripts/build-render-worker.mjs`, run by `prebuild`, `predev` and `pretest`) to `.alex-build/render-worker.mjs`, which is gitignored and included in the sync, push and connect functions with `outputFileTracingIncludes`.
+  - The worker is prebundled by esbuild (`scripts/build-render-worker.mjs`, run by `prebuild` and `pretest`; `npm run dev` runs `scripts/dev.mjs`, which rebuilds it in esbuild watch mode) to `.alex-build/render-worker.mjs`, which is gitignored and included in the sync, push and connect functions with `outputFileTracingIncludes`.
 - **Hydrate budget:** a row is only started when at least 7 s (the render limit plus margin) of the run's 240 s budget remains.
 - **Plain text** is produced by Alex's own single-pass scanner. It uses the message's text part if there is one, otherwise the HTML with tags, comments and script/style contents dropped. Output is capped at 256 Ki characters and shown as React text, never as HTML.
 - **Stored:** the render columns on `mail_messages`:

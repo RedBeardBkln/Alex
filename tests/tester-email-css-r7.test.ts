@@ -43,12 +43,12 @@ describe("AC 18j (Revision 4): ingest-time bound per job, fresh Node process, re
     }
   });
 
-  it("deep nesting hidden from the depth scan (noscript, template, attribute-hidden comment) is still bounded by the worker limit", { timeout: 180_000 }, () => {
+  it("follow-up F1/H1: nesting formerly hidden from the depth scan (noscript, template, attribute-hidden comment) is now caught before the worker", { timeout: 180_000 }, () => {
     const jobs = freshProcessJobs("hidden");
     for (const j of jobs) {
-      expect(j.dispatched, JSON.stringify(j)).toBe(1);
-      expect(j.ms, JSON.stringify(j)).toBeLessThan(RENDER_LIMIT_MS + SLACK_MS);
-      expect(j.kind === "html" || (j.kind === "text" && j.reason === "timeout"), JSON.stringify(j)).toBe(true);
+      expect(j.dispatched, JSON.stringify(j)).toBe(0);
+      expect([j.kind, j.reason], JSON.stringify(j)).toEqual(["text", "too_deep"]);
+      expect(j.ms, JSON.stringify(j)).toBeLessThan(100);
     }
   });
 });

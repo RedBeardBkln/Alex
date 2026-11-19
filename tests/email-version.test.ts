@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import {
@@ -38,22 +39,26 @@ function packageDir(name: string, fromDir: string): string {
   }
 }
 
-/** Installed version and lockfile path of each SANITIZER_DEPENDENCIES entry. */
-function installedSanitizerDependencies(): Record<string, { version: string; lockPath: string }> {
-  const out: Record<string, { version: string; lockPath: string }> = {};
-  for (const dep of SANITIZER_DEPENDENCIES) {
-    const from = dep.resolveFrom === "." ? root : packageDir(dep.resolveFrom, root);
+type Installed = { name: string; via: string; version: string; lockPath: string }[];
+
+/**
+ * Installed version and lockfile path of each SANITIZER_DEPENDENCIES entry, resolved from `base`
+ * along its chain (follow-up G2): each package in `resolveFrom` from the previous one's directory.
+ */
+function installedSanitizerDependencies(base = root): Installed {
+  return SANITIZER_DEPENDENCIES.map((dep) => {
+    let from = base;
+    for (const step of dep.resolveFrom) from = packageDir(step, from);
     const dir = packageDir(dep.name, from);
     const version = JSON.parse(readFileSync(path.join(dir, "package.json"), "utf8")).version as string;
-    out[dep.name] = { version, lockPath: path.relative(root, dir).split(path.sep).join("/") };
-  }
-  return out;
+    return { name: dep.name, via: ["(root)", ...dep.resolveFrom].join(" -> "), version, lockPath: path.relative(base, dir).split(path.sep).join("/") };
+  });
 }
 
 type History = { version: number; packages: Record<string, string> }[];
 
 /** Why the pins don't hold (empty when they do). Pure, so upgrade scenarios can be simulated. */
-function pinProblems(installed: Record<string, string>, history: History, currentVersion: number): string[] {
+function pinProblems(installed: Pick<Installed[number], "name" | "via" | "version">[], history: History, currentVersion: number): string[] {
   const problems: string[] = [];
   const latest = history[history.length - 1];
   if (!latest) return ["SANITIZER_DEPENDENCY_HISTORY is empty"];
@@ -63,34 +68,87 @@ function pinProblems(installed: Record<string, string>, history: History, curren
   if (latest.version !== currentVersion) {
     problems.push(`the last SANITIZER_DEPENDENCY_HISTORY entry is for version ${latest.version}, but SANITIZER_VERSION is ${currentVersion}`);
   }
-  for (const [name, version] of Object.entries(installed)) {
+  for (const { name, via, version } of installed) {
     if (latest.packages[name] !== version) {
-      problems.push(`${name} is ${version} but SANITIZER_VERSION ${latest.version} was recorded with ${latest.packages[name] ?? "nothing"}: bump SANITIZER_VERSION and append a history entry`);
+      problems.push(`${name} (via ${via}) is ${version} but SANITIZER_VERSION ${latest.version} was recorded with ${latest.packages[name] ?? "nothing"}: bump SANITIZER_VERSION and append a history entry`);
     }
   }
-  for (const name of Object.keys(latest.packages)) if (!(name in installed)) problems.push(`${name} is recorded but not checked`);
+  for (const name of Object.keys(latest.packages)) if (!installed.some((d) => d.name === name)) problems.push(`${name} is recorded but not checked`);
   return problems;
 }
 
+/** The latest entry's packages as an installed set, each resolved once from the root. */
+const asInstalled = (packages: Record<string, string>) => Object.entries(packages).map(([name, version]) => ({ name, via: "(root)", version }));
+
 describe("sanitizer dependency versions (Round 10)", () => {
   it("installed versions match the latest history entry, which is for the current SANITIZER_VERSION", () => {
-    const installed = Object.fromEntries(Object.entries(installedSanitizerDependencies()).map(([n, d]) => [n, d.version]));
-    expect(pinProblems(installed, SANITIZER_DEPENDENCY_HISTORY, SANITIZER_VERSION)).toEqual([]);
+    expect(pinProblems(installedSanitizerDependencies(), SANITIZER_DEPENDENCY_HISTORY, SANITIZER_VERSION)).toEqual([]);
   });
 
   it("the lockfile resolves the same versions at the same node_modules paths (nested postcss included)", () => {
     const lock = JSON.parse(readFileSync(path.join(root, "package-lock.json"), "utf8")) as { packages: Record<string, { version?: string }> };
     const installed = installedSanitizerDependencies();
-    expect(installed.postcss!.lockPath).toBe("node_modules/sanitize-html/node_modules/postcss");
-    for (const [name, { version, lockPath }] of Object.entries(installed)) {
-      expect(lock.packages[lockPath]?.version, `${name} at ${lockPath}`).toBe(version);
+    expect(installed.find((d) => d.name === "postcss")!.lockPath).toBe("node_modules/sanitize-html/node_modules/postcss");
+    for (const { name, via, version, lockPath } of installed) {
+      expect(lock.packages[lockPath]?.version, `${name} via ${via} at ${lockPath}`).toBe(version);
     }
   });
 
-  it("every listed dependency is resolved and recorded", () => {
-    const names = SANITIZER_DEPENDENCIES.map((d) => d.name).sort();
-    expect(names).toEqual(["@csstools/css-parser-algorithms", "@csstools/css-tokenizer", "htmlparser2", "postcss", "sanitize-html"]);
-    for (const entry of SANITIZER_DEPENDENCY_HISTORY) expect(Object.keys(entry.packages).sort()).toEqual(names);
+  it("every listed dependency is resolved and recorded in the latest entry; the version 1 entry is unchanged", () => {
+    const names = [...new Set(SANITIZER_DEPENDENCIES.map((d) => d.name))].sort();
+    expect(names).toEqual(["@csstools/css-parser-algorithms", "@csstools/css-tokenizer", "entities", "htmlparser2", "launder", "parse-srcset", "postcss", "sanitize-html"]);
+    expect(Object.keys(SANITIZER_DEPENDENCY_HISTORY.at(-1)!.packages).sort()).toEqual(names);
+    expect(SANITIZER_DEPENDENCY_HISTORY[0]).toEqual({
+      version: 1,
+      packages: { "sanitize-html": "2.18.2", htmlparser2: "12.0.0", postcss: "8.5.33", "@csstools/css-tokenizer": "4.0.3", "@csstools/css-parser-algorithms": "4.0.3" },
+    });
+    expect(SANITIZER_DEPENDENCY_HISTORY.at(-1)).toEqual({
+      version: 2,
+      packages: {
+        "sanitize-html": "2.18.2", htmlparser2: "12.0.0", postcss: "8.5.33", "@csstools/css-tokenizer": "4.0.3", "@csstools/css-parser-algorithms": "4.0.3",
+        entities: "8.1.0", "parse-srcset": "1.0.2", launder: "1.7.2",
+      },
+    });
+  });
+
+  it("follow-up G2: the chains resolve where Node resolves them in this install", () => {
+    const at = (name: string, via: string) => installedSanitizerDependencies().find((d) => d.name === name && d.via === via)!.lockPath;
+    expect(at("entities", "(root) -> sanitize-html -> htmlparser2")).toBe("node_modules/entities");
+    expect(at("launder", "(root) -> sanitize-html")).toBe("node_modules/launder");
+    expect(at("parse-srcset", "(root) -> sanitize-html")).toBe("node_modules/parse-srcset");
+    expect(at("@csstools/css-tokenizer", "(root) -> @csstools/css-parser-algorithms")).toBe("node_modules/@csstools/css-tokenizer");
+  });
+
+  it("follow-up G2: a nested copy (a real directory tree) is found through its chain and fails the pin", () => {
+    // A throwaway tree shaped like node_modules, outside the repo: the repo's install is never touched.
+    const base = mkdtempSync(path.join(tmpdir(), "alex-dep-guard-"));
+    try {
+      const pkg = (rel: string, version: string) => {
+        mkdirSync(path.join(base, rel), { recursive: true });
+        writeFileSync(path.join(base, rel, "package.json"), JSON.stringify({ name: rel.split("node_modules/").at(-1), version }));
+      };
+      const latest = SANITIZER_DEPENDENCY_HISTORY.at(-1)!.packages;
+      for (const [name, version] of Object.entries(latest)) pkg(`node_modules/${name}`, version);
+      expect(pinProblems(installedSanitizerDependencies(base), SANITIZER_DEPENDENCY_HISTORY, SANITIZER_VERSION)).toEqual([]);
+      const nested: [string, string][] = [
+        ["node_modules/@csstools/css-parser-algorithms/node_modules/@csstools/css-tokenizer", "@csstools/css-tokenizer"],
+        ["node_modules/htmlparser2/node_modules/entities", "entities"],
+        ["node_modules/sanitize-html/node_modules/htmlparser2/node_modules/entities", "entities"],
+        ["node_modules/sanitize-html/node_modules/launder", "launder"],
+        ["node_modules/sanitize-html/node_modules/parse-srcset", "parse-srcset"],
+      ];
+      for (const [rel, name] of nested) {
+        if (rel.startsWith("node_modules/sanitize-html/node_modules/htmlparser2/")) pkg("node_modules/sanitize-html/node_modules/htmlparser2", latest.htmlparser2!);
+        pkg(rel, "99.0.0");
+        const problems = pinProblems(installedSanitizerDependencies(base), SANITIZER_DEPENDENCY_HISTORY, SANITIZER_VERSION);
+        expect(problems.join(" "), rel).toContain(`${name} (via`);
+        expect(problems.join(" "), rel).toContain("is 99.0.0");
+        rmSync(path.join(base, rel), { recursive: true });
+        rmSync(path.join(base, "node_modules/sanitize-html/node_modules"), { recursive: true, force: true });
+      }
+    } finally {
+      rmSync(base, { recursive: true, force: true });
+    }
   });
 
   it("simulated upgrades of each package fail until SANITIZER_VERSION is bumped with a new entry", () => {
@@ -98,15 +156,15 @@ describe("sanitizer dependency versions (Round 10)", () => {
     for (const name of Object.keys(current.packages)) {
       const upgraded = { ...current.packages, [name]: `${current.packages[name]}-next` };
       // Upgrade installed, nothing else changed: fails.
-      expect(pinProblems(upgraded, SANITIZER_DEPENDENCY_HISTORY, SANITIZER_VERSION).join(" "), name).toMatch(/bump SANITIZER_VERSION/);
+      expect(pinProblems(asInstalled(upgraded), SANITIZER_DEPENDENCY_HISTORY, SANITIZER_VERSION).join(" "), name).toMatch(/bump SANITIZER_VERSION/);
       // New entry appended but SANITIZER_VERSION not bumped: fails.
       const appendedSameVersion = [...SANITIZER_DEPENDENCY_HISTORY, { version: current.version, packages: upgraded }];
-      expect(pinProblems(upgraded, appendedSameVersion, SANITIZER_VERSION).length, name).toBeGreaterThan(0);
+      expect(pinProblems(asInstalled(upgraded), appendedSameVersion, SANITIZER_VERSION).length, name).toBeGreaterThan(0);
       // Pin updated in a new entry for a higher version, but SANITIZER_VERSION left alone: fails.
       const appended = [...SANITIZER_DEPENDENCY_HISTORY, { version: current.version + 1, packages: upgraded }];
-      expect(pinProblems(upgraded, appended, SANITIZER_VERSION).join(" ")).toMatch(/SANITIZER_VERSION is/);
+      expect(pinProblems(asInstalled(upgraded), appended, SANITIZER_VERSION).join(" ")).toMatch(/SANITIZER_VERSION is/);
       // New entry and bumped version: passes.
-      expect(pinProblems(upgraded, appended, current.version + 1)).toEqual([]);
+      expect(pinProblems(asInstalled(upgraded), appended, current.version + 1)).toEqual([]);
     }
   });
 });

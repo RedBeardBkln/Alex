@@ -6,6 +6,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { deleteAccount, getAccount, ReauthRequiredError, setLabel } from "@/lib/accounts";
 import { audit } from "@/lib/audit";
+import { accountDisconnectedDetail } from "@/lib/audit-details";
 import { decrypt } from "@/lib/crypto";
 import { env } from "@/lib/env";
 import { gmailClientFor } from "@/lib/gmail/runtime";
@@ -47,7 +48,7 @@ export async function disconnect(formData: FormData) {
   }
   // Deleting the account also deletes its stored mail (ON DELETE CASCADE).
   await deleteAccount(db(), user.id, id);
-  await audit({ userId: user.id, action: "account.disconnected", detail: { email: account.email } });
+  await audit({ userId: user.id, action: "account.disconnected", detail: accountDisconnectedDetail(account) });
   revalidatePath("/");
 }
 

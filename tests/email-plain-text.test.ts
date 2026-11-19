@@ -6,27 +6,35 @@ import { MAX_PLAINTEXT_INPUT, MAX_RENDERED_TEXT, htmlNestingDepth, htmlToPlainTe
 // Plan Revision 4: AC 18l (depth scan), 18m (linear plain-text paths).
 
 describe("htmlNestingDepth", () => {
-  it("counts open elements and closes, never below zero", () => {
+  // Follow-up F1/H1: the scan models htmlparser2's open-element stack (tests/email-depth.test.ts
+  // checks it against the installed parser).
+  it("counts open elements and closes; stray closes never lower the depth", () => {
     expect(htmlNestingDepth("")).toBe(0);
     expect(htmlNestingDepth("plain text")).toBe(0);
     expect(htmlNestingDepth("<div><p>a</p><p>b</p></div>")).toBe(2);
     expect(htmlNestingDepth("</div></div><div><div><div>")).toBe(3);
     expect(htmlNestingDepth("<DIV><Span>x</SPAN></div>")).toBe(2);
-    expect(htmlNestingDepth(`${"<td>".repeat(10)}`)).toBe(10); // unclosed optional end tags count (R21)
+    expect(htmlNestingDepth(`${"<td>".repeat(10)}`)).toBe(1); // each <td> implicitly closes the previous one
+    expect(htmlNestingDepth(`${"<div></zz>".repeat(10)}`)).toBe(10);
   });
 
-  it("doesn't count void elements, self-closing tags, comments, <!…>, <?…> or raw-text contents", () => {
-    const noise = '<!doctype html><?xml x?><br><img src="a"><hr/><x-y/><input><meta charset=utf-8><!-- <div><div> -->';
+  it("doesn't count void elements, comments, <!…>, <?…> or raw-text contents; /> doesn't self-close", () => {
+    const noise = '<!doctype html><?xml x?><br><img src="a"><hr/><input><meta charset=utf-8><!-- <div><div> -->';
     expect(htmlNestingDepth(`${noise}<div>x</div>`)).toBe(1);
-    for (const raw of ["script", "style", "title", "textarea", "xmp", "noscript", "template", "noembed", "noframes", "iframe"]) {
+    expect(htmlNestingDepth("<x-y/><div/>")).toBe(2); // HTML mode ignores the slash
+    for (const raw of ["script", "style", "title", "textarea", "xmp", "noembed", "noframes", "iframe"]) {
       expect(htmlNestingDepth(`<${raw}><div><div><div></${raw.toUpperCase()}><p>x</p>`), raw).toBe(1);
+    }
+    for (const parsed of ["noscript", "template"]) {
+      expect(htmlNestingDepth(`<${parsed}><div><div><div></${parsed.toUpperCase()}><p>x</p>`), parsed).toBe(4);
     }
   });
 
-  it("an unterminated comment, raw-text element or tag ends the scan", () => {
+  it("an unterminated comment, raw-text element or tag ends the scan (an open tag whose name ended counts)", () => {
     expect(htmlNestingDepth(`<div><!--${"<div>".repeat(100)}`)).toBe(1);
-    expect(htmlNestingDepth(`<div><script>${"<div>".repeat(100)}`)).toBe(1);
-    expect(htmlNestingDepth(`<div><p class="x`)).toBe(1);
+    expect(htmlNestingDepth(`<div><script>${"<div>".repeat(100)}`)).toBe(2);
+    expect(htmlNestingDepth(`<div><p class="x`)).toBe(2);
+    expect(htmlNestingDepth(`<div><plaintext></plaintext>${"<div>".repeat(100)}`)).toBe(2);
   });
 
   it("'<' not followed by a letter or '/' is text", () => {
