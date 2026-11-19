@@ -1,11 +1,13 @@
 import { db } from "@/db";
 import { listAccounts, type AccountSummary } from "@/lib/accounts";
 import { env } from "@/lib/env";
+import { mailStatusByAccount, type AccountMailStatus } from "@/lib/gmail/store";
 import { reconnectBy } from "@/lib/google";
 import { requireUser } from "@/lib/session";
 import { disconnect, updateLabel } from "./actions";
 import { TestConnectionButton } from "./test-connection-button";
 import { LocalTime } from "../local-time";
+import { MailStatusLine } from "./mail-status";
 
 const ERRORS: Record<string, string> = {
   cancelled: "Connecting the account was cancelled.",
@@ -22,7 +24,7 @@ export default async function AccountsPage({
 }) {
   const user = await requireUser();
   const params = await searchParams;
-  const accounts = await listAccounts(db(), user.id);
+  const [accounts, mailStatus] = await Promise.all([listAccounts(db(), user.id), mailStatusByAccount(db(), user.id)]);
   const testingMode = env().GOOGLE_OAUTH_TESTING_MODE;
 
   return (
@@ -60,7 +62,7 @@ export default async function AccountsPage({
       ) : (
         <ul className="space-y-3">
           {accounts.map((a) => (
-            <AccountCard key={a.id} account={a} testingMode={testingMode} />
+            <AccountCard key={a.id} account={a} testingMode={testingMode} mail={mailStatus.get(a.id)} />
           ))}
         </ul>
       )}
@@ -68,7 +70,15 @@ export default async function AccountsPage({
   );
 }
 
-function AccountCard({ account: a, testingMode }: { account: AccountSummary; testingMode: boolean }) {
+function AccountCard({
+  account: a,
+  testingMode,
+  mail,
+}: {
+  account: AccountSummary;
+  testingMode: boolean;
+  mail: AccountMailStatus | undefined;
+}) {
   const deadline = reconnectBy(a.consentedAt, testingMode);
   const msLeft = deadline ? deadline.getTime() - Date.now() : null;
   const needsReauth = a.status !== "active" || (msLeft !== null && msLeft <= 0);
@@ -90,6 +100,12 @@ function AccountCard({ account: a, testingMode }: { account: AccountSummary; tes
           {needsReauth ? "Reconnect needed" : "Active"}
         </span>
       </div>
+
+      {a.provider === "google" && (
+        <p className="mt-2 text-sm text-[var(--muted)]">
+          Mail: <MailStatusLine account={a} status={mail} />
+        </p>
+      )}
 
       {deadline && !needsReauth && (
         <p className={`mt-2 text-sm ${soon ? "text-[var(--danger)]" : "text-[var(--muted)]"}`}>

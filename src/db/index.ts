@@ -1,9 +1,14 @@
-import { drizzle, type PostgresJsDatabase } from "drizzle-orm/postgres-js";
+import type { ExtractTablesWithRelations } from "drizzle-orm";
+import type { PgDatabase } from "drizzle-orm/pg-core";
+import { drizzle, type PostgresJsDatabase, type PostgresJsQueryResultHKT } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { env } from "@/lib/env";
 import * as schema from "./schema";
 
 export type Database = PostgresJsDatabase<typeof schema>;
+
+/** A database client or an open transaction: anything queries can run on. */
+export type Executor = PgDatabase<PostgresJsQueryResultHKT, typeof schema, ExtractTablesWithRelations<typeof schema>>;
 
 const globalForDb = globalThis as unknown as { alexDb?: Database };
 

@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+/** Optional setting: unset and empty both mean "not configured". Use sites fail closed. */
+const optional = z.preprocess((v) => (typeof v === "string" && v.trim() === "" ? undefined : v), z.string().trim().optional());
+
 const schema = z.object({
   DATABASE_URL: z.string().min(1),
   APP_URL: z.url().transform((u) => u.replace(/\/+$/, "")),
@@ -21,6 +24,15 @@ const schema = z.object({
     .enum(["true", "false"])
     .default("true")
     .transform((v) => v === "true"),
+  // Mail ingestion (Phase 2a). All optional so the app runs without push; each use site fails closed.
+  /** Pub/Sub topic Gmail publishes to, e.g. projects/<project-id>/topics/gmail-push. Unset: polling only. */
+  GMAIL_PUBSUB_TOPIC: optional,
+  /** Audience configured on the push subscription (the push endpoint URL). Unset: push endpoint returns 503. */
+  PUBSUB_PUSH_AUDIENCE: optional,
+  /** Service account the push subscription authenticates as. Unset: push endpoint returns 503. */
+  PUBSUB_PUSH_SERVICE_ACCOUNT: optional,
+  /** Bearer secret Vercel Cron sends. Unset or too short: cron endpoints return 401. */
+  CRON_SECRET: optional,
 });
 
 export type Env = z.infer<typeof schema>;

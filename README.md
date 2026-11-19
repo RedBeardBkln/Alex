@@ -8,8 +8,9 @@ Alex is a personal executive assistant. It connects several Google accounts (per
 
 | Phase | Scope | Status |
 |---|---|---|
-| 1 | Sign-in, connecting Google accounts (encrypted tokens), database, deployment | **This PR** |
-| 2 | Combined inbox, AI triage and drafts, approval queue | Planned |
+| 1 | Sign-in, connecting Google accounts (encrypted tokens), database, deployment | Done |
+| 2a | Mail ingestion (Gmail push via Pub/Sub, polling fallback, 30-day backfill) and a read-only combined inbox | **In progress** (branch `phase-2-inbox`) |
+| 2b, 2c | Approval queue and replies; AI triage and drafts | Planned |
 | 3 | Calendar: free/busy across accounts, proposing times, invites | Planned |
 | 4 | Slack | Planned |
 | 5 | reMarkable handwriting turned into tasks and meetings | Planned |
@@ -31,6 +32,12 @@ npm install
 cp .env.example .env          # fill in values; generate a key with: npm run gen:key
 npm run db:migrate            # apply migrations to DATABASE_URL
 npm run dev                   # http://localhost:3000
+```
+
+Mail sync runs on a cron in production. Locally it is polling only; trigger it by hand (see [docs/SETUP.md](docs/SETUP.md) section 6):
+
+```bash
+curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/gmail-sync
 ```
 
 Checks:

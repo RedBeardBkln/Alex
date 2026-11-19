@@ -6,7 +6,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
       <header className="flex items-center justify-between border-b border-[var(--border)] pb-4">
-        <span className="text-xl font-semibold">Alex</span>
+        <nav className="flex items-center gap-4">
+          <span className="text-xl font-semibold">Alex</span>
+          <a href="/inbox" className="text-sm underline-offset-4 hover:underline">
+            Inbox
+          </a>
+          <a href="/" className="text-sm underline-offset-4 hover:underline">
+            Accounts
+          </a>
+        </nav>
         <div className="flex items-center gap-3 text-sm text-[var(--muted)]">
           <span className="hidden sm:inline">{user.email}</span>
           <form action={signOut}>

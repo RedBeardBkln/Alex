@@ -11,3 +11,6 @@ coverage
 # Claude Code agent pipeline: per-task artifacts and agent memory stay local
 .claude/pipeline/
 .claude/agent-memory/
+
+# Render-worker bundle built by scripts/build-render-worker.mjs (Revision 4)
+.alex-build/

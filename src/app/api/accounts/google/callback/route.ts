@@ -1,8 +1,10 @@
-import type { NextRequest } from "next/server";
+import { after, type NextRequest } from "next/server";
 import { db } from "@/db";
 import { upsertGoogleAccount } from "@/lib/accounts";
 import { audit } from "@/lib/audit";
 import { env } from "@/lib/env";
+import { defaultSyncDeps } from "@/lib/gmail/runtime";
+import { syncAfterConnect } from "@/lib/gmail/sync";
 import { googleClient, grantedScopes, identityFromTokens, missingScopes } from "@/lib/google";
 import { redirectTo } from "@/lib/http";
 import { finishOAuth } from "@/lib/oauth-state";
@@ -48,5 +50,12 @@ export async function GET(request: NextRequest) {
     },
   });
   await audit({ userId: user.id, accountId: account.id, action: "account.connected", detail: { email: account.email, label: account.label } });
+  // Mail ingestion setup (cursor, watch, 30-day backfill) runs after the redirect is sent.
+  // If it is cut short, the 5-minute cron carries on from the stored state.
+  after(async () => {
+    await syncAfterConnect(defaultSyncDeps(), account.id).catch((err) =>
+      console.error("mail setup after connect failed", { accountId: account.id, name: err instanceof Error ? err.name : "unknown" }),
+    );
+  });
   return redirectTo("/", { connected: account.email });
 }
