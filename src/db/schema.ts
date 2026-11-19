@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   index,
   integer,
   jsonb,
@@ -286,6 +287,76 @@ export const mailAttachments = pgTable(
   (t) => [uniqueIndex("mail_attachments_message_part_uidx").on(t.messageId, t.partId)],
 );
 
+// ---------------------------------------------------------------------------------------------
+// Approval queue (Phase 2b). Nothing is sent, invited or posted unless an approval_items row was
+// approved by the owner and claimed by exactly one executor (src/lib/approvals/). Generic across
+// kinds: each kind has a payload schema and an executor in src/lib/approvals/kinds.ts.
+// ---------------------------------------------------------------------------------------------
+
+export const approvalKind = pgEnum("approval_kind", ["email.send"]);
+export const approvalStatus = pgEnum("approval_status", [
+  "pending",
+  "approved",
+  "executing",
+  "succeeded",
+  "failed",
+  "unknown",
+  "rejected",
+  "cancelled",
+]);
+export const approvalSource = pgEnum("approval_source", ["owner"]);
+
+export const approvalItems = pgTable(
+  "approval_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    kind: approvalKind("kind").notNull(),
+    status: approvalStatus("status").notNull().default("pending"),
+    source: approvalSource("source").notNull(),
+    /** The acting account. For replies it is copied from mail_threads.account_id, never from a form. */
+    accountId: uuid("account_id").references(() => connectedAccounts.id, { onDelete: "cascade" }),
+    threadId: uuid("thread_id").references(() => mailThreads.id, { onDelete: "set null" }),
+    parentMessageId: uuid("parent_message_id").references(() => mailMessages.id, { onDelete: "set null" }),
+    /** The parent's internal_date, copied at propose time and never edited: the Q6 baseline, kept if the parent row is deleted. */
+    parentInternalDate: timestamp("parent_internal_date", { withTimezone: true }),
+    /** Current editable content, validated by the kind's payload schema. */
+    payload: jsonb("payload").$type<Record<string, unknown>>().notNull(),
+    revision: integer("revision").notNull().default(1),
+    /** sha256 of the canonical JSON of {kind, accountId, payload} at this revision. */
+    contentHash: text("content_hash").notNull(),
+    // Frozen snapshot, written only by approve.
+    approvedRevision: integer("approved_revision"),
+    approvedHash: text("approved_hash"),
+    approvedPayload: jsonb("approved_payload").$type<Record<string, unknown>>(),
+    approvedAt: timestamp("approved_at", { withTimezone: true }),
+    /** RFC 5322 Message-ID fixed at approval (email.send), used to reconcile an unknown outcome. */
+    messageIdHeader: text("message_id_header"),
+    /** Set once, by the approved -> executing claim. */
+    executionId: uuid("execution_id"),
+    executingSince: timestamp("executing_since", { withTimezone: true }),
+    /** { gmailMessageId, gmailThreadId } on success. */
+    result: jsonb("result").$type<Record<string, unknown>>(),
+    /** Content-free, e.g. reauth_required, gmail_400, gmail_5xx, timeout, stale_account. */
+    errorCode: text("error_code"),
+    /** Set by ingestion when another message lands in thread_id while the item awaits approval (Q6). */
+    threadChangedAt: timestamp("thread_changed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("approval_items_user_status_created_idx").on(t.userId, t.status, t.createdAt.desc()),
+    index("approval_items_status_executing_idx").on(t.status, t.executingSince),
+    // Ingestion looks items up by thread (Q6 warning) and by our Message-ID (reconciling a sent reply).
+    index("approval_items_thread_idx").on(t.threadId),
+    index("approval_items_account_message_id_idx").on(t.accountId, t.messageIdHeader),
+    check("approval_items_email_send_account_chk", sql`${t.kind} <> 'email.send' OR ${t.accountId} IS NOT NULL`),
+  ],
+);
+
 export type User = typeof users.$inferSelect;
 export type ConnectedAccount = typeof connectedAccounts.$inferSelect;
 export type MailSyncState = typeof mailSyncState.$inferSelect;
@@ -293,3 +364,4 @@ export type MailFetchQueueRow = typeof mailFetchQueue.$inferSelect;
 export type MailThread = typeof mailThreads.$inferSelect;
 export type MailMessage = typeof mailMessages.$inferSelect;
 export type MailAttachment = typeof mailAttachments.$inferSelect;
+export type ApprovalItem = typeof approvalItems.$inferSelect;

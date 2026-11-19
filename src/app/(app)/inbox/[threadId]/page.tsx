@@ -2,10 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
+import { replyContext, replyFormDefaults } from "@/lib/approvals/service";
 import { getThreadView, type ThreadView } from "@/lib/gmail/store";
 import { requireUser } from "@/lib/session";
 import { LocalTime } from "../../../local-time";
 import { MessageBody } from "./message-body";
+import { ReplyForm } from "./reply-form";
 
 export const dynamic = "force-dynamic";
 
@@ -23,17 +25,19 @@ export default async function ThreadPage({
   searchParams,
 }: {
   params: Promise<{ threadId: string }>;
-  searchParams: Promise<{ remote?: string }>;
+  searchParams: Promise<{ remote?: string; reply?: string; error?: string }>;
 }) {
   const user = await requireUser();
   const { threadId } = await params;
-  const { remote } = await searchParams;
+  const { remote, reply, error } = await searchParams;
   if (!z.uuid().safeParse(threadId).success) notFound();
   const view = await getThreadView(db(), user.id, threadId);
   if (!view) notFound();
 
   const visible = view.messages.filter((m) => !m.labelIds.some((l) => HIDDEN_LABELS.includes(l)));
   const hidden = view.messages.length - visible.length;
+  const replyMode = reply === "all" ? "all" : reply ? "reply" : null;
+  const ctx = replyMode ? await replyContext(db(), user.id, threadId) : null;
 
   return (
     <div className="space-y-4">
@@ -65,6 +69,30 @@ export default async function ThreadPage({
           <MessageCard key={m.id} message={m} view={view} remoteOn={remote === m.id} />
         ))}
       </ol>
+
+      <div id="reply">
+        {ctx && replyMode ? (
+          <ReplyForm
+            threadId={view.thread.id}
+            parentMessageId={ctx.parent.id}
+            account={view.account}
+            mode={replyMode}
+            defaults={replyFormDefaults(ctx, replyMode)}
+            error={error}
+          />
+        ) : (
+          visible.length > 0 && (
+            <p className="flex gap-3 text-sm">
+              <Link href={`/inbox/${view.thread.id}?reply=1#reply`} className="rounded-md bg-[var(--accent)] px-3 py-1.5 font-medium text-[var(--bg)]">
+                Reply
+              </Link>
+              <Link href={`/inbox/${view.thread.id}?reply=all#reply`} className="rounded-md border border-[var(--border)] px-3 py-1.5">
+                Reply all
+              </Link>
+            </p>
+          )
+        )}
+      </div>
     </div>
   );
 }

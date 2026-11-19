@@ -9,8 +9,9 @@ Alex is a personal executive assistant. It connects several Google accounts (per
 | Phase | Scope | Status |
 |---|---|---|
 | 1 | Sign-in, connecting Google accounts (encrypted tokens), database, deployment | Done |
-| 2a | Mail ingestion (Gmail push via Pub/Sub, polling fallback, 30-day backfill) and a read-only combined inbox | **In progress** (branch `phase-2-inbox`) |
-| 2b, 2c | Approval queue and replies; AI triage and drafts | Planned |
+| 2a | Mail ingestion (Gmail push via Pub/Sub, polling fallback, 30-day backfill) and a combined inbox | **In progress** (branch `phase-2-inbox`) |
+| 2b | Approval queue and replies (plain text, sent only after you approve; new-message compose comes after 2c) | **In progress** (branch `phase-2-inbox`) |
+| 2c | AI triage and drafts | Planned |
 | 3 | Calendar: free/busy across accounts, proposing times, invites | Planned |
 | 4 | Slack | Planned |
 | 5 | reMarkable handwriting turned into tasks and meetings | Planned |

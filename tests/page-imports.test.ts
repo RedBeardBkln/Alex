@@ -77,6 +77,10 @@ const PAGES = [
   "src/app/(app)/inbox/page.tsx",
   "src/app/(app)/layout.tsx",
   "src/app/(app)/actions.ts",
+  // Phase 2b: the approval queue pages and their actions (the thread page's reply form imports them too).
+  "src/app/(app)/queue/page.tsx",
+  "src/app/(app)/queue/[itemId]/page.tsx",
+  "src/app/(app)/queue/actions.ts",
 ];
 
 describe("18n: inbox pages never reach the sanitizer", () => {
@@ -90,7 +94,11 @@ describe("18n: inbox pages never reach the sanitizer", () => {
       );
       expect(reachedPackages).toEqual([]);
       // Sanity: the walk really followed the imports (each entry reaches some repo module).
-      const expected = page.endsWith("page.tsx") ? path.join("lib", "gmail", "store.ts") : path.join("lib", "session.ts");
+      const expected = page.includes("/queue/")
+        ? path.join("lib", "approvals", "service.ts")
+        : page.endsWith("page.tsx")
+          ? path.join("lib", "gmail", "store.ts")
+          : path.join("lib", "session.ts");
       expect([...g.files].some((f) => f.endsWith(expected))).toBe(true);
     });
   }

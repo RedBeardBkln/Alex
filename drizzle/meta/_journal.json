@@ -15,6 +15,13 @@
       "when": 1795093284734,
       "tag": "0001_mail_ingestion",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795114822709,
+      "tag": "0002_approval_queue",
+      "breakpoints": true
     }
   ]
 }

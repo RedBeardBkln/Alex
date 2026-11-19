@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, getTableColumns, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import type { Executor } from "@/db";
+import { onMessageStored } from "@/lib/approvals/ingest-hook";
 import {
   connectedAccounts,
   mailAttachments,
@@ -446,6 +447,19 @@ export async function storeMessage(
 
     await recomputeThread(tx, threadId);
     if (input.queueRowId) await deleteQueueRow(tx, input.queueRowId);
+    // Phase 2b: reconcile Alex's own sent replies and flag new messages in threads with pending replies.
+    if (inserted) {
+      await onMessageStored(tx, {
+        accountId: account.id,
+        threadId,
+        messageId: messageId!,
+        gmailMessageId: input.gmailMessageId,
+        gmailThreadId: input.gmailThreadId,
+        rfc822MessageId: p.rfc822MessageId,
+        isSent: input.labelIds.includes("SENT"),
+        internalDate: input.internalDate,
+      });
+    }
     return { threadId, messageId, inserted };
   });
 }

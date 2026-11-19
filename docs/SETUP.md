@@ -69,7 +69,7 @@ A business account on Google Workspace has another option. You can create a sepa
 
 ## 6. Mail ingestion (Phase 2a)
 
-Alex pulls INBOX mail from every connected Google account into its database: first a 30-day backfill per account, then only new mail. Gmail push notifications arrive through Google Cloud Pub/Sub, and a cron job polls every 5 minutes as a fallback. Alex only reads mail. It never sends, labels, archives or marks anything read.
+Alex pulls INBOX mail from every connected Google account into its database: first a 30-day backfill per account, then only new mail. Gmail push notifications arrive through Google Cloud Pub/Sub, and a cron job polls every 5 minutes as a fallback. Ingestion only reads mail. It never sends, labels, archives or marks anything read. (Replies are sent only after you approve them in the queue; see section 9.)
 
 Mail ingestion works with polling alone. Without the Pub/Sub steps below, new mail shows up within about 5 minutes instead of within seconds.
 
@@ -195,3 +195,44 @@ Removing the addresses from those old entries is **optional, manual and destruct
 3. The `UPDATE` reports how many rows it changed. If that equals the total from step 1, run `COMMIT;`. Otherwise run `ROLLBACK;`, and nothing is changed.
 
 Only the `email` key is removed; every other field and every other entry is kept.
+
+## 8. Approval queue (Phase 2b): database migration
+
+**Run this before merging Phase 2b to `main`, because merging deploys to production.** Without the new table, the app layout (the Queue badge), the queue pages and the cron's reconcile step fail as soon as the new code is live. The migration only adds three enum types and the `approval_items` table with its indexes (`drizzle/0002_approval_queue.sql`). It doesn't change any existing table, so it is safe to apply while the current version is still running. Apply 0001 first if it isn't applied yet (section 6.0); `npm run db:migrate` applies whatever is missing, in order.
+
+```bash
+DATABASE_URL='<the pooled connection string>' npm run db:migrate
+```
+
+No new environment variables and no new Google scopes are needed: `gmail.modify`, which every connected account already granted, is one of the scopes `messages.send` accepts.
+
+## 9. Using the approval queue
+
+- Open a thread in **Inbox** and click **Reply** or **Reply all**. The reply always goes out from the account that received the thread; the form shows it, and it can't be changed. Recipients are plain addresses, one per line. **Save for approval** creates a pending item; nothing is sent.
+- **Queue** (top bar; the badge counts pending items and items needing attention) lists pending, needs-attention (not sent, outcome unknown) and done items.
+- On an item, check the From account, every recipient, the subject and the whole message, read any warnings, then click **Approve and send**. If new messages arrived in the thread since you wrote the reply, tick "I've seen the new messages" first.
+- **Not sent** (for example the account needs reconnecting, or Gmail refused it): edit it or click **Approve and send again**. Each attempt needs your click.
+- **Outcome unknown** (Gmail didn't confirm, for example a timeout): Alex never resends it on its own. It looks for the message in Gmail on every 5-minute cron run and on **Check again**. If it can't be found after 30 minutes, check Gmail's Sent folder yourself, then use **Mark as not sent** if it really isn't there, and approve it again if you still want to send it.
+
+## 10. Live send check (on production, right after merging Phase 2b)
+
+**Where and when (owner decision, 2026-11-19):** you run this check yourself on production (`https://alex.ericandeva.com`), right after the Phase 2 merge has deployed and migration 0002 is applied (section 8), **before any reply is sent to anyone else**.
+
+- No preview deployment is used for it, and none is needed.
+- No production secrets are copied anywhere (not into Preview, a local `.env` or chat).
+- The first approved send goes **only to another of your own connected accounts**. Until every step below has passed, don't approve a reply to a third party.
+
+The automated tests use a fake Gmail, so these behaviours of the real Gmail API are **not verified** until you run this check:
+
+1. Pick two of your own connected accounts (A and B). Using Gmail itself, send a short plain-text email from B to A **with a non-ASCII character in its subject**, for example `Café test`. Wait for it to appear in Alex's Inbox under account A (within seconds with push, at most 5 minutes with the cron).
+2. In Alex, open that thread, click **Reply**, type a short message and save it. **Keep the default subject** (`Re: Café test`) unchanged: changing it could itself break threading, and the default already tests the non-ASCII encoding.
+3. On the queue item, check the screen shows From = account A, To = **only** account B's address (no Cc), the subject and the full text. Click **Approve and send**. Expect "Sent." and a Gmail message id.
+4. In Gmail, check:
+   1. In account B's inbox, the reply is in the same conversation as the original. In account A's Sent folder, it is in the same conversation too.
+   2. The reply's From is account A's address.
+   3. In account B, open the reply and choose **Show original**. Its `Message-ID` equals the one Alex generated. To see the one Alex generated, run this read-only query yourself in the Neon SQL editor: `SELECT message_id_header FROM approval_items ORDER BY created_at DESC LIMIT 1;`. (If Gmail replaced it, automatic reconciliation of "Outcome unknown" items can only work through ingestion, and you would resolve the rest by hand.)
+   4. The non-ASCII subject displays correctly in both accounts.
+5. The sent reply appears in the thread in Alex at the next 5-minute cron run. Gmail's push watch covers INBOX only, so no push notification arrives for the SENT copy.
+6. Optional: click **Approve and send** again on the same item (or reload and resubmit the form). Expect "This item changed or was already handled", and no second email in Gmail.
+
+Report the result of each step to the tester; until then the pipeline records these as "not verified live".
