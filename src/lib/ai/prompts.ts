@@ -23,9 +23,20 @@ export const DRAFT_MAX_TOKENS = 16_000;
 export const TRIAGE_EFFORT = "low";
 export const DRAFT_EFFORT = "medium";
 
-/** Owner Q5: per-message and total text caps (UTF-16 code units, cut on code-point boundaries). */
+/**
+ * Owner Q5, as amended by the E4 follow-up (owner Q1): budgets in UTF-16 code units of the
+ * JSON-encoded tool result, so the sender-controlled headers, the JSON keys and every escape count
+ * as well as the body text. Text is cut on code-point boundaries.
+ * - MESSAGE_TEXT_CAP: each message's encoded object in a draft's thread, and the whole triage tool
+ *   result (`{"message":…}`).
+ * - THREAD_TEXT_CAP: a draft's whole tool result (`{"messages":[…]}`).
+ */
 export const MESSAGE_TEXT_CAP = 6_000;
 export const THREAD_TEXT_CAP = 30_000;
+/** E4 follow-up (owner Q3): per-field header caps, cut silently (`truncated` is about body text only). */
+export const SUBJECT_CAP = 300;
+export const DATE_CAP = 100;
+export const FROM_ADDRESS_CAP = 254;
 export const OWNER_INSTRUCTION_CAP = 2_000;
 
 const UNTRUSTED_POLICY = `<untrusted_content_policy>
@@ -129,18 +140,81 @@ export function encodeUntrusted(value: unknown): string {
     .join(`${bs}u0026`);
 }
 
-/** Per-message cap, then the total cap, keeping the newest messages whole first (owner Q5). Input and output oldest first. */
+const capHeader = (v: string | null, max: number) => (v === null ? null : capText(v, max).text);
+
+/**
+ * The message as the model sees it: only the known fields, in a fixed order, with the header fields
+ * capped (E4, owner Q3). A null header stays null.
+ */
+function shapeMessage(m: ThreadTextMessage, text: string, truncated: boolean): ThreadTextMessage {
+  return {
+    source: m.source,
+    from_address: capHeader(m.from_address, FROM_ADDRESS_CAP),
+    date: capHeader(m.date, DATE_CAP),
+    subject: capHeader(m.subject, SUBJECT_CAP),
+    text,
+    truncated,
+  };
+}
+
+/**
+ * The message with its headers capped and its text cut so that `encodeUntrusted(result).length` is
+ * at most `budget`, or null if even the headers alone don't fit. `truncated` is true when text was
+ * cut here or earlier. The encoded size never shrinks as the text grows, so a binary search over the
+ * cut finds the longest prefix that fits.
+ */
+function fitMessage(m: ThreadTextMessage, budget: number): ThreadTextMessage | null {
+  const whole = shapeMessage(m, m.text, m.truncated === true);
+  if (encodeUntrusted(whole).length <= budget) return whole;
+  const cutTo = (n: number) => shapeMessage(m, capText(m.text, n).text, true);
+  if (m.text === "" || encodeUntrusted(cutTo(0)).length > budget) return null;
+  // Every cut drops at least one code unit (n < length), so `truncated: true` is accurate. The
+  // encoded size is never below the raw size, so a prefix longer than the budget can't fit.
+  let lo = 0;
+  let hi = Math.min(m.text.length - 1, budget);
+  while (lo < hi) {
+    const mid = Math.ceil((lo + hi) / 2);
+    if (encodeUntrusted(cutTo(mid)).length <= budget) lo = mid;
+    else hi = mid - 1;
+  }
+  return cutTo(lo);
+}
+
+/** `{"messages":[]}`: the part of a draft's tool result that is neither a message nor a separating comma. */
+const THREAD_ENVELOPE = encodeUntrusted({ messages: [] }).length;
+/** `{"message":}`: the part of a triage tool result that isn't the message. */
+const MESSAGE_ENVELOPE = encodeUntrusted({ message: null }).length - "null".length;
+
+/**
+ * The thread as the model sees it (owner Q5, E4 follow-up). Newest first, each message gets
+ * min(perMessage, what is left of total) for its whole encoded object, headers included, and its
+ * text is cut to fit. Once a message doesn't fit even without text, it and every older one are
+ * dropped. Guarantees `encodeUntrusted({ messages: capThread(m, p, t) }).length <= t`, and every
+ * message encodes to at most `p`. Input and output oldest first.
+ */
 export function capThread(messages: ThreadTextMessage[], perMessage = MESSAGE_TEXT_CAP, total = THREAD_TEXT_CAP): ThreadTextMessage[] {
   const out: ThreadTextMessage[] = [];
-  let left = total;
-  for (let i = messages.length - 1; i >= 0 && left > 0; i--) {
-    const m = messages[i]!;
-    const first = capText(m.text, perMessage);
-    const second = capText(first.text, left);
-    left -= second.text.length;
-    out.push({ ...m, text: second.text, truncated: first.truncated || second.truncated || m.truncated === true });
+  let left = total - THREAD_ENVELOPE;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const comma = out.length > 0 ? 1 : 0;
+    const budget = Math.min(perMessage, left - comma);
+    if (budget <= 0) break;
+    const fitted = fitMessage(messages[i]!, budget);
+    if (!fitted) break;
+    left -= encodeUntrusted(fitted).length + comma;
+    out.push(fitted);
   }
   return out.reverse();
+}
+
+/**
+ * The triage message (E4 follow-up): headers capped and text cut so that the whole tool result,
+ * `encodeUntrusted({ message })`, is at most `cap`. With the header caps, a message with no text
+ * encodes to at most 4,018 units (every header character a 6-unit escape), so the no-text fallback
+ * is never reached at the default cap.
+ */
+export function capTriageMessage(message: ThreadTextMessage, cap = MESSAGE_TEXT_CAP): ThreadTextMessage {
+  return fitMessage(message, cap - MESSAGE_ENVELOPE) ?? shapeMessage(message, "", true);
 }
 
 /** A request body for the Messages API (plain data; the provider passes it to the SDK unchanged). */
@@ -158,8 +232,7 @@ export type ModelRequest = {
 };
 
 export function buildTriageRequest(input: TriageInput): ModelRequest {
-  const capped = capText(input.message.text, MESSAGE_TEXT_CAP);
-  const message: ThreadTextMessage = { ...input.message, text: capped.text, truncated: capped.truncated || input.message.truncated === true };
+  const message = capTriageMessage(input.message);
   return {
     model: TRIAGE_MODEL,
     max_tokens: TRIAGE_MAX_TOKENS,

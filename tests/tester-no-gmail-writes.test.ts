@@ -16,7 +16,7 @@ function files(dir: string): string[] {
   });
 }
 
-const sources = files(SRC).map((f) => ({ file: path.relative(SRC, f).replace(/\\/g, "/"), text: readFileSync(f, "utf8") }));
+const sources = files(SRC).map((f) => ({ file: path.relative(SRC, f).replace(/\\/g, "/"), text: readFileSync(f, "utf8").replace(/\r\n/g, "\n") })); // CRLF checkouts too (phase-2-followups-1 round 2, O3)
 
 /** Source without line and block comments, so documentation mentioning forbidden calls doesn't count. */
 const code = (t: string) => t.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:])\/\/.*$/gm, "$1");

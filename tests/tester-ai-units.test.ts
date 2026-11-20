@@ -107,24 +107,43 @@ describe("prompt construction", () => {
     expect(encodeUntrusted({ a: "<>&" })).toBe(`{"a":"${String.fromCharCode(92)}u003c${String.fromCharCode(92)}u003e${String.fromCharCode(92)}u0026"}`);
   });
 
-  it("caps: per message exactly 6,000 whole / 6,001 cut; total exactly 30,000 keeps 5 newest whole and drops the 6th; newest first; no lone surrogate", () => {
-    const six = (c: string) => m(c.repeat(MESSAGE_TEXT_CAP));
-    expect(capThread([m("a".repeat(6_000))])[0]).toMatchObject({ text: "a".repeat(6_000), truncated: false });
-    expect(capThread([m("a".repeat(6_001))])[0]).toMatchObject({ text: "a".repeat(6_000), truncated: true });
+  // Rewritten by the coder in phase-2-followups-1 (E4, plan R-E4-2): the budgets now measure each
+  // message's whole encoded object (headers, keys, escapes, the truncated flag), not text alone. Every
+  // boundary below is the exact equivalent of the original text-only one.
+  it("caps: per message exactly 6,000 encoded whole / one more unit cut; the 30,000 thread budget is exact (4 newest whole, the 5th cut, the 6th dropped); newest first; no lone surrogate", () => {
+    const enc = (x: unknown) => encodeUntrusted(x).length;
+    // Encoded size of the helper's message with no text: headers, keys, quotes and the flag.
+    const head = (truncated: boolean) => enc({ ...m(""), truncated });
+    const envelope = enc({ messages: [] }); // {"messages":[]}
+    const fullText = MESSAGE_TEXT_CAP - head(false); // this much text encodes to exactly 6,000
+    expect(capThread([m("a".repeat(fullText))])[0]).toMatchObject({ text: "a".repeat(fullText), truncated: false });
+    expect(enc(capThread([m("a".repeat(fullText))])[0])).toBe(MESSAGE_TEXT_CAP);
+    // One unit over: cut. A cut always drops at least one unit, so `truncated: true` is never a lie.
+    expect(capThread([m("a".repeat(fullText + 1))])[0]).toMatchObject({ text: "a".repeat(fullText), truncated: true });
+    const six = (c: string) => m(c.repeat(fullText));
+    // Six messages of 6,000 each: 5 of them would encode to 15 + 5 × 6,000 + 4 commas = 30,019.
     const t = capThread(["o", "b", "c", "d", "e", "f"].map(six));
     expect(t.map((x) => x.text[0])).toEqual(["b", "c", "d", "e", "f"]); // oldest ("o") dropped
-    expect(t.every((x) => x.text.length === 6_000 && !x.truncated)).toBe(true);
-    expect(t.reduce((s, x) => s + x.text.length, 0)).toBe(THREAD_TEXT_CAP);
-    // Total 30,001: the oldest message is cut to what is left (4); newer ones whole.
-    const t2 = capThread([m("o".repeat(5)), six("b"), six("c"), six("d"), six("e"), m("f".repeat(5_996))]);
-    expect(t2.map((x) => x.text.length)).toEqual([4, 6_000, 6_000, 6_000, 6_000, 5_996]); // 30,000 − 29,996 = 4 left for the oldest
+    expect(t.slice(1).every((x) => x.text.length === fullText && !x.truncated)).toBe(true); // 4 newest whole
+    // The 5th newest loses the 19 units over budget, less the one unit "true" saves over "false".
+    expect(t[0]).toMatchObject({ truncated: true });
+    expect(t[0]!.text.length).toBe(fullText - 18);
+    expect(enc({ messages: t })).toBe(THREAD_TEXT_CAP);
+    expect(t.every((x) => enc(x) <= MESSAGE_TEXT_CAP)).toBe(true);
+    // A thread over by a little: the oldest message is cut to what is left (4 text units); newer ones whole.
+    const fLen = THREAD_TEXT_CAP - envelope - 4 * MESSAGE_TEXT_CAP - 5 - head(false) - head(true) - 4;
+    const t2 = capThread([m("o".repeat(5)), six("b"), six("c"), six("d"), six("e"), m("f".repeat(fLen))]);
+    expect(t2.map((x) => x.text.length)).toEqual([4, fullText, fullText, fullText, fullText, fLen]);
     expect(t2[0]!.truncated).toBe(true);
-    // Surrogate at both cuts.
-    const s = capThread([m("a".repeat(5_999) + "🍜🍜")])[0]!;
+    expect(enc({ messages: t2 })).toBe(THREAD_TEXT_CAP);
+    // Surrogate at both cuts: the per-message cut lands inside the first pair, and the total cut inside the only one.
+    const s = capThread([m("a".repeat(fullText) + "🍜🍜")])[0]!;
     expect(s.text.isWellFormed()).toBe(true);
-    expect(s.text.length).toBe(5_999);
-    const s2 = capThread([m("x".repeat(10)), m("y".repeat(29_999) + "🍜")], 100_000, 30_000);
+    expect(s.text.length).toBe(fullText);
+    const yLen = THREAD_TEXT_CAP - envelope - head(true) - 1;
+    const s2 = capThread([m("x".repeat(10)), m("y".repeat(yLen) + "🍜")], 100_000, 30_000);
     expect(s2.every((x) => x.text.isWellFormed())).toBe(true);
+    expect(s2.map((x) => x.text.length)).toEqual([yLen]); // no room is left for the older message
   });
 });
 
@@ -226,13 +245,14 @@ describe("src/lib/ai-ledger is genuinely SDK-free (static graph, value imports o
 describe("AI Server Actions: guard first, AI code only via dynamic import", () => {
   it("every exported action starts with requireActionUser(), which is requireUser then the strict Origin check; no static AI import", () => {
     const root = path.resolve(import.meta.dirname, "..", "src", "app", "(app)");
-    const actions = readFileSync(path.join(root, "inbox", "[threadId]", "ai-actions.ts"), "utf8");
+    // Line endings normalised (phase-2-followups-1 round 2, O3): a CRLF checkout (core.autocrlf=true) must pass too.
+    const actions = readFileSync(path.join(root, "inbox", "[threadId]", "ai-actions.ts"), "utf8").replace(/\r\n/g, "\n");
     const exported = [...actions.matchAll(/export async function (\w+)\(formData: FormData\) \{\n\s*([^\n]+)/g)].map((x) => [x[1], x[2]!.trim()]);
     expect(exported.map(([n]) => n).sort()).toEqual(["draftReplyAction", "triageThreadAction"]);
     for (const [n, first] of exported) expect(first, n).toBe("const user = await requireActionUser();");
     expect(actions).not.toMatch(/^import[^;]*@\/lib\/ai(\/|["'])/m);
     expect(actions.match(/await import\("@\/lib\/ai\/runtime"\)/g)).toHaveLength(2);
-    const guard = readFileSync(path.join(root, "action-guard.ts"), "utf8");
+    const guard = readFileSync(path.join(root, "action-guard.ts"), "utf8").replace(/\r\n/g, "\n");
     expect(guard).toMatch(/const user = await requireUser\(\);\n\s*if \(!isAllowedOrigin\(\(await headers\(\)\)\.get\("origin"\), env\(\)\.APP_URL\)\) throw new ForbiddenOriginError\(\);/);
   });
 });

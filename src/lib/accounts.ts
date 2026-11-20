@@ -91,10 +91,41 @@ export async function setLabel(database: Database, userId: string, accountId: st
   return rows.length > 0;
 }
 
-export async function deleteAccount(database: Database, userId: string, accountId: string): Promise<void> {
-  await database
-    .delete(connectedAccounts)
-    .where(and(eq(connectedAccounts.id, accountId), eq(connectedAccounts.userId, userId)));
+/** Postgres "deadlock detected". */
+const DEADLOCK_DETECTED = "40P01";
+/** Disconnect tries the DELETE at most this many times when it loses a deadlock (owner Q6). */
+export const DELETE_ACCOUNT_ATTEMPTS = 3;
+
+const pgCode = (err: unknown): unknown => (err as { cause?: { code?: unknown } })?.cause?.code ?? (err as { code?: unknown })?.code;
+
+/**
+ * Deletes the user's account; its mail, items and sync rows cascade. The single DELETE statement is
+ * rolled back whole when Postgres picks it as a deadlock victim (40P01), so it is retried, up to
+ * `attempts` times in all with a 50–250 ms jittered pause, then the error is rethrown. Other errors
+ * aren't retried. The audited transitions lock the account row first (src/lib/db-locks.ts), so a
+ * deadlock is a backstop case here, mainly a running sync. `attempts: 1` turns the retry off (tests).
+ */
+export async function deleteAccount(
+  database: Database,
+  userId: string,
+  accountId: string,
+  opts: { attempts?: number; sleep?: (ms: number) => Promise<void>; random?: () => number } = {},
+): Promise<void> {
+  const attempts = Math.max(1, opts.attempts ?? DELETE_ACCOUNT_ATTEMPTS);
+  const sleep = opts.sleep ?? ((ms: number) => new Promise<void>((r) => setTimeout(r, ms)));
+  const random = opts.random ?? Math.random;
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await database
+        .delete(connectedAccounts)
+        .where(and(eq(connectedAccounts.id, accountId), eq(connectedAccounts.userId, userId)));
+      return;
+    } catch (err) {
+      if (attempt >= attempts || pgCode(err) !== DEADLOCK_DETECTED) throw err;
+      console.error("disconnect deadlocked, retrying", { accountId, attempt });
+      await sleep(50 + Math.floor(random() * 200));
+    }
+  }
 }
 
 export type Refresher = (refreshToken: string) => Promise<{ accessToken: string; accessTokenExpiresAt: Date }>;

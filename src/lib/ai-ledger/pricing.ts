@@ -46,9 +46,20 @@ export const usdToMicros = (usd: number) => Math.round(usd * 1_000_000);
  * Worst-case cost reserved for a draft call while it is in flight (round 3, E3), so concurrent
  * drafts can't exceed a dollar cap. Opus 5.5 at the draft limits:
  * - output: max_tokens 16,000 (thinking included)
- * - input: the 30,000-character thread cap at an upper bound of one token per character, plus
- *   2,000 tokens for the system prompt, the owner instruction and the request structure
+ * - input: the whole sender-controlled part of the request, the read_thread tool result, is at most
+ *   THREAD_TEXT_CAP (30,000) UTF-16 code units by construction (capThread in src/lib/ai/prompts.ts:
+ *   headers, JSON keys and escapes included, E4 follow-up), plus 2,000 tokens for the system
+ *   prompt, the owner instruction and the request structure
  * 32,000 × $4 + 16,000 × $20 per MTok = 128,000 + 320,000 = 448,000 micro-dollars ($0.448).
+ *
+ * The bound rests on two assumptions, neither exact:
+ * - A: at most one input token per code unit of the tool result. Not verifiable against Anthropic's
+ *   tokenizer (it isn't documented per character); ordinary text uses far fewer. If an unusual
+ *   script took 3 tokens per unit, a hostile draft's input would be about 92,000 tokens, ≈ $0.69.
+ * - B: the fixed parts fit in the 2,000-token allowance. The request without messages is 3,530
+ *   characters of JSON (5,587 with a 2,000-character instruction), and the owner's smoke run of
+ *   2026-11-20 measured about 1,584 tokens of fixed overhead for a draft (input plus cache write),
+ *   so a maximum-length instruction may go slightly over (fractions of a cent).
  * Keep in step with DRAFT_MAX_TOKENS and THREAD_TEXT_CAP in src/lib/ai/prompts.ts (a test checks).
  */
 export const DRAFT_RESERVED_INPUT_TOKENS = 30_000 + 2_000;
@@ -62,8 +73,11 @@ export const DRAFT_RESERVED_COST_MICROS = costUsdMicros("claude-opus-5-5", {
 
 /**
  * Worst-case cost of one triage call (round 4, B1), derived like the draft reserve: Haiku 5.5 at
- * TRIAGE_MAX_TOKENS 1,024 output and the 6,000-character message cap at one token per character
- * plus 2,000 tokens of prompt and structure. 8,000 × $0.10 + 1,024 × $0.50 per MTok = 1,312 µ$.
+ * TRIAGE_MAX_TOKENS 1,024 output, and the read_message tool result (at most MESSAGE_TEXT_CAP, 6,000
+ * code units, headers included, by construction) at one token per code unit, plus 2,000 tokens of
+ * prompt and structure. 8,000 × $0.10 + 1,024 × $0.50 per MTok = 1,312 µ$. The same assumptions A
+ * and B as the draft reserve apply (the owner's smoke run measured about 1,539 tokens of fixed
+ * triage overhead).
  * Keep in step with TRIAGE_MAX_TOKENS and MESSAGE_TEXT_CAP in src/lib/ai/prompts.ts (a test checks).
  */
 export const TRIAGE_RESERVED_INPUT_TOKENS = 6_000 + 2_000;

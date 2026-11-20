@@ -4,6 +4,7 @@ import type { Executor } from "@/db";
 import { auditLog, connectedAccounts, mailFetchQueue, mailMessages, type ConnectedAccount, type MailFetchQueueRow, type MailSyncState } from "@/db/schema";
 import { ReauthRequiredError } from "@/lib/accounts";
 import { audit } from "@/lib/audit";
+import { lockAccountForWrite } from "@/lib/db-locks";
 import { RENDER_LIMIT_MS, renderEmailBody } from "@/lib/email/render";
 import type { RenderFields } from "@/lib/email/types";
 import { SANITIZER_VERSION } from "@/lib/email/version";
@@ -450,6 +451,8 @@ async function startResync(ctx: Ctx, state: MailSyncState): Promise<MailSyncStat
   const afterDate = new Date(after);
 
   await ctx.db.transaction(async (tx) => {
+    // Lock order (phase-2-followups-1): the account row first, so a concurrent Disconnect can't deadlock.
+    await lockAccountForWrite(tx, account.id);
     await updateSyncState(tx, account.id, {
       historyId: profile.historyId,
       lastHistorySyncAt: now,

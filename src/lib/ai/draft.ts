@@ -73,6 +73,8 @@ export async function draftReply(
     now,
     caps: deps.caps ?? aiCaps(),
   });
+  // Round 2, O1: the account was disconnected meanwhile; no provider call, same answer as a missing thread.
+  if (start.kind === "not_found") return { ok: false, code: "not_found" };
   if (start.kind === "in_flight") return { ok: false, code: "in_flight" };
   if (start.kind === "capped") {
     await auditCapReachedOnce(deps.db, input.userId, "draft", start.cap, now);

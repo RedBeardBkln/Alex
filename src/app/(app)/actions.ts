@@ -46,7 +46,8 @@ export async function disconnect(formData: FormData) {
       .revokeToken(decrypt(token, env().ALEX_ENCRYPTION_KEY))
       .catch((err) => console.warn("Google token revocation failed; deleting locally anyway", err));
   }
-  // Deleting the account also deletes its stored mail (ON DELETE CASCADE).
+  // Deleting the account also deletes its stored mail (ON DELETE CASCADE). The default form retries
+  // a lost deadlock (40P01) up to DELETE_ACCOUNT_ATTEMPTS times.
   await deleteAccount(db(), user.id, id);
   await audit({ userId: user.id, action: "account.disconnected", detail: accountDisconnectedDetail(account) });
   revalidatePath("/");

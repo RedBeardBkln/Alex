@@ -113,21 +113,29 @@ describe("prompt construction (AC4)", () => {
     expect(cleanOwnerInstruction("a".repeat(5_000))!.length).toBe(2_000);
   });
 
-  it("caps: 6K per message, 30K in total, newest kept whole first; never cuts a surrogate pair", () => {
+  // E4 follow-up (phase-2-followups-1): the 6K/30K budgets measure the encoded message objects,
+  // headers included, so the expected text lengths are the budget less the header encoding.
+  it("caps: 6K per encoded message, 30K for the encoded thread, newest kept whole first; never cuts a surrogate pair", () => {
+    const enc = (x: unknown) => encodeUntrusted(x).length;
+    const head = (truncated: boolean) => enc({ ...msg(""), truncated });
+    const cutText = 6_000 - head(true); // text left in a cut message that encodes to exactly 6,000
     const thread = [msg("o".repeat(20_000)), msg("m".repeat(9_000)), msg("n".repeat(5_000))];
     const capped = capThread(thread);
-    expect(capped.map((m) => m.text.length)).toEqual([6_000, 6_000, 5_000]);
+    expect(capped.map((m) => m.text.length)).toEqual([cutText, cutText, 5_000]);
     expect(capped.map((m) => m.truncated)).toEqual([true, true, false]);
+    expect(capped.map(enc)).toEqual([6_000, 6_000, head(false) + 5_000]);
     const many = Array.from({ length: 8 }, (_, i) => msg(String(i).repeat(6_000)));
     const c2 = capThread(many);
-    expect(c2.reduce((s, m) => s + m.text.length, 0)).toBe(30_000);
-    expect(c2.at(-1)!.text).toBe("7".repeat(6_000)); // newest whole
-    expect(c2).toHaveLength(5);
-    const emoji = capThread([msg("a".repeat(5_999) + cp(0x1f35c))])[0]!.text;
+    expect(enc({ messages: c2 })).toBe(30_000);
+    expect(c2.at(-1)!.text).toBe("7".repeat(cutText)); // the newest is kept first, as far as its own budget allows
+    expect(c2.slice(1).every((m) => enc(m) === 6_000)).toBe(true);
+    expect(c2).toHaveLength(5); // the 5th newest gets what is left; the 3 oldest are dropped
+    const emoji = capThread([msg("a".repeat(cutText - 1) + cp(0x1f35c))])[0]!.text;
     expect(emoji.isWellFormed()).toBe(true);
-    expect(emoji.length).toBe(5_999);
+    expect(emoji.length).toBe(cutText - 1);
     const t = buildTriageRequest({ message: msg("x".repeat(10_000)) });
-    expect(JSON.parse(toolResults(t)[0]!).message.text).toHaveLength(6_000);
+    expect(toolResults(t)[0]!.length).toBe(6_000);
+    expect(JSON.parse(toolResults(t)[0]!).message.text).toHaveLength(6_000 - (enc({ message: null }) - "null".length) - head(true));
   });
 
   it("JSON encoding survives quotes, backslashes, </ and control characters", () => {
