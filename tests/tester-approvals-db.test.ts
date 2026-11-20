@@ -669,8 +669,17 @@ describe.skipIf(!testDbUrl)("tester: approval queue attacks (Postgres, fake Gmai
       await runUntilEmpty();
       expect(await flagOf(a.id), "lagged").not.toBeNull();
 
-      // Older than the parent (a late backfilled history message): not flagged.
-      const b = await propose();
+      // 2c round 2 (D1 at propose time): lagA is newer than the parent, so every later propose on
+      // this parent starts flagged. To keep testing the ingest hook's own ordering rules below, the
+      // propose-time flag is asserted and then cleared before each new delivery.
+      const proposeCleared = async () => {
+        const x = await propose();
+        expect(x.threadChangedAt, "propose-time flag (newer message than the parent already stored)").not.toBeNull();
+        await database.update(schema.approvalItems).set({ threadChangedAt: null }).where(eq(schema.approvalItems.id, x.id));
+        return x;
+      };
+      // Older than the parent (a late backfilled history message): the hook doesn't flag.
+      const b = await proposeCleared();
       gmail.deliver(msg({ id: "oldB", internalDate: clock - 2 * DAY }));
       await runUntilEmpty();
       expect(await flagOf(b.id), "older than parent").toBeNull();
@@ -678,7 +687,7 @@ describe.skipIf(!testDbUrl)("tester: approval queue attacks (Postgres, fake Gmai
       // Statuses: pending and failed flag; the rest don't.
       const st: Record<string, string> = {};
       for (const status of ["failed", "approved", "executing", "unknown", "succeeded", "rejected", "cancelled"] as const) {
-        const x = await propose();
+        const x = await proposeCleared();
         await database.update(schema.approvalItems).set({ status }).where(eq(schema.approvalItems.id, x.id));
         st[status] = x.id;
       }
@@ -688,7 +697,7 @@ describe.skipIf(!testDbUrl)("tester: approval queue attacks (Postgres, fake Gmai
       for (const s of ["approved", "executing", "unknown", "succeeded", "rejected", "cancelled"]) expect(await flagOf(st[s]!), s).toBeNull();
 
       // The owner's own reply sent from Gmail (SENT, not Alex's Message-ID) newer than the parent: flagged.
-      const d = await propose();
+      const d = await proposeCleared();
       gmail.deliver(msg({ id: "webD", labelIds: ["SENT"], from: "work@example.com", internalDate: Date.now() + 2000 }));
       await runUntilEmpty();
       expect(await flagOf(d.id), "owner's own Gmail-web reply").not.toBeNull();
@@ -1034,7 +1043,9 @@ describe.skipIf(!testDbUrl)("tester: approval queue attacks (Postgres, fake Gmai
     async function unknownItem() {
       nextOutcome = () => ({ kind: "unknown", code: "timeout", status: null });
       const it0 = await propose();
-      await approveAndSend(deps(), approveInput(it0));
+      // 2c round 2: earlier iterations left newer messages in this thread, so the item can start
+      // flagged (D1 at propose time). Approve like the page: rendered value plus the tick (B1).
+      await approveAndSend(deps(), approveInput(it0, { ackThreadChange: it0.threadChangedAt !== null }));
       const u = await item(it0.id);
       expect(u.status).toBe("unknown");
       return u;
@@ -1053,6 +1064,9 @@ describe.skipIf(!testDbUrl)("tester: approval queue attacks (Postgres, fake Gmai
         await database.delete(schema.approvalItems);
         const u = await unknownItem();
         const sibling = await propose(); // pending item in the same thread
+        // It may start flagged by earlier iterations' messages (D1 at propose time); clear it so the
+        // assertion below measures what the inbound reuse itself does.
+        await database.update(schema.approvalItems).set({ threadChangedAt: null }).where(eq(schema.approvalItems.id, sibling.id));
         const stored = await deliverWith(labels, u.messageIdHeader!);
         expect((await item(u.id)).status, labels.join("+")).toBe("unknown");
         expect((await audits()).filter((a) => a.action === "approval.reconciled"), labels.join("+")).toHaveLength(0);

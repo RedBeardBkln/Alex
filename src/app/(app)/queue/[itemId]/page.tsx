@@ -4,7 +4,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { extractAddresses } from "@/lib/approvals/addresses";
 import { outgoingBody } from "@/lib/approvals/payload";
-import { subjectWarnings } from "@/lib/approvals/warnings";
+import { invisibleCharacters, linksNotInThread, newRecipients, subjectWarnings, type InvisibleFinding } from "@/lib/approvals/warnings";
 import { getItemView, MARK_NOT_SENT_AFTER_MS, STUCK_EXECUTING_MS } from "@/lib/approvals/service";
 import { requireUser } from "@/lib/session";
 import { LocalTime } from "../../../local-time";
@@ -76,6 +76,16 @@ const STATUS_LABEL: Record<string, string> = {
   cancelled: "Cancelled",
 };
 
+function InvisibleWarning({ where, finding }: { where: string; finding: InvisibleFinding }) {
+  return (
+    <Warning>
+      The {where} contains {finding.count} invisible, control or text-direction {finding.count === 1 ? "character" : "characters"} that can make it read differently
+      from what is sent: <span className="font-mono">{finding.items.map((x) => `${x.codePoint} at position ${x.index}`).join(", ")}</span>
+      {finding.count > finding.items.length ? ", …" : ""}
+    </Warning>
+  );
+}
+
 function Warning({ children }: { children: React.ReactNode }) {
   return <li className="rounded-md bg-[var(--warn-bg)] px-3 py-2">{children}</li>;
 }
@@ -98,6 +108,12 @@ export default async function QueueItemPage({
   const now = Date.now();
   const executingFor = item.executingSince ? now - item.executingSince.getTime() : 0;
   const subjectWarning = subjectWarnings(shown.subject, parent?.subject ?? thread?.subject ?? null);
+  // Phase 2c content warnings (plan §6.7): new recipients and invisible characters for every item, links for AI items.
+  const isAi = item.source === "ai";
+  const unknownRecipients = newRecipients([...shown.to, ...shown.cc], view.threadAddresses, view.ownAccounts);
+  const bodyInvisible = invisibleCharacters(shown.bodyText);
+  const quoteInvisible = invisibleCharacters(shown.quote?.included ? shown.quote.text : "");
+  const unknownLinks = isAi ? linksNotInThread(shown.bodyText, view.threadHaystack) : [];
   const parentHasText = !!(parent && (parent.bodyText ?? parent.renderedText ?? "").trim() !== "");
   const errorText = item.errorCode ? (ERROR_CODES[item.errorCode] ?? (item.errorCode.startsWith("gmail_") ? `Gmail refused it (${item.errorCode.slice(6)}).` : "It wasn't sent.")) : null;
 
@@ -115,7 +131,11 @@ export default async function QueueItemPage({
       )}
 
       <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
-        <p className="text-xs uppercase tracking-wide text-[var(--muted)]">Email reply · {STATUS_LABEL[item.status]}</p>
+        <p className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wide text-[var(--muted)]">
+          <span>Email reply · {STATUS_LABEL[item.status]}</span>
+          {isAi && <span className="rounded-full bg-[var(--warn-bg)] px-2 py-0.5 normal-case tracking-normal text-[var(--text)]">AI draft</span>}
+        </p>
+        {isAi && <p className="mt-1 font-medium">Written by AI (Opus 5.5); check every line before approving.</p>}
         <dl className="mt-3 grid grid-cols-[6rem_1fr] gap-x-3 gap-y-2">
           <dt className="text-[var(--muted)]">From</dt>
           <dd>
@@ -168,6 +188,18 @@ export default async function QueueItemPage({
         </dl>
 
         <ul className="mt-3 space-y-2">
+          {unknownRecipients.map((a) => (
+            <Warning key={`r-${a}`}>
+              New recipient not in this conversation: <span className="font-mono">{a}</span>
+            </Warning>
+          ))}
+          {bodyInvisible.count > 0 && <InvisibleWarning where="message" finding={bodyInvisible} />}
+          {quoteInvisible.count > 0 && <InvisibleWarning where="quoted text" finding={quoteInvisible} />}
+          {unknownLinks.length > 0 && (
+            <Warning>
+              The AI draft mentions links or domains that don&apos;t appear in this thread: <span className="font-mono">{unknownLinks.join(", ")}</span>. Check them before sending.
+            </Warning>
+          )}
           {shown.replyToNotice && (
             <Warning>
               Reply-To differs from the sender. This reply goes to the Reply-To address

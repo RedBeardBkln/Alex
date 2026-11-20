@@ -2,6 +2,7 @@ import { after, type NextRequest } from "next/server";
 import { db } from "@/db";
 import { env } from "@/lib/env";
 import { handlePush } from "@/lib/gmail/push";
+import { productionTriage } from "@/lib/ai/runtime";
 import { defaultSyncDeps } from "@/lib/gmail/runtime";
 import { syncAfterPush } from "@/lib/gmail/sync";
 import { verifyPubSubToken } from "@/lib/pubsub-auth";
@@ -20,7 +21,7 @@ export async function POST(request: NextRequest) {
       verify: (authorization, config) => verifyPubSubToken(authorization, config),
       schedule: (accountId) =>
         after(async () => {
-          await syncAfterPush(defaultSyncDeps(), accountId).catch((err) =>
+          await syncAfterPush({ ...defaultSyncDeps(), triage: productionTriage() }, accountId).catch((err) =>
             console.error("push-triggered sync failed", { accountId, name: err instanceof Error ? err.name : "unknown" }),
           );
         }),

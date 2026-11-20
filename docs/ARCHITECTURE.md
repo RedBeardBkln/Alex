@@ -21,7 +21,7 @@
 2. **Unified inbox** (Phase 2a: ingestion and a read-only inbox; see "Mail ingestion" below)
    - New mail from each Google account arrives through Gmail push notifications (Pub/Sub), with polling as a fallback.
    - Every message stays tied to its account, so replies always go out from the address that received the email.
-3. **Delegation** (Phases 2–3)
+3. **Delegation** (Phases 2–3; Phase 2c adds AI triage and reply drafts, see "AI" below)
    - A typed request becomes a Claude tool-use loop. Its tools are search mail, read thread, check free/busy, draft reply and propose meeting.
    - Read-only tools run directly.
    - Tools that write or send never run directly. They create an **approval item**.
@@ -131,6 +131,65 @@ One-way, read-only sync from Gmail into Postgres. The only Gmail calls in ingest
 - **Audit** (no addresses, subjects or body text): `approval.proposed`, `.edited`, `.approved`, `.rejected`, `.cancelled`, `.execution_started` (committed before the send), `.executed`, `.execution_failed`, `.execution_unknown`, `.reconciled` and `.marked_not_sent`, with item ids, revisions, hashes, counts and content-free codes.
 - **Retention:** sent, rejected and cancelled items keep their content until the account is disconnected (cascade).
 - **Not verified live** (SETUP §10): whether Gmail keeps Alex's Message-ID, whether a `Re: ` subject counts as "matching" for threading, how Gmail treats From, and whether a 400, 401, 403, 404 or 429 can ever follow a completed send.
+
+## AI (Phase 2c)
+
+The Claude API (`@anthropic-ai/sdk` 1.11.0, pinned) is used for two things. It is optional: without `ANTHROPIC_API_KEY` both are off and the app says "AI not configured".
+
+- **Triage** (Haiku 5.5, `claude-haiku-5-5`, effort `low`, `max_tokens` 1,024):
+  - a `triage` stage in `syncAccount`, after hydrate (and re-render) on cron and push runs, never on connect
+  - it picks INBOX, non-SENT, non-Spam/Trash messages from the last 3 days that have no result for the current prompt version, newest first, up to 50 per run
+  - calls are sequential and stop with less than 15 s of the run budget left; a failure never fails the sync
+  - results go in `mail_triage` (one row per message and prompt version): category (`needs_reply`, `fyi`, `newsletter`, `notification`, `promo`, `spam_suspect`), needs-reply flag, and a summary of at most 200 characters with control, bidi and invisible characters removed
+  - errors retry with backoff (5 minutes, doubling), at most 3 attempts; refused and invalid results are final
+  - older mail is triaged on demand ("Triage this thread")
+  - the inbox shows a chip and the summary for the latest inbound message, with a **Needs reply** view; nothing is ever hidden or moved
+- **Drafts** (Opus 5.5, `claude-opus-5-5`, effort `medium`, `max_tokens` 16,000, a 90 s timeout; the thread page's `maxDuration` is 120):
+  - only when the owner clicks **Draft reply with AI** (Reply or Reply all, with an optional instruction). The buttons are disabled while a draft is being written, and the server allows one draft in flight per user and thread: a `pending` `ai_calls` row, created under a per-user advisory lock and backed by a partial unique index, which the caps count, at a reserved worst case of $0.448 (`DRAFT_RESERVED_COST_MICROS`: 32,000 input and 16,000 output Opus tokens) until it finishes, so, within the text caps (headers are not capped yet; see the E4 follow-up), parallel drafts can't together go past a dollar cap by more than one call, the same bound as sequential calls (a call starts while the estimate is below the cap). A pending row older than 3 minutes is treated as a crashed attempt and closed as `abandoned`, still at the reserve.
+  - the model sees this thread only, oldest first, as plain stored text: 6,000 characters per message and 30,000 in total, keeping the newest messages whole
+  - it returns `{body, notes}`; the body is checked again by `draftReply` and by `proposeAiReply` (C0 controls other than newline and tab, DEL and C1 controls removed, at most 20K characters, not empty), whatever the provider did; `proposeAiReply` (`src/lib/approvals/service.ts`) turns it into a 2b `email.send` item with `source: ai`
+  - the account comes from the thread; recipients are the code-computed Reply/Reply-all defaults; the subject is the default `Re:`; threading comes from the stored parent; the quote is included
+  - it is `pending` until the owner approves it through the unchanged approve → claim → execute path; a refusal, invalid output, error or timeout creates no item
+- **Provider interface** (`src/lib/ai/types.ts`): `TriageProvider` and `DraftProvider` take and return plain data, so a local provider could replace Anthropic.
+  - `AI_TRIAGE_PROVIDER` selects triage (default `anthropic-haiku`; an unknown value turns triage off).
+  - The SDK is imported only in `src/lib/ai/providers/anthropic.ts`, and no page, layout or action statically imports `src/lib/ai/**` (tested); the thread page's AI actions load it with a dynamic `import()`.
+- **Prompt injection** (`src/lib/ai/prompts.ts`, following Anthropic's guidance on indirect prompt injection):
+  - The system prompt is fixed per version and states an untrusted-content policy.
+  - Email content is sent only as the JSON-encoded result of a `read_message`/`read_thread` tool call that Alex makes itself, with `<`, `>` and `&` escaped. The tools are inert: `tool_choice` is `none`.
+  - The output is structured JSON with no recipient, subject, account, thread or Message-ID field. Extra keys, a non-enum category, `refusal` and `max_tokens` all count as not ok.
+  - No temperature, top_p or top_k parameter is sent, no assistant prefill is used, and no refusal fallback is used. Text is read from content blocks by `type`, after checking `stop_reason`.
+  - The owner's instruction is sent as the owner's own words in the user turn.
+- **Approval-page warnings** (computed in code):
+  - For every item:
+    - a new recipient (not in the thread's From/To/Cc/Reply-To headers and not one of the owner's accounts)
+    - bidi and invisible characters in the body or the quote, with code points and positions (U+061C, U+180E, U+200B–200F, U+2028–202E, U+2060–2064, U+2066–2069, U+FEFF, the tag characters U+E0000–E007F and the C1 controls U+0080–U+009F)
+  - For AI items only:
+    - links and domains in the body whose host isn't in the thread: hosts are compared on whole names, so a link counts as known only if its host equals, or is a subdomain of, a host in the thread; IDN names are compared in punycode. A link the sender put in their own email is "in the thread", so this can't catch it.
+    - the "AI draft" badge, and "Written by AI (Opus 5.5); check every line"
+- **Cost and caps** (`src/lib/ai-ledger/`, SDK-free):
+  - Every call writes one `ai_calls` row with status, error code, request id, tokens (input, output, thinking, cache write and read), estimated cost in micro-dollars, the pricing version and latency. A call that failed in a way that may still have been billed but returned no usage (`timeout`, `aborted`, `network`, `unexpected`, `api_5xx`, and swept `abandoned` drafts) is recorded at its purpose's reserved worst case (`DRAFT_RESERVED_COST_MICROS` $0.448, `TRIAGE_RESERVED_COST_MICROS` $0.001312: Haiku at 8,000 input and 1,024 output tokens), so the dollar caps count it; AI usage shows these as "estimated (no usage returned)". Definite refusals (spend limit, 429, other 4xx) are recorded at $0. It holds no prompt, thread text or model output.
+  - Prices: `src/lib/ai-ledger/pricing.ts`, from the pricing page as read on 2026-11-19.
+  - Daily UTC caps, checked before every call (defaults; the `AI_*` env variables override them):
+    - triage 400 calls and $0.50
+    - drafts 25 calls and $3.00
+    - $3.50 overall
+  - An Anthropic spend-limit answer pauses both features for the day.
+  - The **AI usage** page shows the last 14 days.
+- **Audit** (no addresses, subjects, bodies, summaries or prompts):
+  - `ai.triage_run {triaged, failed, skipped_cap, costUsdMicros}`
+  - `ai.draft_requested {threadId}`
+  - `ai.draft_proposed {itemId, model, costUsdMicros}`
+  - `ai.draft_failed {code}`
+  - `ai.cap_reached {purpose, cap}`, once per day and purpose
+  - `ai.provider_error {purpose, status}`, only when the error changes
+  - `approval.proposed` records `source`
+- **Retention:** Alex stores no prompts and no raw model output (owner Q6). Anthropic's docs say API prompts and outputs aren't retained by default for these models; the commercial retention policy wasn't read.
+- **Not verified live** (SETUP 11.4–11.5):
+  - whether the API accepts the synthetic tool_use/tool_result turns together with structured output
+  - real token counts and costs
+  - triage and draft quality
+
+- **Q6 at propose time** (every reply, manual or AI): if the thread already holds a message newer than the parent that isn't one of Alex's own sends, the new item starts with `thread_changed_at` set, so the warning and the confirmation apply as if the message had arrived afterwards. The check runs again after the item commits, and the ingest hook runs its flag again after the message commits (`afterMessageCommitted`), so whichever commits second sees the other: a message committed concurrently with the save is always caught.
 
 ## Security model
 

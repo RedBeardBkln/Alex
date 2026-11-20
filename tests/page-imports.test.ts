@@ -19,8 +19,8 @@ const FORBIDDEN_FILES = [
   "src/lib/email/plain-text.ts",
 ].map((f) => path.join(root, f));
 
-/** Module specifiers a file imports at runtime (static, re-export, side-effect and dynamic). */
-function runtimeImports(code: string): string[] {
+/** Module specifiers a file imports at runtime (static, re-export, side-effect and, unless excluded, dynamic). */
+function runtimeImports(code: string, dynamic = true): string[] {
   const specs: string[] = [];
   const fromRe = /(?:^|[\n;])\s*(import|export)\s+(type\s+)?([^;]*?)\bfrom\s*["']([^"']+)["']/g;
   for (let m = fromRe.exec(code); m; m = fromRe.exec(code)) {
@@ -30,7 +30,7 @@ function runtimeImports(code: string): string[] {
   const bareRe = /(?:^|[\n;])\s*import\s*["']([^"']+)["']/g;
   for (let m = bareRe.exec(code); m; m = bareRe.exec(code)) specs.push(m[1]!);
   const dynRe = /\bimport\(\s*["']([^"']+)["']\s*\)/g;
-  for (let m = dynRe.exec(code); m; m = dynRe.exec(code)) specs.push(m[1]!);
+  if (dynamic) for (let m = dynRe.exec(code); m; m = dynRe.exec(code)) specs.push(m[1]!);
   return specs;
 }
 
@@ -43,7 +43,7 @@ function resolveFile(base: string): string | null {
 
 type Graph = { files: Set<string>; packages: Map<string, string> };
 
-function importGraph(entry: string): Graph {
+function importGraph(entry: string, dynamic = true): Graph {
   const files = new Set<string>();
   const packages = new Map<string, string>(); // package -> first importing file
   const stack = [entry];
@@ -51,7 +51,7 @@ function importGraph(entry: string): Graph {
     const file = stack.pop()!;
     if (files.has(file)) continue;
     files.add(file);
-    for (const spec of runtimeImports(readFileSync(file, "utf8"))) {
+    for (const spec of runtimeImports(readFileSync(file, "utf8"), dynamic)) {
       if (spec.startsWith("node:")) continue;
       let base: string | null = null;
       if (spec.startsWith("@/")) base = path.join(src, spec.slice(2));
@@ -81,6 +81,10 @@ const PAGES = [
   "src/app/(app)/queue/page.tsx",
   "src/app/(app)/queue/[itemId]/page.tsx",
   "src/app/(app)/queue/actions.ts",
+  // Phase 2c: the AI usage page and the thread page's AI actions and panel.
+  "src/app/(app)/ai-usage/page.tsx",
+  "src/app/(app)/inbox/[threadId]/ai-actions.ts",
+  "src/app/(app)/inbox/[threadId]/ai-panel.tsx",
 ];
 
 describe("18n: inbox pages never reach the sanitizer", () => {
@@ -94,7 +98,11 @@ describe("18n: inbox pages never reach the sanitizer", () => {
       );
       expect(reachedPackages).toEqual([]);
       // Sanity: the walk really followed the imports (each entry reaches some repo module).
-      const expected = page.includes("/queue/")
+      const expected = page.includes("/ai-usage/")
+        ? path.join("lib", "ai-ledger", "ledger.ts")
+        : page.includes("/inbox/[threadId]/ai-")
+          ? path.join("lib", "session.ts")
+          : page.includes("/queue/")
         ? path.join("lib", "approvals", "service.ts")
         : page.endsWith("page.tsx")
           ? path.join("lib", "gmail", "store.ts")
@@ -112,5 +120,25 @@ describe("18n: inbox pages never reach the sanitizer", () => {
     const html = importGraph(path.join(root, "src/lib/email-html.ts"));
     expect(html.packages.has("sanitize-html")).toBe(true);
     expect(html.packages.has("@csstools/css-tokenizer")).toBe(true);
+  });
+});
+
+// Phase 2c AC10: the static import graph of every page, the layout and the actions reaches neither
+// the Anthropic SDK nor src/lib/ai/**. (The AI actions load src/lib/ai with a dynamic import, which
+// runs only when the owner clicks; the sanitizer check above follows dynamic imports too.)
+describe("AC10: pages never statically reach the Anthropic SDK or src/lib/ai", () => {
+  const aiDir = path.join(src, "lib", "ai") + path.sep;
+  for (const page of PAGES) {
+    it(page, () => {
+      const g = importGraph(path.join(root, page), false);
+      expect([...g.files].filter((f) => f.startsWith(aiDir)).map((f) => path.relative(root, f))).toEqual([]);
+      expect([...g.packages.keys()].filter((p) => p.startsWith("@anthropic-ai/"))).toEqual([]);
+    });
+  }
+
+  it("positive control: the AI actions do reach src/lib/ai through their dynamic import", () => {
+    const g = importGraph(path.join(root, "src/app/(app)/inbox/[threadId]/ai-actions.ts"), true);
+    expect([...g.files].some((f) => f.startsWith(aiDir))).toBe(true);
+    expect(g.packages.has("@anthropic-ai/sdk")).toBe(true);
   });
 });

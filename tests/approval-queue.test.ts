@@ -544,12 +544,20 @@ describe.skipIf(!testDbUrl)("approval queue (Postgres + fake Gmail)", () => {
     expect((await database.select().from(schema.mailMessages).where(eq(schema.mailMessages.gmailMessageId, "lag1"))).length).toBe(1);
     expect((await getOwnItem(database, userId, item.id))!.threadChangedAt).not.toBeNull();
 
-    // A message older than the parent (say, a late backfill) doesn't raise it.
+    // A reply proposed now, to the same parent, starts flagged: lag1 is already stored (2c round 2, D1).
     const other = await propose();
+    expect(other.threadChangedAt).not.toBeNull();
+  });
+
+  it("D1: a message older than the parent (a late backfill) doesn't raise the warning", async () => {
+    const item = await propose();
+    expect(item.threadChangedAt).toBeNull();
     gmail.deliver(msg({ id: "old1", internalDate: clock - 3 * DAY, messageIdHeader: "<old1@mail.example.org>" }));
     await syncAccount(syncDeps(), await reload(), "cron");
     expect((await database.select().from(schema.mailMessages).where(eq(schema.mailMessages.gmailMessageId, "old1"))).length).toBe(1);
-    expect((await getOwnItem(database, userId, other.id))!.threadChangedAt).toBeNull();
+    expect((await getOwnItem(database, userId, item.id))!.threadChangedAt).toBeNull();
+    // And an item proposed afterwards isn't flagged by it either.
+    expect((await propose()).threadChangedAt).toBeNull();
   });
 
   it("D2: an emoji at the quote cap can be saved; with the toggle off no quote is computed or stored; lone surrogates become U+FFFD", async () => {
@@ -682,6 +690,13 @@ describe.skipIf(!testDbUrl)("approval queue (Postgres + fake Gmail)", () => {
   });
 
   it("B1: a page rendered with no warning (null) can't approve once a message has landed; null vs null approves", async () => {
+    // null rendered, null stored: approves and sends (no tick needed).
+    const plain = await propose();
+    expect(plain.threadChangedAt).toBeNull();
+    expect((await approveAndSend(deps(), approveInput(plain))).kind).toBe("executed");
+    expect(sends).toHaveLength(1);
+    sends = [];
+
     const item = await propose();
     const rendered = (await getOwnItem(database, userId, item.id))!;
     expect(rendered.threadChangedAt).toBeNull();
@@ -697,12 +712,6 @@ describe.skipIf(!testDbUrl)("approval queue (Postgres + fake Gmail)", () => {
       result: { kind: "blocked", reason: "ack_required" },
     });
     expect(sends).toHaveLength(0);
-
-    // null rendered, null stored: approves and sends (no tick needed).
-    const plain = await propose();
-    expect(plain.threadChangedAt).toBeNull();
-    expect((await approveAndSend(deps(), approveInput(plain))).kind).toBe("executed");
-    expect(sends).toHaveLength(1);
   });
 
   it("B1: a message landing between the check and the UPDATE makes the conditional UPDATE miss: ack_required, nothing sent", async () => {
@@ -801,7 +810,7 @@ describe.skipIf(!testDbUrl)("approval queue (Postgres + fake Gmail)", () => {
     const enums = await database.execute(sql`select t.typname, array_agg(e.enumlabel order by e.enumsortorder) as labels from pg_type t join pg_enum e on e.enumtypid = t.oid where t.typname like 'approval_%' group by t.typname order by t.typname`);
     expect(enums.map((r) => [r.typname, r.labels])).toEqual([
       ["approval_kind", ["email.send"]],
-      ["approval_source", ["owner"]],
+      ["approval_source", ["owner", "ai"]], // "ai" added by 0003 (Phase 2c)
       ["approval_status", ["pending", "approved", "executing", "succeeded", "failed", "unknown", "rejected", "cancelled"]],
     ]);
     const indexes = await database.execute(sql`select indexname from pg_indexes where tablename = 'approval_items' order by indexname`);

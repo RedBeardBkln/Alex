@@ -1,5 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
+  bigint,
   boolean,
   check,
   index,
@@ -304,7 +305,7 @@ export const approvalStatus = pgEnum("approval_status", [
   "rejected",
   "cancelled",
 ]);
-export const approvalSource = pgEnum("approval_source", ["owner"]);
+export const approvalSource = pgEnum("approval_source", ["owner", "ai"]);
 
 export const approvalItems = pgTable(
   "approval_items",
@@ -357,6 +358,92 @@ export const approvalItems = pgTable(
   ],
 );
 
+// ---------------------------------------------------------------------------------------------
+// AI (Phase 2c): triage results per message and a content-free log of every model call. No
+// prompts, thread text or raw model output are stored (owner Q6).
+// ---------------------------------------------------------------------------------------------
+
+export const triageCategory = pgEnum("triage_category", ["needs_reply", "fyi", "newsletter", "notification", "promo", "spam_suspect"]);
+export const triageStatus = pgEnum("triage_status", ["ok", "refused", "invalid", "error", "skipped_cap"]);
+export const aiPurpose = pgEnum("ai_purpose", ["triage", "draft"]);
+/** `pending`: a draft call in flight (the single-flight marker, counted by the caps). */
+export const aiCallStatus = pgEnum("ai_call_status", ["ok", "refused", "invalid", "error", "pending"]);
+
+/** One triage result per message and prompt version. Advisory only: nothing is hidden or moved. */
+export const mailTriage = pgTable(
+  "mail_triage",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    accountId: uuid("account_id")
+      .notNull()
+      .references(() => connectedAccounts.id, { onDelete: "cascade" }),
+    messageId: uuid("message_id")
+      .notNull()
+      .references(() => mailMessages.id, { onDelete: "cascade" }),
+    threadId: uuid("thread_id")
+      .notNull()
+      .references(() => mailThreads.id, { onDelete: "cascade" }),
+    status: triageStatus("status").notNull(),
+    /** Null unless status is ok. */
+    category: triageCategory("category"),
+    needsReply: boolean("needs_reply"),
+    /** At most 200 characters, bidi and invisible characters removed (model output from attacker input). */
+    summary: text("summary"),
+    provider: text("provider").notNull(),
+    model: text("model").notNull(),
+    promptVersion: text("prompt_version").notNull(),
+    attempts: integer("attempts").notNull().default(0),
+    nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("mail_triage_message_prompt_uidx").on(t.messageId, t.promptVersion),
+    index("mail_triage_thread_idx").on(t.threadId),
+  ],
+);
+
+/** Every model call: tokens, estimated cost and outcome. No content. */
+export const aiCalls = pgTable(
+  "ai_calls",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    accountId: uuid("account_id").references(() => connectedAccounts.id, { onDelete: "set null" }),
+    purpose: aiPurpose("purpose").notNull(),
+    provider: text("provider").notNull(),
+    model: text("model").notNull(),
+    messageId: uuid("message_id").references(() => mailMessages.id, { onDelete: "set null" }),
+    /** The thread a draft call is for (single-flight per user and thread). */
+    threadId: uuid("thread_id").references(() => mailThreads.id, { onDelete: "set null" }),
+    approvalItemId: uuid("approval_item_id").references(() => approvalItems.id, { onDelete: "set null" }),
+    status: aiCallStatus("status").notNull(),
+    /** Content-free, e.g. max_tokens, schema, timeout, spend_limit, rate_limit, api_500. */
+    errorCode: text("error_code"),
+    requestId: text("request_id"),
+    inputTokens: integer("input_tokens").notNull().default(0),
+    outputTokens: integer("output_tokens").notNull().default(0),
+    thinkingTokens: integer("thinking_tokens"),
+    cacheWriteTokens: integer("cache_write_tokens").notNull().default(0),
+    cacheReadTokens: integer("cache_read_tokens").notNull().default(0),
+    /** Estimated cost in millionths of a US dollar; null when the provider has no price. */
+    costUsdMicros: bigint("cost_usd_micros", { mode: "number" }),
+    pricingVersion: text("pricing_version"),
+    latencyMs: integer("latency_ms").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("ai_calls_user_created_idx").on(t.userId, t.createdAt),
+    // At most one draft in flight per user and thread (review round 1, D4).
+    uniqueIndex("ai_calls_draft_in_flight_uidx").on(t.userId, t.threadId).where(sql`${t.purpose} = 'draft' and ${t.status} = 'pending'`),
+  ],
+);
+
 export type User = typeof users.$inferSelect;
 export type ConnectedAccount = typeof connectedAccounts.$inferSelect;
 export type MailSyncState = typeof mailSyncState.$inferSelect;
@@ -365,3 +452,5 @@ export type MailThread = typeof mailThreads.$inferSelect;
 export type MailMessage = typeof mailMessages.$inferSelect;
 export type MailAttachment = typeof mailAttachments.$inferSelect;
 export type ApprovalItem = typeof approvalItems.$inferSelect;
+export type MailTriage = typeof mailTriage.$inferSelect;
+export type AiCall = typeof aiCalls.$inferSelect;

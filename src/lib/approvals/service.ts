@@ -1,12 +1,12 @@
 import { randomBytes, randomUUID } from "node:crypto";
-import { and, desc, eq, inArray, lt, or, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, lt, or, sql, type SQL } from "drizzle-orm";
 import type { Executor } from "@/db";
 import { approvalItems, connectedAccounts, mailMessages, mailThreads, type ApprovalItem, type ConnectedAccount } from "@/db/schema";
 import { audit } from "@/lib/audit";
 import { MAX_BODY_CHARS, isValidSubject, replySubject, replyThreading } from "@/lib/gmail/compose";
-import { MAX_RECIPIENTS, parseRecipientInput, replyDefaults, replyToDiffers, type ParentHeaders } from "./addresses";
+import { extractAddresses, MAX_RECIPIENTS, parseRecipientInput, replyDefaults, replyToDiffers, type ParentHeaders } from "./addresses";
 import { contentHash, emailSendPayload, quoteText, type EmailSendPayload } from "./payload";
-import { hasDisallowedControl, wellFormed } from "./text";
+import { hasDisallowedControl, sliceOnCodePoint, stripAllControls, wellFormed } from "./text";
 
 /**
  * The approval queue's state machine (Phase 2b, plan §5). Every transition is one conditional
@@ -164,7 +164,7 @@ function buildEmailPayload(
  * Creates a pending `email.send` reply. The sending account is the thread's account (never taken
  * from the form), and the threading headers come from the stored parent. Nothing is sent.
  */
-export async function proposeReply(ex: Executor, input: ReplyInput, source: "owner" = "owner"): Promise<{ ok: true; itemId: string } | { ok: false; error: InputError }> {
+export async function proposeReply(ex: Executor, input: ReplyInput, source: ApprovalItem["source"] = "owner"): Promise<{ ok: true; itemId: string } | { ok: false; error: InputError }> {
   const ctx = await replyContext(ex, input.userId, input.threadId, input.parentMessageId);
   if (!ctx) return { ok: false, error: "not_found" };
   if (ctx.account.provider !== "google") return { ok: false, error: "account_not_google" };
@@ -178,6 +178,10 @@ export async function proposeReply(ex: Executor, input: ReplyInput, source: "own
   const payload = built.payload;
   const hash = contentHash(EMAIL_SEND, ctx.account.id, payload);
   const itemId = await ex.transaction(async (tx) => {
+    // Q6 at propose time (review round 1, D1): a message newer than the parent may already be stored
+    // (synced after the form was rendered, or while the AI drafted). Then the warning is raised
+    // now, exactly as the ingest hook raises it for a message that arrives later.
+    const changed = await newerMessageInThread(tx, input.userId, ctx.thread.id, ctx.parent.id, ctx.parent.internalDate);
     const [row] = await tx
       .insert(approvalItems)
       .values({
@@ -190,6 +194,7 @@ export async function proposeReply(ex: Executor, input: ReplyInput, source: "own
         parentMessageId: ctx.parent.id,
         // Q6 baseline (review D5): survives deletion of the parent row; never changed by an edit.
         parentInternalDate: ctx.parent.internalDate,
+        threadChangedAt: changed ? new Date() : null,
         payload,
         revision: 1,
         contentHash: hash,
@@ -206,7 +211,78 @@ export async function proposeReply(ex: Executor, input: ReplyInput, source: "own
     );
     return row!.id;
   });
+  // Round 3, E2: check again now that the item is committed. A message committed while the
+  // transaction above was open is seen here; one committed later is flagged by the ingest hook's
+  // post-commit step (afterMessageCommitted), which then sees this item. Either way it's flagged.
+  if (await newerMessageInThread(ex, input.userId, ctx.thread.id, ctx.parent.id, ctx.parent.internalDate)) {
+    await ex
+      .update(approvalItems)
+      .set({ threadChangedAt: new Date() })
+      .where(and(eq(approvalItems.id, itemId), isNull(approvalItems.threadChangedAt), inArray(approvalItems.status, OPEN)));
+  }
   return { ok: true, itemId };
+}
+
+/**
+ * True if the thread holds a message newer than the parent that isn't one of Alex's own sends (a
+ * SENT copy carrying an approval item's Message-ID in the same account), the rule the ingest hook
+ * uses.
+ */
+export async function newerMessageInThread(ex: Executor, userId: string, threadId: string, parentId: string, parentInternalDate: Date): Promise<boolean> {
+  const [row] = await ex
+    .select({ id: mailMessages.id })
+    .from(mailMessages)
+    .where(
+      and(
+        eq(mailMessages.threadId, threadId),
+        eq(mailMessages.userId, userId),
+        sql`${mailMessages.id} <> ${parentId}::uuid`,
+        sql`${mailMessages.internalDate} > ${parentInternalDate.toISOString()}::timestamptz`,
+        sql`not (${mailMessages.isSent} and ${mailMessages.rfc822MessageId} is not null and exists (
+          select 1 from ${approvalItems} a
+          where a.account_id = ${mailMessages.accountId} and a.message_id_header = ${mailMessages.rfc822MessageId}
+        ))`,
+      ),
+    )
+    .limit(1);
+  return !!row;
+}
+
+/**
+ * The only entry point for AI-written replies (Phase 2c, plan §6.3). The model supplies the body
+ * text and nothing else: the account comes from the thread, the recipients are the code-computed
+ * Reply / Reply-all defaults, the subject is the default "Re:" subject, threading is derived from
+ * the stored parent, and the quote is included (owner Q7). It goes through proposeReply, so the
+ * same validation applies, and the item is `pending` with `source: ai` until the owner approves it.
+ */
+/** Longest AI-written body accepted (plan §6.5). */
+export const AI_BODY_CAP = 20_000;
+
+export async function proposeAiReply(
+  ex: Executor,
+  input: { userId: string; threadId: string; parentMessageId?: string; mode: "reply" | "all"; body: string },
+): Promise<{ ok: true; itemId: string } | { ok: false; error: InputError }> {
+  // The gate checks the model's body itself (review round 1, D3): controls other than newline and
+  // tab removed, at most AI_BODY_CAP characters, and not empty or whitespace-only.
+  const body = sliceOnCodePoint(stripAllControls(wellFormed(input.body).replace(/\r\n?/g, "\n")).trim(), AI_BODY_CAP);
+  if (body === "") return { ok: false, error: "invalid_body" };
+  const ctx = await replyContext(ex, input.userId, input.threadId, input.parentMessageId);
+  if (!ctx) return { ok: false, error: "not_found" };
+  const d = replyFormDefaults(ctx, input.mode);
+  return proposeReply(
+    ex,
+    {
+      userId: input.userId,
+      threadId: input.threadId,
+      parentMessageId: ctx.parent.id,
+      to: d.to.join(", "),
+      cc: d.cc.join(", "),
+      subject: d.subject,
+      bodyText: body,
+      includeQuote: true,
+    },
+    "ai",
+  );
 }
 
 export type EditInput = {
@@ -552,7 +628,7 @@ export const QUEUE_TABS = {
 } as const satisfies Record<string, ApprovalItem["status"][]>;
 export type QueueTab = keyof typeof QUEUE_TABS;
 
-export type QueueRow = Pick<ApprovalItem, "id" | "kind" | "status" | "payload" | "createdAt" | "updatedAt"> & {
+export type QueueRow = Pick<ApprovalItem, "id" | "kind" | "status" | "source" | "payload" | "createdAt" | "updatedAt"> & {
   accountEmail: string | null;
   accountLabel: "personal" | "business" | null;
 };
@@ -563,6 +639,7 @@ export async function listItems(ex: Executor, userId: string, tab: QueueTab, lim
       id: approvalItems.id,
       kind: approvalItems.kind,
       status: approvalItems.status,
+      source: approvalItems.source,
       payload: approvalItems.payload,
       createdAt: approvalItems.createdAt,
       updatedAt: approvalItems.updatedAt,
@@ -601,7 +678,40 @@ export type ItemView = {
     sanitizerVersion: number | null;
     bodyIncomplete: boolean;
   }) | null;
+  /** Phase 2c warnings: every address in the thread's stored From/To/Cc/Reply-To headers. */
+  threadAddresses: string[];
+  /** The owner's connected account addresses. */
+  ownAccounts: string[];
+  /** The thread's stored text, rendered HTML and headers, for the AI links warning. Never shown. */
+  threadHaystack: string;
 };
+
+/** Addresses and text of a thread's stored messages (for the Phase 2c approval warnings). */
+export async function threadContext(ex: Executor, userId: string, threadId: string): Promise<{ addresses: string[]; haystack: string }> {
+  const rows = await ex
+    .select({
+      fromHeader: mailMessages.fromHeader,
+      toHeader: mailMessages.toHeader,
+      ccHeader: mailMessages.ccHeader,
+      replyToHeader: mailMessages.replyToHeader,
+      subject: mailMessages.subject,
+      bodyText: mailMessages.bodyText,
+      renderedText: mailMessages.renderedText,
+      renderedHtml: mailMessages.renderedHtml,
+    })
+    .from(mailMessages)
+    .where(and(eq(mailMessages.threadId, threadId), eq(mailMessages.userId, userId)));
+  const addresses = new Set<string>();
+  const parts: string[] = [];
+  for (const r of rows) {
+    for (const h of [r.fromHeader, r.toHeader, r.ccHeader, r.replyToHeader]) {
+      for (const a of extractAddresses(h).addresses) addresses.add(a.toLowerCase());
+      if (h) parts.push(h);
+    }
+    for (const t of [r.subject, r.bodyText, r.renderedText, r.renderedHtml]) if (t) parts.push(t);
+  }
+  return { addresses: [...addresses], haystack: parts.join(" ") };
+}
 
 /** Everything the detail page shows, or null if it isn't the user's item. */
 export async function getItemView(ex: Executor, userId: string, itemId: string): Promise<ItemView | null> {
@@ -639,5 +749,7 @@ export async function getItemView(ex: Executor, userId: string, itemId: string):
         .where(and(eq(mailMessages.id, item.parentMessageId), eq(mailMessages.userId, userId)))
         .limit(1))[0] ?? null)
     : null;
-  return { item, payload, shown, account, thread, parent };
+  const ctx = item.threadId ? await threadContext(ex, userId, item.threadId) : { addresses: [], haystack: "" };
+  const ownAccounts = (await ex.select({ email: connectedAccounts.email }).from(connectedAccounts).where(eq(connectedAccounts.userId, userId))).map((a) => a.email);
+  return { item, payload, shown, account, thread, parent, threadAddresses: ctx.addresses, ownAccounts, threadHaystack: ctx.haystack };
 }

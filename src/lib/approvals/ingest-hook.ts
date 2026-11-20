@@ -13,39 +13,60 @@ import { markReconciledSent } from "./service";
  *   of a pending or failed item, newer than the message being replied to, sets thread_changed_at,
  *   so the approval screen warns and asks for confirmation. The item itself is never changed.
  */
-export async function onMessageStored(
-  tx: Executor,
-  m: {
-    accountId: string;
-    threadId: string;
-    /** mail_messages.id of the stored message. */
-    messageId: string;
-    gmailMessageId: string;
-    gmailThreadId: string;
-    rfc822MessageId: string | null;
-    isSent: boolean;
-    internalDate: Date;
-  },
-): Promise<void> {
+export type StoredMessage = {
+  accountId: string;
+  threadId: string;
+  /** mail_messages.id of the stored message. */
+  messageId: string;
+  gmailMessageId: string;
+  gmailThreadId: string;
+  rfc822MessageId: string | null;
+  isSent: boolean;
+  internalDate: Date;
+};
+
+/**
+ * The approval items this message is Alex's own SENT copy of, or null if it isn't one. Only a SENT
+ * copy in the same account (the query is account-scoped) counts, the same rule reconcile uses
+ * (D3). An inbound or other non-SENT message reusing one of our Message-IDs is a new message like
+ * any other and raises the Q6 warning (security review S1).
+ */
+async function ownSentCopyOf(ex: Executor, m: StoredMessage) {
   const header = m.rfc822MessageId?.trim() || null;
-  if (header) {
-    const own = await tx
-      .select({ id: approvalItems.id, userId: approvalItems.userId, accountId: approvalItems.accountId, status: approvalItems.status })
-      .from(approvalItems)
-      .where(and(eq(approvalItems.accountId, m.accountId), eq(approvalItems.messageIdHeader, header)));
-    // Only a SENT copy in the same account (the query is account-scoped) is one of Alex's own sends,
-    // the same rule reconcile uses (D3). An inbound or other non-SENT message that reuses one of our
-    // Message-IDs is treated like any other new message and still raises the Q6 warning below
-    // (security review S1).
-    if (own.length > 0 && m.isSent) {
-      for (const item of own) {
-        if (item.status === "unknown" || item.status === "executing") {
-          await markReconciledSent(tx, item, { gmailMessageId: m.gmailMessageId, gmailThreadId: m.gmailThreadId }, "ingest_match");
-        }
+  if (!header || !m.isSent) return null;
+  const own = await ex
+    .select({ id: approvalItems.id, userId: approvalItems.userId, accountId: approvalItems.accountId, status: approvalItems.status })
+    .from(approvalItems)
+    .where(and(eq(approvalItems.accountId, m.accountId), eq(approvalItems.messageIdHeader, header)));
+  return own.length > 0 ? own : null;
+}
+
+export async function onMessageStored(tx: Executor, m: StoredMessage): Promise<void> {
+  const own = await ownSentCopyOf(tx, m);
+  if (own) {
+    for (const item of own) {
+      if (item.status === "unknown" || item.status === "executing") {
+        await markReconciledSent(tx, item, { gmailMessageId: m.gmailMessageId, gmailThreadId: m.gmailThreadId }, "ingest_match");
       }
-      return;
     }
+    return;
   }
+  await flagThreadItems(tx, m);
+}
+
+/**
+ * Round 3, E2: runs again after storeMessage's transaction has committed. proposeReply also
+ * re-checks after its own commit. Whichever of the two commits second, its post-commit step runs
+ * after both are committed and sees the other (READ COMMITTED: every statement reads the latest
+ * committed data), so a reply saved while this message was being stored is always flagged, with no
+ * lock and no waiting on each other.
+ */
+export async function afterMessageCommitted(ex: Executor, m: StoredMessage): Promise<void> {
+  if (await ownSentCopyOf(ex, m)) return;
+  await flagThreadItems(ex, m);
+}
+
+async function flagThreadItems(tx: Executor, m: StoredMessage): Promise<void> {
   // Review D1: compare with the message the owner replied to, not the item's creation time. A message
   // Gmail received shortly before the reply was saved may only be synced afterwards (push or cron
   // lag), and the owner never saw it. The baseline is parent_internal_date, copied at propose time, so it

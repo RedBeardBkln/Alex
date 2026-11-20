@@ -33,6 +33,17 @@ const schema = z.object({
   PUBSUB_PUSH_SERVICE_ACCOUNT: optional,
   /** Bearer secret Vercel Cron sends. Unset or too short: cron endpoints return 401. */
   CRON_SECRET: optional,
+  // AI (Phase 2c). All optional: without ANTHROPIC_API_KEY the AI features are off ("AI not configured").
+  /** Claude API key (Anthropic Console). Server-only; never sent to the browser. */
+  ANTHROPIC_API_KEY: optional,
+  /** Triage provider id; unset means "anthropic-haiku". An unknown id turns triage off. */
+  AI_TRIAGE_PROVIDER: optional,
+  /** Daily cap overrides (UTC day). Invalid values fall back to the defaults in src/lib/ai-ledger/config.ts. */
+  AI_TRIAGE_MAX_CALLS_PER_DAY: optional,
+  AI_TRIAGE_MAX_USD_PER_DAY: optional,
+  AI_DRAFT_MAX_CALLS_PER_DAY: optional,
+  AI_DRAFT_MAX_USD_PER_DAY: optional,
+  AI_MAX_USD_PER_DAY: optional,
 });
 
 export type Env = z.infer<typeof schema>;

@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { productionTriage } from "@/lib/ai/runtime";
 import { reconcileApprovals } from "@/lib/approvals/reconcile";
 import { approvalReconcileDeps } from "@/lib/approvals/runtime";
 import { isAuthorizedCron } from "@/lib/cron-auth";
@@ -17,7 +18,8 @@ export async function GET(request: NextRequest) {
   if (!isAuthorizedCron(request.headers.get("authorization"), env().CRON_SECRET)) {
     return new Response(null, { status: 401 });
   }
-  const results = await runCronSync(defaultSyncDeps());
+  // Phase 2c: AI triage of recent INBOX mail runs inside each account's sync when configured.
+  const results = await runCronSync({ ...defaultSyncDeps(), triage: productionTriage() });
   const counts: Record<string, number> = {};
   const renders: Record<string, number> = {};
   for (const r of results) {

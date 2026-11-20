@@ -236,3 +236,78 @@ The automated tests use a fake Gmail, so these behaviours of the real Gmail API 
 6. Optional: click **Approve and send** again on the same item (or reload and resubmit the form). Expect "This item changed or was already handled", and no second email in Gmail.
 
 Report the result of each step to the tester; until then the pipeline records these as "not verified live".
+
+## 11. AI triage and reply drafts (Phase 2c)
+
+Alex uses the Claude API for two things:
+- **Triage:** Haiku 5.5 labels recent inbox mail with a category, a needs-reply flag and a one-line summary. This is advisory only: nothing is hidden or moved.
+- **Drafts:** Opus 5.5 writes a reply's body text, but only when you click **Draft reply with AI**. The draft becomes a pending queue item. Recipients, account, subject and threading are set by Alex, and nothing is sent until you approve it.
+
+Without an API key every AI feature is off and the app shows "AI not configured". Everything else works as before.
+
+### 11.1 Database migration (before merging)
+
+**Run this before merging Phase 2c to `main`.** Migration `drizzle/0003_ai.sql` only adds things:
+- the value `ai` to the `approval_source` type
+- three new enum types
+- the tables `mail_triage` and `ai_calls`
+
+It changes no existing column or row.
+
+```bash
+DATABASE_URL='<the pooled connection string>' npm run db:migrate
+```
+
+### 11.2 API key (Anthropic Console)
+
+1. In the [Anthropic Console](https://platform.claude.com/), create an API key for Alex.
+2. In Vercel, under **Settings → Environment Variables**, add `ANTHROPIC_API_KEY` for **Production** only. Paste it there directly: never into the repo, a file, a ticket or chat, and never into Preview.
+3. Optionally, override the daily caps with the `AI_*` variables listed in `.env.example`. The defaults (owner decision) are:
+   - triage: 400 calls and $0.50 a day
+   - drafts: 25 calls and $3.00 a day
+   - $3.50 a day overall
+
+   A cap pauses that feature until midnight UTC.
+
+### 11.3 Spend limit (Anthropic Console), as an external backstop
+
+In the Anthropic Console, set a **monthly spend limit** for the organization or workspace that owns the key, for example about $110 (the $3.50 daily cap × 31). Alex's caps are estimates from a price table; the Console limit is enforced by Anthropic. When Anthropic answers that a spend limit is reached, Alex pauses AI triage and drafts for the rest of the UTC day.
+
+### 11.4 Smoke check (owner-run, from your own terminal)
+
+This sends **one fixed synthetic email**, never real mail, through the same request builders the app uses: one Haiku triage call and one Opus draft call.
+- It has no database access.
+- It prints only the stop reason, the token usage and the estimated cost, never model output.
+- It confirms that the API accepts Alex's request shape.
+
+1. Open a terminal in the repo.
+2. Set the key in that shell only, for example with `read -rs ANTHROPIC_API_KEY && export ANTHROPIC_API_KEY` in bash (type or paste the key at the hidden prompt). Don't put it in a file.
+3. Run:
+
+   ```bash
+   node --experimental-strip-types scripts/ai-smoke.mjs
+   ```
+
+4. Expect two lines (`triage:` and `draft:`). Each should show `stop_reason=end_turn`, non-zero `input` and `output`, and a small `cost_estimate`: roughly $0.001 for triage, a few cents for the draft.
+5. Close the shell (or run `unset ANTHROPIC_API_KEY`).
+
+Run `node --experimental-strip-types scripts/ai-smoke.mjs --dry-run` first if you only want to see that the requests build (no key, no call).
+
+Tell the tester the two lines. If a call fails with `status=400`, the request shape needs changing, and the AI features must stay off (leave `ANTHROPIC_API_KEY` unset in Production) until it is fixed.
+
+### 11.5 After merging: check AI on production
+
+There is no preview deployment for this, and no production secret is copied anywhere. You do this on production, after the merge has deployed, migration 0003 is applied (11.1) and `ANTHROPIC_API_KEY` is set in Production (11.2).
+
+1. **Triage:** wait for the next `gmail-sync` cron run (at most 5 minutes) after a new email arrives. In **Inbox**, recent threads show a category chip and a one-line summary, and the **Needs reply** tab lists the ones marked as needing a reply. Every thread is still listed under **All**.
+2. **AI usage** (top bar): today's triage calls, tokens and estimated cost appear, and stay well under the caps.
+3. **Draft:** open a thread from **one of your own other connected accounts**, click **Draft reply with AI** and wait (up to about a minute).
+   - The queue item opens with the "AI draft" badge and "Written by AI (Opus 5.5); check every line".
+   - From, To, Cc and the subject are the normal reply defaults.
+   - Read the whole text and any warnings (new recipient, invisible characters, links not in the thread).
+   - **What the links warning can't do:** it only flags links that appear nowhere in the thread. If the sender put a phishing link in their own email and the AI repeats it, the warning stays silent, because that link is "in the thread". It also doesn't flag a link on **any subdomain of a domain that already appears in the thread**: for example, if the thread mentions a big hosting or document platform, a link to anyone's site or file on a subdomain of that platform counts as "in the thread". Check every link in an AI draft yourself, whatever the warnings say.
+   - **Known cost gap (until fixed):** only each email's body text is capped before it goes to the model. The subject and date lines are not, and they add up across every email in the thread. A sender who writes huge subject lines into a long thread can therefore make one draft cost a few dollars instead of the usual cents, and drafts started at the same time on several such threads can each do this. Triage has the same gap, at much smaller Haiku prices. A call that times out or fails without returning usage is counted at a fixed estimate ($0.448 for a draft), which can be less than Anthropic actually bills for such a thread. Drafts only run when you click. If **AI usage** shows a day's draft cost far above normal, stop drafting on unusually long threads, and keep the Console spend limit (11.3) set, because that is the hard backstop.
+4. Approve it only if it is to your own account, as in the section 10 check. Otherwise reject it. Don't approve an AI draft to a third party until steps 1–3 have worked.
+5. **Anthropic Console:** the Usage page shows the calls, and the cost is in line with Alex's AI usage page.
+
+Report the results to the tester; until then the pipeline records live AI behaviour as "not verified".

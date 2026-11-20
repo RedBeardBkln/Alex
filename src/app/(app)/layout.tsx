@@ -22,6 +22,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               </span>
             )}
           </a>
+          <a href="/ai-usage" className="text-sm underline-offset-4 hover:underline">
+            AI usage
+          </a>
           <a href="/" className="text-sm underline-offset-4 hover:underline">
             Accounts
           </a>

@@ -51,6 +51,7 @@ export default async function QueuePage({ searchParams }: { searchParams: Promis
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-[var(--muted)]">
                     <span>Email reply</span>
+                    {r.source === "ai" && <span className="rounded-full bg-[var(--warn-bg)] px-2 py-0.5 text-xs text-[var(--text)]">AI draft</span>}
                     {r.accountLabel && (
                       <span className="rounded-full border border-[var(--border)] px-2 py-0.5 text-xs">{r.accountLabel === "business" ? "Business" : "Personal"}</span>
                     )}

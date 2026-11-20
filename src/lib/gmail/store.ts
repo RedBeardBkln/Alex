@@ -1,6 +1,6 @@
 import { and, asc, desc, eq, getTableColumns, inArray, isNull, lt, or, sql } from "drizzle-orm";
 import type { Executor } from "@/db";
-import { onMessageStored } from "@/lib/approvals/ingest-hook";
+import { afterMessageCommitted, onMessageStored, type StoredMessage } from "@/lib/approvals/ingest-hook";
 import {
   connectedAccounts,
   mailAttachments,
@@ -8,6 +8,8 @@ import {
   mailMessages,
   mailSyncState,
   mailThreads,
+  mailTriage,
+  type MailTriage,
   type MailFetchQueueRow,
   type MailSyncState,
 } from "@/db/schema";
@@ -375,7 +377,7 @@ export async function storeMessage(
   ex: Executor,
   input: StoreMessageInput,
 ): Promise<{ threadId: string; messageId: string; inserted: boolean } | null> {
-  return ex.transaction(async (tx) => {
+  const result = await ex.transaction(async (tx) => {
     const { account } = input;
     if (input.createThread) {
       await tx
@@ -448,8 +450,9 @@ export async function storeMessage(
     await recomputeThread(tx, threadId);
     if (input.queueRowId) await deleteQueueRow(tx, input.queueRowId);
     // Phase 2b: reconcile Alex's own sent replies and flag new messages in threads with pending replies.
+    let stored: StoredMessage | null = null;
     if (inserted) {
-      await onMessageStored(tx, {
+      stored = {
         accountId: account.id,
         threadId,
         messageId: messageId!,
@@ -458,10 +461,14 @@ export async function storeMessage(
         rfc822MessageId: p.rfc822MessageId,
         isSent: input.labelIds.includes("SENT"),
         internalDate: input.internalDate,
-      });
+      };
+      await onMessageStored(tx, stored);
     }
-    return { threadId, messageId, inserted };
+    return { threadId, messageId, inserted, stored };
   });
+  // Round 3, E2: the Q6 flag again, now that this message is committed (see afterMessageCommitted).
+  if (result && result.stored) await afterMessageCommitted(ex, result.stored);
+  return result ? { threadId: result.threadId, messageId: result.messageId, inserted: result.inserted } : null;
 }
 
 /**
@@ -573,15 +580,31 @@ export type InboxThreadRow = {
   lastMessageAt: Date;
   messageCount: number;
   hasUnread: boolean;
+  /** Phase 2c: the latest inbound message's triage result (advisory), or null if it has none. */
+  triage: { category: string; needs_reply: boolean | null; summary: string | null } | null;
 };
+
+/** The latest inbound message's most recent `ok` triage row, as JSON (Phase 2c). Content is model output; shown as React text. */
+const threadTriageJson = sql<InboxThreadRow["triage"]>`(
+  select json_build_object('category', t.category, 'needs_reply', t.needs_reply, 'summary', t.summary)
+  from mail_triage t
+  where t.status = 'ok' and t.message_id = (
+    select m2.id from mail_messages m2
+    where m2.thread_id = ${mailThreads.id} and not m2.is_sent
+    order by m2.internal_date desc, m2.id desc limit 1
+  )
+  order by t.updated_at desc limit 1
+)`;
 
 /** Threads currently in the inbox across all of the user's accounts, newest first, keyset-paged. */
 export async function listInboxThreads(
   ex: Executor,
   userId: string,
-  opts: { before?: InboxCursor; limit: number },
+  opts: { before?: InboxCursor; limit: number; needsReply?: boolean },
 ): Promise<InboxThreadRow[]> {
   const conditions = [eq(mailThreads.userId, userId), eq(mailThreads.inInbox, true)];
+  // Phase 2c "Needs reply" tab: the triage flag only filters the view; nothing is hidden elsewhere.
+  if (opts.needsReply) conditions.push(sql`(${threadTriageJson})->>'needs_reply' = 'true'`);
   if (opts.before) {
     conditions.push(
       sql`(${mailThreads.lastMessageAt}, ${mailThreads.id}) < (${opts.before.lastMessageAt.toISOString()}::timestamptz, ${opts.before.id}::uuid)`,
@@ -599,6 +622,7 @@ export async function listInboxThreads(
       lastMessageAt: mailThreads.lastMessageAt,
       messageCount: mailThreads.messageCount,
       hasUnread: mailThreads.hasUnread,
+      triage: threadTriageJson,
     })
     .from(mailThreads)
     .innerJoin(connectedAccounts, eq(connectedAccounts.id, mailThreads.accountId))
@@ -695,4 +719,22 @@ export async function mailStatusByAccount(ex: Executor, userId: string): Promise
       },
     ]),
   );
+}
+
+/** Phase 2c: the thread's latest inbound message's triage row (any status), for the thread page. */
+export async function latestThreadTriage(ex: Executor, userId: string, threadId: string): Promise<MailTriage | null> {
+  const [latest] = await ex
+    .select({ id: mailMessages.id })
+    .from(mailMessages)
+    .where(and(eq(mailMessages.threadId, threadId), eq(mailMessages.userId, userId), eq(mailMessages.isSent, false)))
+    .orderBy(desc(mailMessages.internalDate), desc(mailMessages.id))
+    .limit(1);
+  if (!latest) return null;
+  const [row] = await ex
+    .select()
+    .from(mailTriage)
+    .where(and(eq(mailTriage.messageId, latest.id), eq(mailTriage.userId, userId)))
+    .orderBy(desc(mailTriage.updatedAt))
+    .limit(1);
+  return row ?? null;
 }

@@ -7,6 +7,8 @@ import { audit } from "@/lib/audit";
 import { RENDER_LIMIT_MS, renderEmailBody } from "@/lib/email/render";
 import type { RenderFields } from "@/lib/email/types";
 import { SANITIZER_VERSION } from "@/lib/email/version";
+import { runTriageStage } from "@/lib/ai/triage";
+import type { TriageProvider } from "@/lib/ai/types";
 import { describeError } from "./errors";
 import { REAUTH_MARK } from "./marks";
 import { GmailApiError, GmailShapeError, type GmailClient, type HistoryRecord } from "./client";
@@ -113,6 +115,8 @@ export type SyncDeps = {
   render?: (body: { html: string | null; text: string | null }, opts: { version: number }) => Promise<RenderFields>;
   /** Current sanitizer version; defaults to SANITIZER_VERSION (tests raise it to exercise re-rendering). */
   sanitizerVersion?: number;
+  /** Phase 2c: AI triage after hydrate on cron and push runs. Omitted means triage is off. */
+  triage?: { provider: TriageProvider };
 };
 
 export type RunMode = "cron" | "push" | "connect";
@@ -888,6 +892,12 @@ export async function syncAccount(
       // Revision 4, R4.7: push and connect runs skip this so they stay short.
       stage = "rerender";
       await rerender(ctx);
+    }
+    if (deps.triage && (mode === "cron" || mode === "push")) {
+      // Phase 2c: advisory triage of recent INBOX mail. Its failures never fail the sync.
+      await runTriageStage({ db, provider: deps.triage.provider, now, remainingMs: ctx.remainingMs }, account).catch((err: unknown) => {
+        console.error("ai triage stage failed", { accountId: account.id, error: err instanceof Error ? err.name : "unknown" });
+      });
     }
     if (mode !== "push") {
       stage = "listing";

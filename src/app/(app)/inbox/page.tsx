@@ -12,6 +12,16 @@ export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 50;
 
+/** Phase 2c triage chips (advisory; nothing is hidden). */
+const CATEGORY_LABEL: Record<string, string> = {
+  needs_reply: "Needs reply",
+  fyi: "FYI",
+  newsletter: "Newsletter",
+  notification: "Notification",
+  promo: "Promo",
+  spam_suspect: "Suspected spam",
+};
+
 const cursorSchema = z.object({ at: z.iso.datetime({ offset: true }), id: z.uuid() });
 
 function parseCursor(raw: string | undefined): InboxCursor | undefined {
@@ -21,12 +31,14 @@ function parseCursor(raw: string | undefined): InboxCursor | undefined {
   return parsed.success ? { lastMessageAt: new Date(parsed.data.at), id: parsed.data.id } : undefined;
 }
 
-export default async function InboxPage({ searchParams }: { searchParams: Promise<{ before?: string }> }) {
+export default async function InboxPage({ searchParams }: { searchParams: Promise<{ before?: string; view?: string }> }) {
   const user = await requireUser();
   const params = await searchParams;
   const before = parseCursor(params.before);
+  const needsReply = params.view === "needs_reply";
+  const viewParam = needsReply ? "&view=needs_reply" : "";
   const [threads, accounts, status] = await Promise.all([
-    listInboxThreads(db(), user.id, { before, limit: PAGE_SIZE + 1 }),
+    listInboxThreads(db(), user.id, { before, limit: PAGE_SIZE + 1, needsReply }),
     listAccounts(db(), user.id),
     mailStatusByAccount(db(), user.id),
   ]);
@@ -40,7 +52,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
       <section>
         <h1 className="text-2xl font-semibold">Inbox</h1>
         <p className="mt-1 text-sm text-[var(--muted)]">
-          All connected Google accounts, newest first. Read-only: Alex never sends, archives or marks mail read here.
+          All connected Google accounts, newest first. Alex never archives or marks mail read; replies are sent only after you approve them in the Queue.
         </p>
         {googleAccounts.length > 0 && (
           <ul className="mt-3 space-y-1 text-sm text-[var(--muted)]">
@@ -52,6 +64,16 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
           </ul>
         )}
       </section>
+
+      <nav className="flex gap-4 text-sm" aria-label="Inbox views">
+        <Link href="/inbox" className={needsReply ? "underline-offset-4 hover:underline" : "font-semibold underline"}>
+          All
+        </Link>
+        <Link href="/inbox?view=needs_reply" className={needsReply ? "font-semibold underline" : "underline-offset-4 hover:underline"}>
+          Needs reply
+        </Link>
+        <span className="text-xs text-[var(--muted)]">AI triage is a suggestion; every message stays in All.</span>
+      </nav>
 
       {page.length === 0 ? (
         <p className="text-sm text-[var(--muted)]">
@@ -73,12 +95,23 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
                   </span>
                 </div>
                 <p className={`truncate text-sm ${t.hasUnread ? "font-semibold" : ""}`}>{t.subject || "(no subject)"}</p>
-                <p className="truncate text-sm text-[var(--muted)]">{snippetText(t.snippet)}</p>
+                {t.triage?.summary ? (
+                  <p className="truncate text-sm text-[var(--muted)]" title="AI summary">
+                    {t.triage.summary}
+                  </p>
+                ) : (
+                  <p className="truncate text-sm text-[var(--muted)]">{snippetText(t.snippet)}</p>
+                )}
                 <p className="mt-1 flex items-center gap-2 text-xs text-[var(--muted)]">
                   <span className="rounded-full border border-[var(--border)] px-2 py-0.5">
                     {t.accountLabel === "business" ? "Business" : "Personal"}
                   </span>
                   <span className="truncate">{t.accountEmail}</span>
+                  {t.triage && (
+                    <span className="rounded-full bg-[var(--warn-bg)] px-2 py-0.5" title="AI triage (suggestion)">
+                      {CATEGORY_LABEL[t.triage.category] ?? t.triage.category}
+                    </span>
+                  )}
                 </p>
               </Link>
             </li>
@@ -88,12 +121,12 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
 
       <div className="flex gap-3 text-sm">
         {before && (
-          <Link className="underline" href="/inbox">
+          <Link className="underline" href={needsReply ? "/inbox?view=needs_reply" : "/inbox"}>
             Newest
           </Link>
         )}
         {next && (
-          <Link className="underline" href={`/inbox?before=${encodeURIComponent(next)}`}>
+          <Link className="underline" href={`/inbox?before=${encodeURIComponent(next)}${viewParam}`}>
             Load older
           </Link>
         )}

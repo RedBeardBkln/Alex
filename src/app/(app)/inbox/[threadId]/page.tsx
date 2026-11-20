@@ -3,13 +3,18 @@ import { notFound } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/db";
 import { replyContext, replyFormDefaults } from "@/lib/approvals/service";
-import { getThreadView, type ThreadView } from "@/lib/gmail/store";
+import { getThreadView, latestThreadTriage, type ThreadView } from "@/lib/gmail/store";
 import { requireUser } from "@/lib/session";
 import { LocalTime } from "../../../local-time";
 import { MessageBody } from "./message-body";
 import { ReplyForm } from "./reply-form";
+import { AiPanel } from "./ai-panel";
+import { aiConfigured } from "@/lib/ai-ledger/config";
+import { capState } from "@/lib/ai-ledger/ledger";
 
 export const dynamic = "force-dynamic";
+/** The AI draft action runs from this page: Opus with a 90 s timeout (plan §7). */
+export const maxDuration = 120;
 
 const HIDDEN_LABELS = ["TRASH", "SPAM"];
 
@@ -25,11 +30,11 @@ export default async function ThreadPage({
   searchParams,
 }: {
   params: Promise<{ threadId: string }>;
-  searchParams: Promise<{ remote?: string; reply?: string; error?: string }>;
+  searchParams: Promise<{ remote?: string; reply?: string; error?: string; ai_error?: string; ai_triage?: string }>;
 }) {
   const user = await requireUser();
   const { threadId } = await params;
-  const { remote, reply, error } = await searchParams;
+  const { remote, reply, error, ai_error: aiError, ai_triage: aiTriage } = await searchParams;
   if (!z.uuid().safeParse(threadId).success) notFound();
   const view = await getThreadView(db(), user.id, threadId);
   if (!view) notFound();
@@ -38,6 +43,11 @@ export default async function ThreadPage({
   const hidden = view.messages.length - visible.length;
   const replyMode = reply === "all" ? "all" : reply ? "reply" : null;
   const ctx = replyMode ? await replyContext(db(), user.id, threadId) : null;
+  const configured = aiConfigured();
+  const [triage, draftCap] = await Promise.all([
+    latestThreadTriage(db(), user.id, threadId),
+    configured ? capState(db(), user.id, "draft", new Date()) : Promise.resolve({ capped: false as const }),
+  ]);
 
   return (
     <div className="space-y-4">
@@ -69,6 +79,8 @@ export default async function ThreadPage({
           <MessageCard key={m.id} message={m} view={view} remoteOn={remote === m.id} />
         ))}
       </ol>
+
+      <AiPanel threadId={view.thread.id} configured={configured} draftCapped={draftCap.capped} triage={triage} aiError={aiError} aiTriage={aiTriage} />
 
       <div id="reply">
         {ctx && replyMode ? (

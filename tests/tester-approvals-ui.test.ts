@@ -153,3 +153,39 @@ describe.skipIf(!testDbUrl)("tester: approval page and reply form show everythin
     }
   });
 });
+
+describe.skipIf(!testDbUrl)("tester 2c round 4 (B1): the AI usage page's estimated line", () => {
+  let client: Awaited<ReturnType<typeof openTestDb>>["client"];
+  let database: Database;
+  beforeAll(async () => {
+    ({ client, database } = await openTestDb());
+    state.db = database;
+  });
+  afterAll(async () => {
+    await client.end();
+  });
+  it("shows the day's total including the reserved cost, and 'incl. $X for N calls estimated' for timeout/5xx/abandoned rows only", async () => {
+    const { TRIAGE_RESERVED_COST_MICROS: TR, DRAFT_RESERVED_COST_MICROS: DR } = await import("@/lib/ai-ledger/pricing");
+    const u = await makeUser(database);
+    state.user = { id: u.id, email: u.email };
+    const row = (purpose: "triage" | "draft", status: "ok" | "error", errorCode: string | null, cost: number) =>
+      ({ userId: u.id, accountId: null, purpose, provider: "p", model: "m", status, errorCode, costUsdMicros: cost, createdAt: new Date() }) as const;
+    await database.insert(schema.aiCalls).values([
+      row("triage", "ok", null, 275),
+      row("triage", "error", "timeout", TR),
+      row("triage", "error", "api_5xx", TR),
+      row("triage", "error", "api_400", 0),
+      row("draft", "ok", null, 92_000),
+      row("draft", "error", "abandoned", DR),
+      row("draft", "error", "rate_limit", 0),
+    ]);
+    const { default: Page } = await import("@/app/(app)/ai-usage/page");
+    const t = text(renderToStaticMarkup(await Page()));
+    const usd = (m: number) => `$${(m / 1_000_000).toFixed(4)}`;
+    expect(t).toContain(usd(275 + 2 * TR));
+    expect(t).toContain(`incl. ${usd(2 * TR)} for 2 calls estimated (no usage returned)`);
+    expect(t).toContain(usd(92_000 + DR));
+    expect(t).toContain(`incl. ${usd(DR)} for 1 call estimated (no usage returned)`);
+    expect(t.match(/estimated \(no usage returned\)/g)).toHaveLength(2);
+  });
+});
