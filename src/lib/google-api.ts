@@ -12,6 +12,57 @@ export async function googleAccessToken(account: ConnectedAccount): Promise<stri
   });
 }
 
+export type TokenProvider = (opts?: { forceRefresh?: boolean }) => Promise<string>;
+
+/**
+ * Access-token source for a long run of API calls on one account. The token is cached in memory;
+ * `forceRefresh` (used after a 401) refreshes it at Google even if it looks unexpired. A rejected
+ * refresh token marks the account `reauth_required` and throws ReauthRequiredError.
+ */
+export function googleTokenProvider(account: ConnectedAccount): TokenProvider {
+  let cached: string | null = null;
+  return async (opts = {}) => {
+    if (cached && !opts.forceRefresh) return cached;
+    cached = await googleAccessToken(opts.forceRefresh ? { ...account, accessTokenExpiresAt: null } : account);
+    return cached;
+  };
+}
+
+export type GoogleResponse = { status: number; ok: boolean; body: unknown };
+
+export type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
+
+/**
+ * Status-aware Google API call. Never throws on an HTTP error: callers decide what each status
+ * means. The parsed JSON body (or null) is returned as-is; validate it before use.
+ */
+export async function googleRequest(
+  url: string,
+  accessToken: string,
+  init: { method?: "GET" | "POST"; json?: unknown; timeoutMs?: number } = {},
+  fetchImpl: FetchLike = fetch,
+): Promise<GoogleResponse> {
+  const headers: Record<string, string> = { Authorization: `Bearer ${accessToken}` };
+  if (init.json !== undefined) headers["Content-Type"] = "application/json";
+  const res = await fetchImpl(url, {
+    method: init.method ?? "GET",
+    headers,
+    body: init.json === undefined ? undefined : JSON.stringify(init.json),
+    cache: "no-store",
+    signal: AbortSignal.timeout(init.timeoutMs ?? 30_000),
+  });
+  const text = await res.text().catch(() => "");
+  let body: unknown = null;
+  if (text) {
+    try {
+      body = JSON.parse(text);
+    } catch {
+      body = null;
+    }
+  }
+  return { status: res.status, ok: res.ok, body };
+}
+
 async function getJson<T>(url: string, accessToken: string): Promise<T> {
   const res = await fetch(url, { headers: { Authorization: `Bearer ${accessToken}` }, cache: "no-store" });
   if (!res.ok) {
