@@ -2,6 +2,7 @@ import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import type { Executor } from "@/db";
 import { aiCalls, auditLog, type AiCall } from "@/db/schema";
 import { audit } from "@/lib/audit";
+import { lockAccountForWrite } from "@/lib/db-locks";
 import { aiCaps, utcDayStart, type Caps } from "./config";
 import { costUsdMicros, DRAFT_RESERVED_COST_MICROS, ESTIMATED_COST_CODES, PRICING_VERSION } from "./pricing";
 
@@ -219,7 +220,8 @@ export async function linkAiCallToItem(ex: Executor, callId: string, approvalIte
 /** A pending draft row older than this is treated as a crashed attempt (90 s timeout, 120 s function limit). */
 export const DRAFT_IN_FLIGHT_STALE_MS = 3 * 60_000;
 
-export type DraftStart = { kind: "started"; callId: string } | { kind: "in_flight" } | { kind: "capped"; cap: string };
+/** `not_found`: the account was deleted (Disconnect) before this call could start (round 2, O1). */
+export type DraftStart = { kind: "started"; callId: string } | { kind: "in_flight" } | { kind: "capped"; cap: string } | { kind: "not_found" };
 
 /**
  * Atomically starts a draft call for the user and thread. In one transaction, serialized per user
@@ -237,6 +239,10 @@ export async function startDraftCall(
   input: { userId: string; accountId: string; threadId: string; provider: string; model: string; now: Date; caps?: Caps },
 ): Promise<DraftStart> {
   return ex.transaction(async (tx) => {
+    // Lock order (phase-2-followups-1, owner Q7): the account row first, before the advisory lock,
+    // so a concurrent Disconnect can't deadlock with the sweep UPDATE and the ai_calls insert. If
+    // the account is already gone, nothing is written (the ai_calls insert would fail its FK).
+    if (!(await lockAccountForWrite(tx, input.accountId))) return { kind: "not_found" as const };
     await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`alex-ai-draft:${input.userId}`}))`);
     await tx
       .update(aiCalls)

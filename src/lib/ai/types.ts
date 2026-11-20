@@ -15,7 +15,7 @@ export type ThreadTextMessage = {
   date: string | null;
   subject: string | null;
   text: string;
-  /** True when `text` was cut to the per-message or total cap. */
+  /** True when `text` was cut to the per-message or total budget. Header cuts (subject, date, from_address) don't set it. */
   truncated?: boolean;
 };
 
@@ -23,7 +23,7 @@ export type TriageInput = { message: ThreadTextMessage };
 export type TriageResult = { category: TriageCategory; needsReply: boolean; summary: string };
 
 export type DraftInput = {
-  /** This thread only, oldest first, already capped (src/lib/ai/prompts.ts). */
+  /** This thread only, oldest first, uncapped: the request builder caps headers and text (capThread in src/lib/ai/prompts.ts). */
   messages: ThreadTextMessage[];
   /** Optional owner text, trusted, sent as the owner's words in the user turn. */
   ownerInstruction: string | null;

@@ -1,6 +1,8 @@
 import { and, asc, desc, eq, getTableColumns, inArray, isNull, lt, ne, or, sql } from "drizzle-orm";
 import type { Executor } from "@/db";
 import { afterMessageCommitted, onMessageStored, type StoredMessage } from "@/lib/approvals/ingest-hook";
+import { recordRecheckFailure } from "@/lib/approvals/recheck";
+import { lockAccountForWrite } from "@/lib/db-locks";
 import {
   connectedAccounts,
   mailAttachments,
@@ -408,6 +410,10 @@ export async function storeMessage(
   input: StoreMessageInput,
 ): Promise<{ threadId: string; messageId: string; inserted: boolean } | null> {
   const result = await ex.transaction(async (tx) => {
+    // Lock order (phase-2-followups-1): the account row first, so a concurrent Disconnect can't
+    // deadlock with this transaction's FK checks and the nested reconcile audit. A missing account
+    // keeps today's behaviour: the inserts below fail on the foreign key.
+    await lockAccountForWrite(tx, input.account.id);
     const { account } = input;
     if (input.createThread) {
       await tx
@@ -492,12 +498,20 @@ export async function storeMessage(
         isSent: input.labelIds.includes("SENT"),
         internalDate: input.internalDate,
       };
-      await onMessageStored(tx, stored);
+      stored.flaggedIds = await onMessageStored(tx, stored);
     }
     return { threadId, messageId, inserted, stored };
   });
   // Round 3, E2: the Q6 flag again, now that this message is committed (see afterMessageCommitted).
-  if (result && result.stored) await afterMessageCommitted(ex, result.stored);
+  // E5 follow-up: advisory. The message is stored; a failure here is logged and audited, and the
+  // sync run carries on.
+  if (result && result.stored) {
+    try {
+      await afterMessageCommitted(ex, result.stored);
+    } catch (err) {
+      await recordRecheckFailure(ex, { stage: "ingest", userId: input.account.userId, accountId: input.account.id, threadId: result.threadId }, err);
+    }
+  }
   return result ? { threadId: result.threadId, messageId: result.messageId, inserted: result.inserted } : null;
 }
 

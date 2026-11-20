@@ -4,11 +4,13 @@ import type { Executor } from "@/db";
 import { approvalItems, connectedAccounts, mailMessages, mailThreads, type ApprovalItem, type ConnectedAccount } from "@/db/schema";
 import { utcDayStart } from "@/lib/ai-ledger/config";
 import { audit } from "@/lib/audit";
+import { lockAccountForWrite } from "@/lib/db-locks";
 import { MAX_BODY_CHARS, isValidSubject, replySubject, replyThreading } from "@/lib/gmail/compose";
 import { enqueueOutbound } from "@/lib/gmail/store";
 import { extractAddresses, MAX_RECIPIENTS, parseRecipientInput, replyDefaults, replyToDiffers, type ParentHeaders } from "./addresses";
 import { contentHash, emailSendPayload, isNewMessage, quoteText, type EmailSendPayload } from "./payload";
 import { capAllows, capRemaining, confirmationMatches, idnDisplay, newRecipientLimit } from "./recipients";
+import { recordRecheckFailure } from "./recheck";
 import { firstTimeRecipients, newRecipientsUsedToday, recordRecipientCharge, replyParentOf } from "./seen";
 import { hasDisallowedControl, sliceOnCodePoint, stripAllControls, wellFormed } from "./text";
 
@@ -17,6 +19,9 @@ import { hasDisallowedControl, sliceOnCodePoint, stripAllControls, wellFormed } 
  * UPDATE plus its audit entry in the same transaction, so concurrent callers can't both win and a
  * rollback leaves neither. Every query is scoped to the user. Audit details carry ids, counts,
  * hashes and content-free codes only: no addresses, subjects or body text.
+ *
+ * Lock order (phase-2-followups-1): every audited transition's first statement locks the item's
+ * account row FOR KEY SHARE (lockAccountForWrite), so it can't deadlock with a Disconnect.
  *
  * Nothing here sends anything. Sending happens only in execute.ts, after `claimItem`.
  */
@@ -211,6 +216,8 @@ export async function proposeReply(ex: Executor, input: ReplyInput, source: Appr
   const payload = built.payload;
   const hash = contentHash(EMAIL_SEND, ctx.account.id, payload);
   const itemId = await ex.transaction(async (tx) => {
+    // Lock order: the account first. A Disconnect that got there first leaves no account row.
+    if (!(await lockAccountForWrite(tx, ctx.account.id))) return null;
     // Q6 at propose time (review round 1, D1): a message newer than the parent may already be stored
     // (synced after the form was rendered, or while the AI drafted). Then the warning is raised
     // now, exactly as the ingest hook raises it for a message that arrives later.
@@ -244,14 +251,21 @@ export async function proposeReply(ex: Executor, input: ReplyInput, source: Appr
     );
     return row!.id;
   });
+  if (itemId === null) return { ok: false, error: "not_found" };
   // Round 3, E2: check again now that the item is committed. A message committed while the
   // transaction above was open is seen here; one committed later is flagged by the ingest hook's
   // post-commit step (afterMessageCommitted), which then sees this item. Either way it's flagged.
-  if (await newerMessageInThread(ex, input.userId, ctx.thread.id, ctx.parent.id, ctx.parent.internalDate)) {
-    await ex
-      .update(approvalItems)
-      .set({ threadChangedAt: new Date() })
-      .where(and(eq(approvalItems.id, itemId), isNull(approvalItems.threadChangedAt), inArray(approvalItems.status, OPEN)));
+  // E5 follow-up: advisory. The item is saved; a failure here is logged and audited
+  // (approval.recheck_failed), and the save still succeeds.
+  try {
+    if (await newerMessageInThread(ex, input.userId, ctx.thread.id, ctx.parent.id, ctx.parent.internalDate)) {
+      await ex
+        .update(approvalItems)
+        .set({ threadChangedAt: new Date() })
+        .where(and(eq(approvalItems.id, itemId), isNull(approvalItems.threadChangedAt), inArray(approvalItems.status, OPEN)));
+    }
+  } catch (err) {
+    await recordRecheckFailure(ex, { stage: "propose", userId: input.userId, accountId: ctx.account.id, threadId: ctx.thread.id, itemId }, err);
   }
   return { ok: true, itemId };
 }
@@ -290,6 +304,8 @@ export async function proposeNewMessage(ex: Executor, input: NewMessageInput): P
   const payload = built.payload;
   const hash = contentHash(EMAIL_SEND, account.id, payload);
   const itemId = await ex.transaction(async (tx) => {
+    // Lock order: the account first. A Disconnect that got there first leaves no account row.
+    if (!(await lockAccountForWrite(tx, account.id))) return null;
     const [row] = await tx
       .insert(approvalItems)
       .values({
@@ -318,6 +334,7 @@ export async function proposeNewMessage(ex: Executor, input: NewMessageInput): P
     );
     return row!.id;
   });
+  if (itemId === null) return { ok: false, error: "not_found" };
   return { ok: true, itemId };
 }
 
@@ -423,6 +440,8 @@ export async function editItem(ex: Executor, input: EditInput): Promise<{ ok: tr
   if (!built.ok) return { ok: false, error: built.error };
   const hash = contentHash(item.kind, item.accountId, built.payload);
   return ex.transaction(async (tx) => {
+    // Lock order: the account first. If it is gone, the item was cascaded and the UPDATE is stale.
+    if (item.accountId) await lockAccountForWrite(tx, item.accountId);
     const [row] = await tx
       .update(approvalItems)
       .set({
@@ -543,6 +562,11 @@ export async function approveItem(
   // A new Message-ID for every approval, so an approve-again after a definite failure (Q8) is a new message.
   const messageId = `<alex.${item.id}.${item.revision}.${randomBytes(6).toString("hex")}@${input.messageIdHost}>`;
   return ex.transaction(async (tx) => {
+    // Lock order: the account first, before the advisory lock (Disconnect never takes that lock,
+    // so waiting on it while holding KEY SHARE can't form a cycle). If the account is gone, the item
+    // was cascaded with it: stale, as the UPDATE below would find, but without first writing a
+    // new_recipient_limit audit row whose account FK would fail.
+    if (item.accountId && !(await lockAccountForWrite(tx, item.accountId))) return { kind: "stale" as const, status: item.status };
     // Phase 2d, owner Q3 (amended): the daily first-time-recipient cap, for every email.send item.
     // Serialized per user with a transaction-scoped advisory lock (as the AI draft caps), so two
     // parallel approves can't both fit under the limit.
@@ -646,7 +670,10 @@ async function accountCheck(ex: Executor, item: ApprovalItem): Promise<"ok" | "a
  */
 export async function claimItem(ex: Executor, userId: string, itemId: string): Promise<{ executionId: string } | null> {
   const executionId = randomUUID();
+  const accountId = await itemAccountId(ex, userId, itemId);
+  if (accountId === undefined) return null;
   return ex.transaction(async (tx) => {
+    if (accountId) await lockAccountForWrite(tx, accountId);
     const [row] = await tx
       .update(approvalItems)
       .set({ status: "executing", executionId, executingSince: new Date(), updatedAt: new Date() })
@@ -666,6 +693,7 @@ export type ExecutionOutcome =
 /** executing -> succeeded | failed | unknown, only for the execution that claimed the item. */
 export async function recordOutcome(ex: Executor, item: ApprovalItem, executionId: string, outcome: ExecutionOutcome): Promise<boolean> {
   return ex.transaction(async (tx) => {
+    if (item.accountId) await lockAccountForWrite(tx, item.accountId);
     const now = new Date();
     const set =
       outcome.kind === "succeeded"
@@ -699,6 +727,19 @@ export async function recordOutcome(ex: Executor, item: ApprovalItem, executionI
 
 // ---- Reject, cancel, mark not sent, reconcile ----------------------------------------------------
 
+/**
+ * The item's account id for the lock-first rule: undefined if the user has no such item. Read
+ * outside the transition's transaction; an item's account never changes (2d owner Q9).
+ */
+async function itemAccountId(ex: Executor, userId: string, itemId: string): Promise<string | null | undefined> {
+  const [row] = await ex
+    .select({ accountId: approvalItems.accountId })
+    .from(approvalItems)
+    .where(and(eq(approvalItems.id, itemId), eq(approvalItems.userId, userId)))
+    .limit(1);
+  return row ? row.accountId : undefined;
+}
+
 async function simpleTransition(
   ex: Executor,
   userId: string,
@@ -709,7 +750,10 @@ async function simpleTransition(
   extra: Partial<Omit<typeof approvalItems.$inferInsert, "revision">> & { revision?: SQL } = {},
   extraWhere?: ReturnType<typeof and>,
 ): Promise<boolean> {
+  const accountId = await itemAccountId(ex, userId, itemId);
+  if (accountId === undefined) return false;
   return ex.transaction(async (tx) => {
+    if (accountId) await lockAccountForWrite(tx, accountId);
     const [row] = await tx
       .update(approvalItems)
       .set({ status: to, updatedAt: new Date(), ...extra })
@@ -750,6 +794,7 @@ export async function markReconciledSent(
   outcome: "list_found" | "ingest_match",
 ): Promise<boolean> {
   return ex.transaction(async (tx) => {
+    if (item.accountId) await lockAccountForWrite(tx, item.accountId);
     const now = new Date();
     const [row] = await tx
       .update(approvalItems)
@@ -771,6 +816,7 @@ export async function markReconciledSent(
 /** executing (stuck past STUCK_EXECUTING_MS, nothing found) -> unknown. Never retried automatically. */
 export async function markStuckUnknown(ex: Executor, item: Pick<ApprovalItem, "id" | "userId" | "accountId">, now: Date): Promise<boolean> {
   return ex.transaction(async (tx) => {
+    if (item.accountId) await lockAccountForWrite(tx, item.accountId);
     const [row] = await tx
       .update(approvalItems)
       .set({ status: "unknown", errorCode: "stuck", updatedAt: now })
