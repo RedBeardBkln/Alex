@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { extractAddresses } from "@/lib/approvals/addresses";
 import { outgoingBody } from "@/lib/approvals/payload";
 import { invisibleCharacters, linksNotInThread, newRecipients, subjectWarnings, type InvisibleFinding } from "@/lib/approvals/warnings";
+import { newRecipientLimit } from "@/lib/approvals/recipients";
 import { getItemView, MARK_NOT_SENT_AFTER_MS, STUCK_EXECUTING_MS } from "@/lib/approvals/service";
 import { requireUser } from "@/lib/session";
 import { LocalTime } from "../../../local-time";
@@ -38,6 +39,8 @@ const NOTICES: Record<string, string> = {
   ack_required: "New messages arrived in this thread since the page was shown. Nothing was sent. Read them, tick the box below, then approve again.",
   account_inactive: "This account must be reconnected before sending.",
   account_mismatch: "This reply's account no longer matches its thread, so it can't be sent.",
+  recipients_unconfirmed: "Tick every recipient, then approve again. Nothing was sent.",
+  new_recipient_limit: "Today's limit for first-time recipients is reached. Nothing was sent. It resets at 00:00 UTC.",
   hash_mismatch: "This item's stored content doesn't match its checksum, so it can't be approved.",
   not_found: "This item no longer exists.",
 };
@@ -63,7 +66,13 @@ const EDIT_ERRORS: Record<string, string> = {
   invalid_subject: "The subject can't contain line breaks or control characters.",
   body_too_long: "The message is too long.",
   invalid_body: "The message contains a control character (such as NUL) that can't be sent.",
+  empty_subject: "Add a subject.",
+  empty_body: "Write a message.",
+  idn_not_punycode: "Internationalised domains must be typed in their xn-- (punycode) form.",
 };
+
+/** Phase 2d: the account_mismatch notice for a new message, which has no thread. */
+const NEW_MESSAGE_ACCOUNT_MISMATCH = "This message's account is no longer one of your connected accounts, or the item was changed, so it can't be sent.";
 
 const STATUS_LABEL: Record<string, string> = {
   pending: "Waiting for your approval",
@@ -90,6 +99,25 @@ function Warning({ children }: { children: React.ReactNode }) {
   return <li className="rounded-md bg-[var(--warn-bg)] px-3 py-2">{children}</li>;
 }
 
+/** Phase 2d: one recipient of a new message, monospace with the domain in bold, plus its markers. */
+function Recipient({ address, firstTime, idn }: { address: string; firstTime: boolean; idn: string | undefined }) {
+  const at = address.lastIndexOf("@");
+  return (
+    <>
+      <span className="font-mono">
+        {address.slice(0, at + 1)}
+        <strong>{address.slice(at + 1)}</strong>
+      </span>
+      {firstTime && <span className="ml-2 rounded-full bg-[var(--warn-bg)] px-2 py-0.5 text-xs">First time</span>}
+      {idn !== undefined && (
+        <span className="ml-2 text-xs">
+          (internationalised domain, shown as <span className="font-mono">{idn}</span>; check it)
+        </span>
+      )}
+    </>
+  );
+}
+
 export default async function QueueItemPage({
   params,
   searchParams,
@@ -101,16 +129,21 @@ export default async function QueueItemPage({
   const { itemId } = await params;
   const { notice, edit, error } = await searchParams;
   if (!z.uuid().safeParse(itemId).success) notFound();
-  const view = await getItemView(db(), user.id, itemId);
+  const view = await getItemView(db(), user.id, itemId, { newRecipientLimit: newRecipientLimit() });
   if (!view) notFound();
-  const { item, shown, account, thread, parent } = view;
+  const { item, shown, account, thread, parent, isNew } = view;
+  const firstTime = new Set(view.firstTime);
+  const isFirstTime = (a: string) => firstTime.has(a.toLowerCase());
+  // Round 2: one item with more first-time recipients than the whole daily limit can never be approved as it is.
+  const overLimit = view.firstTime.length > view.cap.limit;
+  const overLimitText = `This email has ${view.firstTime.length} first-time ${view.firstTime.length === 1 ? "recipient" : "recipients"}; the daily limit is ${view.cap.limit}, so it can't be sent as it is, on any day. Remove some recipients, or raise EMAIL_NEW_RECIPIENTS_PER_DAY.`;
   const open = item.status === "pending" || item.status === "failed";
   const now = Date.now();
   const executingFor = item.executingSince ? now - item.executingSince.getTime() : 0;
   const subjectWarning = subjectWarnings(shown.subject, parent?.subject ?? thread?.subject ?? null);
   // Phase 2c content warnings (plan §6.7): new recipients and invisible characters for every item, links for AI items.
   const isAi = item.source === "ai";
-  const unknownRecipients = newRecipients([...shown.to, ...shown.cc], view.threadAddresses, view.ownAccounts);
+  const unknownRecipients = isNew ? [] : newRecipients([...shown.to, ...shown.cc], view.threadAddresses, view.ownAccounts);
   const bodyInvisible = invisibleCharacters(shown.bodyText);
   const quoteInvisible = invisibleCharacters(shown.quote?.included ? shown.quote.text : "");
   const unknownLinks = isAi ? linksNotInThread(shown.bodyText, view.threadHaystack) : [];
@@ -126,13 +159,19 @@ export default async function QueueItemPage({
       </p>
       {notice && NOTICES[notice] && (
         <p role="status" className="rounded-md border border-[var(--border)] bg-[var(--surface)] px-3 py-2">
-          {NOTICES[notice]}
+          {isNew && notice === "account_mismatch"
+            ? NEW_MESSAGE_ACCOUNT_MISMATCH
+            : notice === "new_recipient_limit" && overLimit
+              ? overLimitText
+              : NOTICES[notice]}
         </p>
       )}
 
       <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
         <p className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wide text-[var(--muted)]">
-          <span>Email reply · {STATUS_LABEL[item.status]}</span>
+          <span>
+            {isNew ? "New email" : "Email reply"} · {STATUS_LABEL[item.status]}
+          </span>
           {isAi && <span className="rounded-full bg-[var(--warn-bg)] px-2 py-0.5 normal-case tracking-normal text-[var(--text)]">AI draft</span>}
         </p>
         {isAi && <p className="mt-1 font-medium">Written by AI (Opus 5.5); check every line before approving.</p>}
@@ -150,11 +189,17 @@ export default async function QueueItemPage({
           <dt className="text-[var(--muted)]">To</dt>
           <dd>
             <ul>
-              {shown.to.map((a) => (
-                <li key={a} className="font-mono">
-                  {a}
-                </li>
-              ))}
+              {shown.to.map((a) =>
+                isNew ? (
+                  <li key={a}>
+                    <Recipient address={a} firstTime={open && isFirstTime(a)} idn={view.idn[a]} />
+                  </li>
+                ) : (
+                  <li key={a} className="font-mono">
+                    {a}
+                  </li>
+                ),
+              )}
             </ul>
           </dd>
           <dt className="text-[var(--muted)]">Cc</dt>
@@ -163,11 +208,17 @@ export default async function QueueItemPage({
               <span className="text-[var(--muted)]">None</span>
             ) : (
               <ul>
-                {shown.cc.map((a) => (
-                  <li key={a} className="font-mono">
-                    {a}
-                  </li>
-                ))}
+                {shown.cc.map((a) =>
+                  isNew ? (
+                    <li key={a}>
+                      <Recipient address={a} firstTime={open && isFirstTime(a)} idn={view.idn[a]} />
+                    </li>
+                  ) : (
+                    <li key={a} className="font-mono">
+                      {a}
+                    </li>
+                  ),
+                )}
               </ul>
             )}
           </dd>
@@ -177,7 +228,15 @@ export default async function QueueItemPage({
           <dd>{shown.subject}</dd>
           <dt className="text-[var(--muted)]">Thread</dt>
           <dd>
-            {thread ? (
+            {isNew ? (
+              view.sentThread ? (
+                <Link href={`/inbox/${view.sentThread.id}`} className="underline">
+                  New conversation (open it)
+                </Link>
+              ) : (
+                "New conversation"
+              )
+            ) : thread ? (
               <Link href={`/inbox/${thread.id}`} className="underline">
                 Reply in thread: {thread.subject || "(no subject)"} ({thread.messageCount} {thread.messageCount === 1 ? "message" : "messages"})
               </Link>
@@ -213,14 +272,21 @@ export default async function QueueItemPage({
               . Check it's the right address.
             </Warning>
           )}
-          {thread && subjectWarning.changed && <Warning>The subject was changed; Gmail may not thread this reply.</Warning>}
+          {isNew &&
+            Object.entries(view.idn).map(([a, u]) => (
+              <Warning key={`idn-${a}`}>
+                <span className="font-mono">{a}</span> has an internationalised domain. It displays as <span className="font-mono">{u}</span>; check that this is
+                the domain you mean.
+              </Warning>
+            ))}
+          {!isNew && thread && subjectWarning.changed && <Warning>The subject was changed; Gmail may not thread this reply.</Warning>}
           {subjectWarning.bidi && (
             <Warning>The subject contains invisible text-direction characters, so it may display differently from what is sent.</Warning>
           )}
-          {shown.threading && shown.threading.inReplyTo === null && (
+          {!isNew && shown.threading && shown.threading.inReplyTo === null && (
             <Warning>The original message has no usable Message-ID, so threading relies on Gmail&apos;s thread id only.</Warning>
           )}
-          {item.threadChangedAt && open && (
+          {!isNew && item.threadChangedAt && open && (
             <Warning>
               New messages arrived in this thread since this was written.{" "}
               {thread && (
@@ -231,6 +297,7 @@ export default async function QueueItemPage({
             </Warning>
           )}
           {account && account.status !== "active" && <Warning>This account must be reconnected before sending.</Warning>}
+          {open && overLimit && <Warning>{overLimitText}</Warning>}
         </ul>
 
         <h2 className="mt-4 font-medium">Message (exactly as it will be sent)</h2>
@@ -244,7 +311,7 @@ export default async function QueueItemPage({
             Sent {item.completedAt && <LocalTime iso={item.completedAt.toISOString()} />}. Gmail message id:{" "}
             <span className="font-mono">{String((item.result as { gmailMessageId?: string } | null)?.gmailMessageId ?? "")}</span>
           </p>
-          {thread && (
+          {!isNew && thread && (
             <p className="mt-1">
               <Link href={`/inbox/${thread.id}`} className="underline">
                 Open the thread
@@ -252,6 +319,16 @@ export default async function QueueItemPage({
               (the sent reply appears after the next sync).
             </p>
           )}
+          {isNew &&
+            (view.sentThread ? (
+              <p className="mt-1">
+                <Link href={`/inbox/${view.sentThread.id}`} className="underline">
+                  Open the conversation
+                </Link>
+              </p>
+            ) : (
+              <p className="mt-1">The conversation appears in Alex after the next sync (up to 5 minutes).</p>
+            ))}
         </section>
       )}
 
@@ -306,14 +383,15 @@ export default async function QueueItemPage({
               <textarea name="cc" rows={2} defaultValue={view.payload.cc.join("\n")} className="mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--bg)] p-2 font-mono" />
             </label>
             <label className="block">
-              <span className="text-[var(--muted)]">Subject (changing it may stop Gmail from threading the reply)</span>
-              <input name="subject" defaultValue={view.payload.subject} maxLength={500} className="mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--bg)] p-2" />
+              <span className="text-[var(--muted)]">{isNew ? "Subject" : "Subject (changing it may stop Gmail from threading the reply)"}</span>
+              <input name="subject" required={isNew} defaultValue={view.payload.subject} maxLength={500} className="mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--bg)] p-2" />
             </label>
             <label className="block">
               <span className="text-[var(--muted)]">Message (plain text)</span>
-              <textarea name="bodyText" rows={10} maxLength={100_000} defaultValue={view.payload.bodyText} className="mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--bg)] p-2" />
+              <textarea name="bodyText" rows={10} required={isNew} maxLength={100_000} defaultValue={view.payload.bodyText} className="mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--bg)] p-2" />
             </label>
-            {(view.payload.quote || parentHasText) && (
+            {isNew && <p className="text-[var(--muted)]">The sending account can&apos;t be changed. To send from another account, cancel this and compose again.</p>}
+            {!isNew && (view.payload.quote || parentHasText) && (
               <label className="flex items-center gap-2">
                 <input type="checkbox" name="includeQuote" defaultChecked={!!view.payload.quote?.included} />
                 <span>Include the quoted message</span>
@@ -331,7 +409,33 @@ export default async function QueueItemPage({
             <input type="hidden" name="revision" value={item.revision} />
             <input type="hidden" name="contentHash" value={item.contentHash} />
             <input type="hidden" name="shownThreadChangedAt" value={item.threadChangedAt ? String(item.threadChangedAt.getTime()) : ""} />
-            {item.threadChangedAt && (
+            {isNew && (
+              <fieldset className="space-y-1">
+                <legend className="font-medium">
+                  {shown.to.length + shown.cc.length} {shown.to.length + shown.cc.length === 1 ? "recipient" : "recipients"}: {shown.to.length} To,{" "}
+                  {shown.cc.length} Cc
+                </legend>
+                <ul className="space-y-1">
+                  {[...shown.to.map((a) => ["To", a] as const), ...shown.cc.map((a) => ["Cc", a] as const)].map(([kind, a]) => (
+                    <li key={`c-${a}`}>
+                      <label className="flex flex-wrap items-center gap-2">
+                        <input type="checkbox" name="confirmRecipient" value={a} required />
+                        <span className="w-6 text-[var(--muted)]">{kind}</span>
+                        <Recipient address={a} firstTime={isFirstTime(a)} idn={view.idn[a]} />
+                      </label>
+                    </li>
+                  ))}
+                </ul>
+              </fieldset>
+            )}
+            {(isNew || view.firstTime.length > 0) && (
+              <p>
+                {isNew ? "Tick each recipient to confirm it. " : ""}
+                {view.firstTime.length} of them {view.firstTime.length === 1 ? "is a first-time recipient" : "are first-time recipients"}; today&apos;s limit:{" "}
+                {view.cap.remaining} left.
+              </p>
+            )}
+            {!isNew && item.threadChangedAt && (
               <label className="flex items-center gap-2">
                 <input type="checkbox" name="ackThreadChange" required />
                 <span>I&apos;ve seen the new messages in this thread</span>

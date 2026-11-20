@@ -50,9 +50,14 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
   return (
     <div className="space-y-6">
       <section>
-        <h1 className="text-2xl font-semibold">Inbox</h1>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-2xl font-semibold">Inbox</h1>
+          <Link href="/compose" className="rounded-md bg-[var(--accent)] px-3 py-1.5 text-sm font-medium text-[var(--bg)]">
+            Compose
+          </Link>
+        </div>
         <p className="mt-1 text-sm text-[var(--muted)]">
-          All connected Google accounts, newest first. Alex never archives or marks mail read; replies are sent only after you approve them in the Queue.
+          All connected Google accounts, newest first. Alex never archives or marks mail read; replies and new messages are sent only after you approve them in the Queue.
         </p>
         {googleAccounts.length > 0 && (
           <ul className="mt-3 space-y-1 text-sm text-[var(--muted)]">

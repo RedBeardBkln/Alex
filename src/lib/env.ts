@@ -44,6 +44,9 @@ const schema = z.object({
   AI_DRAFT_MAX_CALLS_PER_DAY: optional,
   AI_DRAFT_MAX_USD_PER_DAY: optional,
   AI_MAX_USD_PER_DAY: optional,
+  // Compose (Phase 2d).
+  /** First-time recipients the owner may approve per UTC day (default 10; 0 means none). Invalid values fall back to the default. */
+  EMAIL_NEW_RECIPIENTS_PER_DAY: optional,
 });
 
 export type Env = z.infer<typeof schema>;

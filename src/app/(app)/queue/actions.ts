@@ -9,14 +9,25 @@ import { approveAndSend } from "@/lib/approvals/execute";
 import { ForbiddenOriginError, isAllowedOrigin } from "@/lib/approvals/origin";
 import { reconcileApprovals } from "@/lib/approvals/reconcile";
 import { approvalExecutorDeps, approvalReconcileDeps, messageIdHost } from "@/lib/approvals/runtime";
-import { cancelItem, editItem, markNotSent, proposeReply, rejectItem } from "@/lib/approvals/service";
+import { newRecipientLimit } from "@/lib/approvals/recipients";
+import {
+  cancelItem,
+  editItem,
+  markNotSent,
+  MAX_CONFIRMED_RECIPIENT_CHARS,
+  MAX_CONFIRMED_RECIPIENTS,
+  proposeNewMessage,
+  proposeReply,
+  rejectItem,
+} from "@/lib/approvals/service";
 import { env } from "@/lib/env";
 import { requireUser } from "@/lib/session";
 
 /**
  * Approval queue Server Actions (Phase 2b, plan §6). Each one requires a signed-in user, checks
  * the Origin header, validates its input with zod and acts only on the user's own items. Only
- * `approveItem` can lead to a send, through approveAndSend (approve, claim, execute).
+ * `approveItem` can lead to a send, through approveAndSend (approve, claim, execute). Composing a
+ * new message (Phase 2d) only creates a pending item, like a reply.
  */
 
 const uuid = z.uuid();
@@ -92,6 +103,46 @@ export async function proposeReplyFormAction(prev: ReplyFormState, formData: For
   redirect(itemPath(result.itemId));
 }
 
+/** What the compose form shows again after a refused save (the owner's own input only, never stored). */
+export type ComposeFormState = {
+  /** Increases with every refused save, so the form remounts with these values. */
+  seq: number;
+  error: string;
+  /** Up to 10 of the owner's invalid address tokens, echoed back in the response only. */
+  invalid: string[];
+  values: { accountId: string; to: string; cc: string; subject: string; bodyText: string };
+} | null;
+
+/**
+ * The compose form's action (Phase 2d, plan §6.1): creates a pending new-message item from the
+ * owner's typed fields and the account they picked, then opens it. Nothing is sent from here.
+ */
+export async function proposeNewMessageFormAction(prev: ComposeFormState, formData: FormData): Promise<ComposeFormState> {
+  const user = await guard();
+  const input = z
+    .object({
+      accountId: z.string().max(100).default(""),
+      to: text(20_000),
+      cc: text(20_000),
+      subject: text(1_000),
+      bodyText: text(200_000),
+    })
+    .parse({
+      accountId: field(formData, "accountId"),
+      to: field(formData, "to"),
+      cc: field(formData, "cc"),
+      subject: field(formData, "subject"),
+      bodyText: field(formData, "bodyText"),
+    });
+  const refuse = (error: string, invalid: string[] = []): ComposeFormState => ({ seq: (prev?.seq ?? 0) + 1, error, invalid, values: input });
+  // No account picked (there is no default): refused before anything else.
+  if (!uuid.safeParse(input.accountId).success) return refuse("no_account");
+  const result = await proposeNewMessage(db(), { userId: user.id, accountId: input.accountId, to: input.to, cc: input.cc, subject: input.subject, bodyText: input.bodyText });
+  if (!result.ok) return refuse(result.error, result.invalid ?? []);
+  revalidatePath("/queue");
+  redirect(itemPath(result.itemId));
+}
+
 export async function editItemAction(formData: FormData) {
   const user = await guard();
   const input = z
@@ -137,6 +188,11 @@ export async function approveItemAction(formData: FormData) {
       ackThreadChange: field(formData, "ackThreadChange"),
       shownThreadChangedAt: field(formData, "shownThreadChangedAt"),
     });
+  // Phase 2d, owner Q2: the ticked recipient boxes (new messages). Bounded before use.
+  const confirmedRecipients = z
+    .array(z.string().max(MAX_CONFIRMED_RECIPIENT_CHARS))
+    .max(MAX_CONFIRMED_RECIPIENTS)
+    .parse(formData.getAll("confirmRecipient").filter((v): v is string => typeof v === "string"));
   const result = await approveAndSend(approvalExecutorDeps(), {
     userId: user.id,
     itemId: input.itemId,
@@ -145,6 +201,8 @@ export async function approveItemAction(formData: FormData) {
     ackThreadChange: input.ackThreadChange === "on",
     shownThreadChangedAt: input.shownThreadChangedAt === "" ? null : Number(input.shownThreadChangedAt),
     messageIdHost: messageIdHost(),
+    confirmedRecipients,
+    newRecipientLimit: newRecipientLimit(),
   });
   revalidatePath("/queue");
   let notice: string;

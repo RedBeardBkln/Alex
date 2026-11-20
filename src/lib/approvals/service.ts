@@ -2,10 +2,14 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { and, desc, eq, inArray, isNull, lt, or, sql, type SQL } from "drizzle-orm";
 import type { Executor } from "@/db";
 import { approvalItems, connectedAccounts, mailMessages, mailThreads, type ApprovalItem, type ConnectedAccount } from "@/db/schema";
+import { utcDayStart } from "@/lib/ai-ledger/config";
 import { audit } from "@/lib/audit";
 import { MAX_BODY_CHARS, isValidSubject, replySubject, replyThreading } from "@/lib/gmail/compose";
+import { enqueueOutbound } from "@/lib/gmail/store";
 import { extractAddresses, MAX_RECIPIENTS, parseRecipientInput, replyDefaults, replyToDiffers, type ParentHeaders } from "./addresses";
-import { contentHash, emailSendPayload, quoteText, type EmailSendPayload } from "./payload";
+import { contentHash, emailSendPayload, isNewMessage, quoteText, type EmailSendPayload } from "./payload";
+import { capAllows, capRemaining, confirmationMatches, idnDisplay, newRecipientLimit } from "./recipients";
+import { firstTimeRecipients, newRecipientsUsedToday, recordRecipientCharge, replyParentOf } from "./seen";
 import { hasDisallowedControl, sliceOnCodePoint, stripAllControls, wellFormed } from "./text";
 
 /**
@@ -45,7 +49,24 @@ export type InputError =
   | "invalid_subject"
   | "body_too_long"
   | "invalid_body"
-  | "account_not_google";
+  | "account_not_google"
+  // Phase 2d (new messages)
+  | "empty_subject"
+  | "empty_body"
+  | "account_inactive"
+  | "idn_not_punycode";
+
+/** A refused save. `invalid` lists up to 10 of the owner's own invalid tokens (compose only; never stored or audited). */
+export type InputFailure = { ok: false; error: InputError; invalid?: string[] };
+
+/** How many invalid tokens the compose form echoes back, and how long each may be. */
+const MAX_ECHOED_TOKENS = 10;
+const MAX_ECHOED_TOKEN_CHARS = 100;
+
+const hasNonAscii = (v: string) => {
+  for (let i = 0; i < v.length; i++) if (v.charCodeAt(i) > 127) return true;
+  return false;
+};
 
 // ---- Reply context ------------------------------------------------------------------------------
 
@@ -125,25 +146,37 @@ export function replyFormDefaults(ctx: ReplyContext, mode: "reply" | "all") {
   return { ...d, subject: replySubject(ctx.parent.subject ?? ctx.thread.subject), hasQuote: quote !== "" };
 }
 
-/** Owner-entered fields to a validated payload (recipients re-checked, Reply-To notice recomputed in code). */
-function buildEmailPayload(
+/**
+ * Owner-entered fields to a validated payload (recipients re-checked, Reply-To notice recomputed in code).
+ * `newMessage` (Phase 2d, plan §5): the subject and body must not be empty (owner Q8), the quote is
+ * never included, a non-ASCII token is reported as `idn_not_punycode` (owner Q7), and the invalid
+ * tokens are returned so the compose form can list them.
+ */
+export function buildEmailPayload(
   fields: { to: string; cc: string; subject: string; bodyText: string; includeQuote: boolean },
   /** `quote` is only called when the owner includes the quote (review D2: an excluded quote isn't computed or stored). */
-  base: { quote: () => string | null; threading: EmailSendPayload["threading"]; parent: ParentHeaders | null; previousNotice: boolean },
-): { ok: true; payload: EmailSendPayload } | { ok: false; error: InputError } {
+  base: { quote: () => string | null; threading: EmailSendPayload["threading"]; parent: ParentHeaders | null; previousNotice: boolean; newMessage?: boolean },
+): { ok: true; payload: EmailSendPayload } | InputFailure {
   const to = parseRecipientInput(fields.to);
   const cc = parseRecipientInput(fields.cc);
-  if (to.invalid.length > 0 || cc.invalid.length > 0) return { ok: false, error: "invalid_recipients" };
+  const invalid = [...to.invalid, ...cc.invalid];
+  if (invalid.length > 0) {
+    if (!base.newMessage) return { ok: false, error: "invalid_recipients" };
+    const echoed = invalid.slice(0, MAX_ECHOED_TOKENS).map((t) => sliceOnCodePoint(wellFormed(t), MAX_ECHOED_TOKEN_CHARS));
+    return { ok: false, error: invalid.some(hasNonAscii) ? "idn_not_punycode" : "invalid_recipients", invalid: echoed };
+  }
   if (to.addresses.length === 0) return { ok: false, error: "no_recipients" };
   const ccList = cc.addresses.filter((a) => !to.addresses.some((t) => t.toLowerCase() === a.toLowerCase()));
   if (to.addresses.length + ccList.length > MAX_RECIPIENTS) return { ok: false, error: "too_many_recipients" };
   // Lone surrogates become U+FFFD (jsonb rejects them); NUL and other controls are validation errors (review D2, D4).
   const subject = wellFormed(fields.subject).trim();
   if (!isValidSubject(subject)) return { ok: false, error: "invalid_subject" };
+  if (base.newMessage && subject === "") return { ok: false, error: "empty_subject" };
   const bodyText = wellFormed(fields.bodyText).replace(/\r\n?/g, "\n");
   if (hasDisallowedControl(bodyText)) return { ok: false, error: "invalid_body" };
   if (bodyText.length > MAX_BODY_CHARS) return { ok: false, error: "body_too_long" };
-  const quote = fields.includeQuote ? base.quote() : null;
+  if (base.newMessage && bodyText.trim() === "") return { ok: false, error: "empty_body" };
+  const quote = fields.includeQuote && !base.newMessage ? base.quote() : null;
   const payload: EmailSendPayload = {
     to: to.addresses,
     cc: ccList,
@@ -220,6 +253,71 @@ export async function proposeReply(ex: Executor, input: ReplyInput, source: Appr
       .set({ threadChangedAt: new Date() })
       .where(and(eq(approvalItems.id, itemId), isNull(approvalItems.threadChangedAt), inArray(approvalItems.status, OPEN)));
   }
+  return { ok: true, itemId };
+}
+
+export type NewMessageInput = {
+  userId: string;
+  /** The account the owner picked (owner constraint 2). Checked to be the user's, Google and active. */
+  accountId: string;
+  to: string;
+  cc: string;
+  subject: string;
+  bodyText: string;
+};
+
+/**
+ * Creates a pending `email.send` item for a NEW message (Phase 2d, plan §6.2): no thread, no
+ * parent, no quote, `threading: null`. Recipients, subject and body are only what the owner typed.
+ * The account must be the user's own Google account and active (owner Q10). Nothing is sent: it
+ * goes through the same approve, claim and execute path as a reply.
+ */
+export async function proposeNewMessage(ex: Executor, input: NewMessageInput): Promise<{ ok: true; itemId: string } | InputFailure> {
+  const [account] = await ex
+    .select({ id: connectedAccounts.id, provider: connectedAccounts.provider, status: connectedAccounts.status })
+    .from(connectedAccounts)
+    .where(and(eq(connectedAccounts.id, input.accountId), eq(connectedAccounts.userId, input.userId)))
+    .limit(1);
+  // Another user's account and a missing one get the same answer.
+  if (!account) return { ok: false, error: "not_found" };
+  if (account.provider !== "google") return { ok: false, error: "account_not_google" };
+  if (account.status !== "active") return { ok: false, error: "account_inactive" };
+  const built = buildEmailPayload(
+    { to: input.to, cc: input.cc, subject: input.subject, bodyText: input.bodyText, includeQuote: false },
+    { quote: () => null, threading: null, parent: null, previousNotice: false, newMessage: true },
+  );
+  if (!built.ok) return built;
+  const payload = built.payload;
+  const hash = contentHash(EMAIL_SEND, account.id, payload);
+  const itemId = await ex.transaction(async (tx) => {
+    const [row] = await tx
+      .insert(approvalItems)
+      .values({
+        userId: input.userId,
+        kind: EMAIL_SEND,
+        source: "owner",
+        status: "pending",
+        accountId: account.id,
+        threadId: null,
+        parentMessageId: null,
+        parentInternalDate: null,
+        threadChangedAt: null,
+        payload,
+        revision: 1,
+        contentHash: hash,
+      })
+      .returning({ id: approvalItems.id });
+    await audit(
+      {
+        userId: input.userId,
+        accountId: account.id,
+        action: "approval.proposed",
+        detail: { itemId: row!.id, kind: EMAIL_SEND, source: "owner", recipients: payload.to.length + payload.cc.length, variant: "new" },
+      },
+      tx,
+    );
+    return row!.id;
+  });
   return { ok: true, itemId };
 }
 
@@ -305,16 +403,24 @@ export async function editItem(ex: Executor, input: EditInput): Promise<{ ok: tr
   if (!item) return { ok: false, error: "not_found" };
   if (!OPEN.includes(item.status) || item.revision !== input.revision) return { ok: false, error: "stale" };
   const current = emailSendPayload.parse(item.payload);
-  const parent = item.parentMessageId
-    ? ((await ex.select(parentColumns).from(mailMessages).where(and(eq(mailMessages.id, item.parentMessageId), eq(mailMessages.userId, input.userId))).limit(1))[0] ?? null)
-    : null;
-  const built = buildEmailPayload(input, {
-    quote: () => current.quote?.text ?? (parent ? parentQuote(parent) : null),
-    threading: current.threading,
-    parent,
-    previousNotice: current.replyToNotice,
-  });
-  if (!built.ok) return built;
+  // Phase 2d: a new message keeps the new-message rules (non-empty subject and body, no quote).
+  // The account never changes on edit (owner Q9): editItem takes no account.
+  const newMessage = isNewMessage(current);
+  const parent =
+    item.parentMessageId && !newMessage
+      ? ((await ex.select(parentColumns).from(mailMessages).where(and(eq(mailMessages.id, item.parentMessageId), eq(mailMessages.userId, input.userId))).limit(1))[0] ?? null)
+      : null;
+  const built = buildEmailPayload(
+    newMessage ? { ...input, includeQuote: false } : input,
+    {
+      quote: () => current.quote?.text ?? (parent ? parentQuote(parent) : null),
+      threading: current.threading,
+      parent,
+      previousNotice: current.replyToNotice,
+      newMessage,
+    },
+  );
+  if (!built.ok) return { ok: false, error: built.error };
   const hash = contentHash(item.kind, item.accountId, built.payload);
   return ex.transaction(async (tx) => {
     const [row] = await tx
@@ -330,6 +436,7 @@ export async function editItem(ex: Executor, input: EditInput): Promise<{ ok: tr
         approvedAt: null,
         messageIdHeader: null,
         errorCode: null,
+        newRecipientCount: null,
         updatedAt: new Date(),
       })
       .where(
@@ -355,7 +462,23 @@ export type ApproveResult =
   | { kind: "already_approved" }
   /** Changed since the page loaded (another revision or hash), or handled already. */
   | { kind: "stale"; status: ApprovalItem["status"] }
-  | { kind: "blocked"; reason: "not_found" | "account_inactive" | "account_mismatch" | "hash_mismatch" | "ack_required" };
+  | {
+      kind: "blocked";
+      reason:
+        | "not_found"
+        | "account_inactive"
+        | "account_mismatch"
+        | "hash_mismatch"
+        | "ack_required"
+        /** Phase 2d, owner Q2: the ticked recipients aren't exactly the new message's to ∪ cc. */
+        | "recipients_unconfirmed"
+        /** Phase 2d, owner Q3: approving would pass today's first-time-recipient limit. */
+        | "new_recipient_limit";
+    };
+
+/** Most confirmRecipient values the approve action accepts, and the longest one. */
+export const MAX_CONFIRMED_RECIPIENTS = 100;
+export const MAX_CONFIRMED_RECIPIENT_CHARS = 254;
 
 /**
  * Approves exactly what was on screen (plan §5.1): the conditional UPDATE requires the displayed
@@ -376,6 +499,15 @@ export async function approveItem(
      */
     shownThreadChangedAt?: number | null;
     messageIdHost: string;
+    /**
+     * Phase 2d, owner Q2: the recipients the owner ticked on the approval page. Required to equal
+     * the stored to ∪ cc exactly for a new message; not taken or checked for replies.
+     */
+    confirmedRecipients?: string[];
+    /** The daily first-time-recipient cap (owner Q3). Omitted: EMAIL_NEW_RECIPIENTS_PER_DAY, default 10. */
+    newRecipientLimit?: number;
+    /** The clock for the cap's UTC day (tests). */
+    now?: Date;
   },
 ): Promise<ApproveResult> {
   const item = await getOwnItem(ex, input.userId, input.itemId);
@@ -397,9 +529,36 @@ export async function approveItem(
   if (item.threadChangedAt && !input.ackThreadChange) return { kind: "blocked", reason: "ack_required" };
   const shownSql = shown === null ? null : new Date(shown).toISOString();
 
+  // Phase 2d, owner Q2: a new message is approved only with every recipient ticked, exactly. The
+  // stored payload is the one bound by the revision and content hash checked above.
+  const parsed = emailSendPayload.safeParse(item.payload);
+  if (!parsed.success) return { kind: "blocked", reason: "hash_mismatch" };
+  const payload = parsed.data;
+  const newMessage = isNewMessage(payload);
+  const confirmed = input.confirmedRecipients ?? [];
+  if (newMessage && !confirmationMatches(confirmed, payload)) return { kind: "blocked", reason: "recipients_unconfirmed" };
+  const limit = input.newRecipientLimit ?? newRecipientLimit();
+  const now = input.now ?? new Date();
+
   // A new Message-ID for every approval, so an approve-again after a definite failure (Q8) is a new message.
   const messageId = `<alex.${item.id}.${item.revision}.${randomBytes(6).toString("hex")}@${input.messageIdHost}>`;
   return ex.transaction(async (tx) => {
+    // Phase 2d, owner Q3 (amended): the daily first-time-recipient cap, for every email.send item.
+    // Serialized per user with a transaction-scoped advisory lock (as the AI draft caps), so two
+    // parallel approves can't both fit under the limit.
+    await tx.execute(sql`select pg_advisory_xact_lock(hashtext(${`alex-new-recipients:${input.userId}`}))`);
+    const firstTime = await firstTimeRecipients(tx, input.userId, payload, replyParentOf(item));
+    const n = firstTime.length;
+    if (n > 0) {
+      const used = await newRecipientsUsedToday(tx, input.userId, utcDayStart(now));
+      if (!capAllows(n, used, limit)) {
+        await audit(
+          { userId: input.userId, accountId: item.accountId, action: "approval.new_recipient_limit", detail: { itemId: item.id, newRecipients: n, usedToday: used, limit } },
+          tx,
+        );
+        return { kind: "blocked" as const, reason: "new_recipient_limit" as const };
+      }
+    }
     const [row] = await tx
       .update(approvalItems)
       .set({
@@ -407,11 +566,12 @@ export async function approveItem(
         approvedRevision: item.revision,
         approvedHash: item.contentHash,
         approvedPayload: item.payload,
-        approvedAt: new Date(),
+        approvedAt: now,
         messageIdHeader: messageId,
         executionId: null,
         executingSince: null,
         errorCode: null,
+        newRecipientCount: n,
         updatedAt: new Date(),
       })
       .where(
@@ -431,24 +591,47 @@ export async function approveItem(
       const sameContent = now && OPEN.includes(now.status) && now.revision === input.revision && now.contentHash === input.contentHash;
       return sameContent ? { kind: "blocked" as const, reason: "ack_required" as const } : { kind: "stale" as const, status: now?.status ?? item.status };
     }
+    // Round 2, D1: the charge survives account disconnects. Always written (also when n = 0), so a
+    // re-approval replaces an earlier approval's charge instead of reviving it.
+    await recordRecipientCharge(tx, { itemId: item.id, userId: input.userId, accountId: item.accountId, approvedAt: now, newRecipients: n });
     await audit(
-      { userId: input.userId, accountId: item.accountId, action: "approval.approved", detail: { itemId: item.id, revision: item.revision, contentHash: item.contentHash } },
+      {
+        userId: input.userId,
+        accountId: item.accountId,
+        action: "approval.approved",
+        // Counts only (plan §6.5): how many recipients were ticked, and how many were first-time.
+        detail: {
+          itemId: item.id,
+          revision: item.revision,
+          contentHash: item.contentHash,
+          ...(newMessage ? { confirmedRecipients: confirmed.length } : {}),
+          newRecipients: n,
+        },
+      },
       tx,
     );
     return { kind: "approved" as const };
   });
 }
 
-/** For email.send: the account must be active and, for a reply, still the thread's account. */
+/**
+ * For email.send: the account must be the user's and active. A reply's account must still be its
+ * thread's account. A new message (Phase 2d) must have no thread and no parent, and its account must
+ * be a Google account (owner constraint 2, checked again at send time by the executor).
+ */
 async function accountCheck(ex: Executor, item: ApprovalItem): Promise<"ok" | "account_inactive" | "account_mismatch" | "not_found"> {
   if (!item.accountId) return "account_mismatch";
   const [account] = await ex
-    .select({ status: connectedAccounts.status, userId: connectedAccounts.userId })
+    .select({ status: connectedAccounts.status, userId: connectedAccounts.userId, provider: connectedAccounts.provider })
     .from(connectedAccounts)
     .where(eq(connectedAccounts.id, item.accountId))
     .limit(1);
   if (!account || account.userId !== item.userId) return "account_mismatch";
   if (account.status !== "active") return "account_inactive";
+  if (item.kind === EMAIL_SEND && isNewMessage(item.payload)) {
+    if (item.threadId !== null || item.parentMessageId !== null || account.provider !== "google") return "account_mismatch";
+    return "ok";
+  }
   if (item.kind === EMAIL_SEND) {
     if (!item.threadId) return "account_mismatch";
     const [thread] = await ex.select({ accountId: mailThreads.accountId }).from(mailThreads).where(eq(mailThreads.id, item.threadId)).limit(1);
@@ -501,6 +684,10 @@ export async function recordOutcome(ex: Executor, item: ApprovalItem, executionI
     const base = { userId: item.userId, accountId: item.accountId };
     if (outcome.kind === "succeeded") {
       await audit({ ...base, action: "approval.executed", detail: { itemId: item.id, gmailMessageId: outcome.gmailMessageId } }, tx);
+      // Phase 2d (plan §6.4): bring the SENT copy of a new message into Alex at the next sync.
+      if (isNewMessage(item.approvedPayload) && item.accountId) {
+        await enqueueOutbound(tx, { id: item.accountId, userId: item.userId }, outcome.gmailMessageId, outcome.gmailThreadId);
+      }
     } else if (outcome.kind === "failed") {
       await audit({ ...base, action: "approval.execution_failed", detail: { itemId: item.id, code: outcome.code, status: outcome.status } }, tx);
     } else {
@@ -569,9 +756,14 @@ export async function markReconciledSent(
       .set({ status: "succeeded", result: found, completedAt: now, updatedAt: now, errorCode: null })
       // Scoped to the item's user as well (security review N1).
       .where(and(eq(approvalItems.id, item.id), eq(approvalItems.userId, item.userId), inArray(approvalItems.status, ["unknown", "executing"])))
-      .returning({ id: approvalItems.id });
+      .returning({ id: approvalItems.id, accountId: approvalItems.accountId, approvedPayload: approvalItems.approvedPayload });
     if (!row) return false;
     await audit({ userId: item.userId, accountId: item.accountId, action: "approval.reconciled", detail: { itemId: item.id, outcome } }, tx);
+    // Phase 2d (plan §6.4): a reconcile hit (SENT in this account) for a new message brings its SENT
+    // copy into Alex. An ingest match means the copy is being stored already.
+    if (outcome === "list_found" && isNewMessage(row.approvedPayload) && row.accountId) {
+      await enqueueOutbound(tx, { id: row.accountId, userId: item.userId }, found.gmailMessageId, found.gmailThreadId);
+    }
     return true;
   });
 }
@@ -684,6 +876,16 @@ export type ItemView = {
   ownAccounts: string[];
   /** The thread's stored text, rendered HTML and headers, for the AI links warning. Never shown. */
   threadHaystack: string;
+  /** Phase 2d: a new message (threading null), not a reply. */
+  isNew: boolean;
+  /** Phase 2d: the shown recipients (lowercased) that are first-time recipients right now (owner Q3, Q4). */
+  firstTime: string[];
+  /** Phase 2d, owner Q7: the Unicode form of each shown recipient's punycode domain, keyed by the address as shown. */
+  idn: Record<string, string>;
+  /** Phase 2d: today's first-time-recipient cap (UTC day). */
+  cap: { limit: number; usedToday: number; remaining: number };
+  /** Phase 2d: the stored thread of a sent new message (found by the Gmail thread id in the result), once synced. */
+  sentThread: { id: string; subject: string | null; messageCount: number } | null;
 };
 
 /** Addresses and text of a thread's stored messages (for the Phase 2c approval warnings). */
@@ -714,7 +916,12 @@ export async function threadContext(ex: Executor, userId: string, threadId: stri
 }
 
 /** Everything the detail page shows, or null if it isn't the user's item. */
-export async function getItemView(ex: Executor, userId: string, itemId: string): Promise<ItemView | null> {
+export async function getItemView(
+  ex: Executor,
+  userId: string,
+  itemId: string,
+  opts: { newRecipientLimit?: number; now?: Date } = {},
+): Promise<ItemView | null> {
   const item = await getOwnItem(ex, userId, itemId);
   if (!item) return null;
   const payload = emailSendPayload.parse(item.payload);
@@ -751,5 +958,40 @@ export async function getItemView(ex: Executor, userId: string, itemId: string):
     : null;
   const ctx = item.threadId ? await threadContext(ex, userId, item.threadId) : { addresses: [], haystack: "" };
   const ownAccounts = (await ex.select({ email: connectedAccounts.email }).from(connectedAccounts).where(eq(connectedAccounts.userId, userId))).map((a) => a.email);
-  return { item, payload, shown, account, thread, parent, threadAddresses: ctx.addresses, ownAccounts, threadHaystack: ctx.haystack };
+
+  // Phase 2d: first-time markers, IDN display, the cap, and the sent new message's thread.
+  const isNew = isNewMessage(shown);
+  const firstTime = await firstTimeRecipients(ex, userId, shown, replyParentOf(item));
+  const idn: Record<string, string> = {};
+  for (const a of [...shown.to, ...shown.cc]) {
+    const u = idnDisplay(a);
+    if (u !== null) idn[a] = u;
+  }
+  const limit = opts.newRecipientLimit ?? newRecipientLimit();
+  const usedToday = await newRecipientsUsedToday(ex, userId, utcDayStart(opts.now ?? new Date()));
+  const sentGmailThreadId = (item.result as { gmailThreadId?: unknown } | null)?.gmailThreadId;
+  const sentThread =
+    isNew && item.accountId && typeof sentGmailThreadId === "string"
+      ? ((await ex
+          .select({ id: mailThreads.id, subject: mailThreads.subject, messageCount: mailThreads.messageCount })
+          .from(mailThreads)
+          .where(and(eq(mailThreads.accountId, item.accountId), eq(mailThreads.gmailThreadId, sentGmailThreadId), eq(mailThreads.userId, userId)))
+          .limit(1))[0] ?? null)
+      : null;
+  return {
+    item,
+    payload,
+    shown,
+    account,
+    thread,
+    parent,
+    threadAddresses: ctx.addresses,
+    ownAccounts,
+    threadHaystack: ctx.haystack,
+    isNew,
+    firstTime,
+    idn,
+    cap: { limit, usedToday, remaining: capRemaining(usedToday, limit) },
+    sentThread,
+  };
 }

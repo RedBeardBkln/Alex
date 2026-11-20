@@ -31,6 +31,15 @@ export const emailSendPayload = z
 
 export type EmailSendPayload = z.infer<typeof emailSendPayload>;
 
+/**
+ * The only definition of "new message" (Phase 2d, plan §4): an `email.send` payload whose
+ * `threading` is null. Every reply has a threading object (replyThreading always returns one). A
+ * stored payload missing the key is not a new message, so it takes the stricter reply rules.
+ */
+export function isNewMessage(payload: unknown): boolean {
+  return payload !== null && typeof payload === "object" && "threading" in payload && (payload as { threading: unknown }).threading === null;
+}
+
 /** JSON with object keys sorted at every level, so equal content always hashes the same. */
 export function canonicalJson(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(canonicalJson).join(",")}]`;

@@ -213,6 +213,12 @@ No new environment variables and no new Google scopes are needed: `gmail.modify`
 - On an item, check the From account, every recipient, the subject and the whole message, read any warnings, then click **Approve and send**. If new messages arrived in the thread since you wrote the reply, tick "I've seen the new messages" first.
 - **Not sent** (for example the account needs reconnecting, or Gmail refused it): edit it or click **Approve and send again**. Each attempt needs your click.
 - **Outcome unknown** (Gmail didn't confirm, for example a timeout): Alex never resends it on its own. It looks for the message in Gmail on every 5-minute cron run and on **Check again**. If it can't be found after 30 minutes, check Gmail's Sent folder yourself, then use **Mark as not sent** if it really isn't there, and approve it again if you still want to send it.
+- **New email (Phase 2d):** click **Compose** (top bar, or the button on Inbox).
+  - **Pick the account to send from.** None is preselected; accounts that need reconnecting can't be picked.
+  - Type the To and Cc addresses yourself: plain addresses, one per line, no names. An internationalised domain must be typed in its `xn--` form. There is no Bcc. The subject and the message can't be empty. **Save for approval** creates a pending item; nothing is sent.
+  - On the item, **tick the box next to every recipient**, then click **Approve and send**. Alex refuses to send unless every recipient is ticked. Check any "First time" badge (an address Alex hasn't seen in your mail) and any internationalised-domain warning.
+  - **Daily limit on first-time recipients:** at most `EMAIL_NEW_RECIPIENTS_PER_DAY` (default 10) first-time recipients can be approved per UTC day, across new emails **and replies**. In a reply, addresses already on the message you're replying to don't count (unless that message is in Spam or Trash), so only recipients you add count. Disconnecting an account doesn't reset the day's count. When the limit is reached the item stays pending ("Today's limit … resets at 00:00 UTC"); wait until then, or raise the value in Vercel (section 12.2) and redeploy. An item with more first-time recipients than the whole daily limit says so ("This email has N first-time recipients; the daily limit is X…") and can never be approved as it is: remove some recipients, or raise the limit. There is no override button.
+  - The account can't be changed by editing: cancel and compose again. After it is sent, the conversation appears in Alex at the next sync (up to 5 minutes), linked from the queue item as **Open the conversation**. It isn't listed in Inbox until someone replies.
 
 ## 10. Live send check (on production, right after merging Phase 2b)
 
@@ -236,6 +242,34 @@ The automated tests use a fake Gmail, so these behaviours of the real Gmail API 
 6. Optional: click **Approve and send** again on the same item (or reload and resubmit the form). Expect "This item changed or was already handled", and no second email in Gmail.
 
 Report the result of each step to the tester; until then the pipeline records these as "not verified live".
+
+### 10.1 New message check (Phase 2d)
+
+Run this on production right after the Phase 2 merge has deployed and migration 0004 is applied (section 12.1), **after the reply steps above have passed and before any new message to a third party**. Same rules as above: no preview deployment, no secrets copied anywhere, and the first new message goes only to another of your own connected accounts.
+
+1. Click **Compose**. Check that **no account is preselected**. Pick account A and type **only account B's address** in To. Use a **unique** subject with a non-ASCII character, for example `Café compose test <today's date>`, and a short body. Save.
+2. On the queue item, check:
+   - From is A, the To list is exactly B, there is no Cc, and it says "No Bcc".
+   - B has **no** "First time" badge (it is one of your own accounts).
+   - Approval is refused until B's box is ticked. Optionally, approve without ticking it (if your browser lets you) and expect "Tick every recipient… Nothing was sent."
+   - Tick the box and click **Approve and send**. Expect "Sent." and a Gmail message id.
+3. In Gmail, check:
+   - B receives it as a **new** conversation, not grouped into an older one.
+   - Its From is A's address.
+   - **Show original**: the `Message-ID` equals `message_id_header` (the same read-only SQL as step 4.3 above), and there is no `In-Reply-To` or `References` header.
+   - The subject displays correctly.
+   - A's Sent folder has it.
+4. In Alex:
+   - The message appears in Inbox under account B (normal ingestion).
+   - Within about 5 minutes, the queue item shows **Open the conversation** for account A, and that thread opens with the sent message.
+   - The conversation is **not** listed in Inbox under account A (it is sent-only until a reply arrives).
+   - The queue item stays "Sent".
+5. Optional cap check, **only to an address you control that is not a connected account**:
+   - Set `EMAIL_NEW_RECIPIENTS_PER_DAY=0` in Vercel (Production), redeploy, compose to that address and open the queue item. Before approving, it already shows the warning "This email has 1 first-time recipient; the daily limit is 0, so it can't be sent as it is, on any day…". Tick the box and approve it anyway: expect the same text as the notice, and nothing arrives in that mailbox.
+   - Then remove the variable (or set it back) and redeploy.
+   - If you have no such address, skip this; the cap is then recorded as not verified live.
+
+Report the results to the tester; until then the pipeline records them as "not verified live".
 
 ## 11. AI triage and reply drafts (Phase 2c)
 
@@ -311,3 +345,27 @@ There is no preview deployment for this, and no production secret is copied anyw
 5. **Anthropic Console:** the Usage page shows the calls, and the cost is in line with Alex's AI usage page.
 
 Report the results to the tester; until then the pipeline records live AI behaviour as "not verified".
+
+## 12. Composing new messages (Phase 2d)
+
+How to use it is in section 9; the production check is section 10.1. No new Google scopes are needed (`messages.send` accepts `gmail.modify`).
+
+### 12.1 Database migration (before merging)
+
+**Run this before merging Phase 2d to `main`.** Apply 0001–0003 first if they aren't applied yet (sections 6.0, 8 and 11.1); `npm run db:migrate` applies whatever is missing, in order. Migration `drizzle/0004_compose.sql` only adds things:
+- the value `outbound` to the `mail_fetch_source` type (additive; not used in the same migration)
+- the nullable column `approval_items.new_recipient_count`
+- the table `approval_recipient_charges` (what each approval charged against the daily first-time-recipient cap; it keeps counting after an account is disconnected)
+- the check constraint `approval_items_new_message_shape_chk` (an `email.send` item without threading has no thread or parent; every existing item is a reply, so it passes)
+
+```bash
+DATABASE_URL='<the pooled connection string>' npm run db:migrate
+```
+
+### 12.2 Environment variable (optional)
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `EMAIL_NEW_RECIPIENTS_PER_DAY` | `10` | First-time recipients (addresses Alex hasn't seen in your mail) that can be approved per UTC day, across new emails and replies. `0` means none. Empty or invalid means `10`. |
+
+Set it in Vercel (Production) only if you want a different limit, then redeploy.

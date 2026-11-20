@@ -48,12 +48,14 @@ async function executeEmailSend(deps: ExecutorDeps, item: ApprovalItem): Promise
     .limit(1);
   if (!account || account.provider !== "google") return { kind: "failed", code: "stale_account", status: null };
   if (account.status !== "active") return { kind: "failed", code: "reauth_required", status: null };
-  // The sending account is always the thread's account.
-  if (item.threadId) {
+  if (parsed.data.threading === null) {
+    // Phase 2d: a new message is never linked to a thread or a parent (also a DB check constraint).
+    if (item.threadId !== null || item.parentMessageId !== null) return { kind: "failed", code: "stale_account", status: null };
+  } else {
+    // A reply's sending account is always its thread's account.
+    if (!item.threadId) return { kind: "failed", code: "stale_account", status: null };
     const [thread] = await deps.db.select({ accountId: mailThreads.accountId }).from(mailThreads).where(eq(mailThreads.id, item.threadId)).limit(1);
     if (!thread || thread.accountId !== account.id) return { kind: "failed", code: "stale_account", status: null };
-  } else if (parsed.data.threading) {
-    return { kind: "failed", code: "stale_account", status: null };
   }
 
   const p = parsed.data;

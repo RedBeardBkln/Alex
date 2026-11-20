@@ -20,6 +20,7 @@ import {
   deleteQueueRow,
   deleteQueueRowForMessage,
   deleteStoredMessage,
+  dropQueueRow,
   dueQueueRows,
   enqueueLabelRefresh,
   enqueueMessages,
@@ -40,6 +41,7 @@ import {
   updateMessageRender,
   PARKED_AT,
   type EnqueueRow,
+  type FetchSource,
 } from "./store";
 
 // Re-exported for existing importers.
@@ -186,20 +188,24 @@ export function decideHistoryAction(event: HistoryEvent, ctx: { stored: boolean;
   }
 }
 
-export type IngestDecision = "drop" | "inbox" | "sent" | "defer";
+export type IngestDecision = "drop" | "inbox" | "sent" | "defer" | "outbound";
 
 /**
  * Whether a not-yet-stored message with these (current) labels is ingested. Sent mail needs a
- * stored thread; if the thread's inbox message is still queued, the sent message waits.
+ * stored thread; if the thread's inbox message is still queued, the sent message waits. The
+ * exception (Phase 2d, plan §6.4) is an `outbound` row, the SENT copy of a new message Alex sent:
+ * it is stored and creates its thread.
  */
 export function classifyForIngest(
   labels: string[],
   thread: { stored: boolean; inboxQueued: boolean },
+  source?: FetchSource,
 ): IngestDecision {
   if (labels.some((l) => NEVER_INGEST.includes(l))) return "drop";
   if (labels.includes("INBOX")) return "inbox";
   if (labels.includes("SENT")) {
     if (thread.stored) return "sent";
+    if (source === "outbound") return "outbound";
     if (thread.inboxQueued) return "defer";
   }
   return "drop";
@@ -633,7 +639,7 @@ async function hydrateRow(ctx: Ctx, row: MailFetchQueueRow): Promise<void> {
       const t = await threadContext(ctx, row.gmailThreadId, id);
       if (!t.stored) {
         if (t.inboxQueued) await deferSent(ctx, row, row.gmailThreadId);
-        else await deleteQueueRow(ctx.db, row.id);
+        else await dropQueueRow(ctx.db, row);
         return;
       }
     }
@@ -651,9 +657,10 @@ async function hydrateRow(ctx: Ctx, row: MailFetchQueueRow): Promise<void> {
 
     if (row.needsClassify) {
       const m = await ctx.gmail.getMessageMinimal(id);
-      const decision = classifyForIngest(m.labelIds ?? [], await threadContext(ctx, m.threadId, id));
+      const decision = classifyForIngest(m.labelIds ?? [], await threadContext(ctx, m.threadId, id), row.source);
       if (decision === "drop") {
-        await deleteQueueRow(ctx.db, row.id);
+        // Conditional (plan §6.4, R7): a row converted to outbound while this ran is kept.
+        await dropQueueRow(ctx.db, row);
         return;
       }
       if (decision === "defer") {
@@ -664,9 +671,9 @@ async function hydrateRow(ctx: Ctx, row: MailFetchQueueRow): Promise<void> {
 
     const full = await ctx.gmail.getMessageFull(id);
     const labels = full.labelIds ?? [];
-    const decision = classifyForIngest(labels, await threadContext(ctx, full.threadId, id));
+    const decision = classifyForIngest(labels, await threadContext(ctx, full.threadId, id), row.source);
     if (decision === "drop") {
-      await deleteQueueRow(ctx.db, row.id);
+      await dropQueueRow(ctx.db, row);
       return;
     }
     if (decision === "defer") {
@@ -705,7 +712,8 @@ async function hydrateRow(ctx: Ctx, row: MailFetchQueueRow): Promise<void> {
       sizeEstimate: full.sizeEstimate ?? null,
       parsed,
       bodyIncomplete,
-      createThread: decision === "inbox",
+      // INBOX mail, and the SENT copy of a new message Alex sent (outbound), create their thread.
+      createThread: decision === "inbox" || decision === "outbound",
       queueRowId: row.id,
       render,
     });

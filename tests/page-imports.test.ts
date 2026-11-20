@@ -85,6 +85,9 @@ const PAGES = [
   "src/app/(app)/ai-usage/page.tsx",
   "src/app/(app)/inbox/[threadId]/ai-actions.ts",
   "src/app/(app)/inbox/[threadId]/ai-panel.tsx",
+  // Phase 2d: the compose page and its form.
+  "src/app/(app)/compose/page.tsx",
+  "src/app/(app)/compose/compose-form.tsx",
 ];
 
 describe("18n: inbox pages never reach the sanitizer", () => {

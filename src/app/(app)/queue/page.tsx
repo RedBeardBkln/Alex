@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { db } from "@/db";
+import { isNewMessage } from "@/lib/approvals/payload";
 import { listItems, QUEUE_TABS, type QueueTab } from "@/lib/approvals/service";
 import { requireUser } from "@/lib/session";
 import { LocalTime } from "../../local-time";
@@ -50,7 +51,7 @@ export default async function QueuePage({ searchParams }: { searchParams: Promis
                     <span className="text-xs text-[var(--muted)]">{STATUS_LABEL[r.status]}</span>
                   </div>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-[var(--muted)]">
-                    <span>Email reply</span>
+                    <span>{isNewMessage(r.payload) ? "New email" : "Email reply"}</span>
                     {r.source === "ai" && <span className="rounded-full bg-[var(--warn-bg)] px-2 py-0.5 text-xs text-[var(--text)]">AI draft</span>}
                     {r.accountLabel && (
                       <span className="rounded-full border border-[var(--border)] px-2 py-0.5 text-xs">{r.accountLabel === "business" ? "Business" : "Personal"}</span>

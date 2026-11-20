@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, getTableColumns, inArray, isNull, lt, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, getTableColumns, inArray, isNull, lt, ne, or, sql } from "drizzle-orm";
 import type { Executor } from "@/db";
 import { afterMessageCommitted, onMessageStored, type StoredMessage } from "@/lib/approvals/ingest-hook";
 import {
@@ -115,7 +115,24 @@ export async function enqueueMessages(ex: Executor, account: AccountRef, rows: E
 }
 
 /**
- * Due queue rows: history/resync first, then backfill inbox, then backfill sent, then oldest first.
+ * Phase 2d (plan §6.4): queues the SENT copy of a new message Alex just sent, so the next sync
+ * stores it even though its thread isn't stored yet. Called in the same transaction as the item's
+ * move to `succeeded`. The Gmail ids come only from our own send response or from a reconcile hit
+ * that carried SENT in this account. A row already queued for the message (for example from
+ * history) is converted, so it can't be dropped as "sent mail in an unknown thread".
+ */
+export async function enqueueOutbound(ex: Executor, account: AccountRef, gmailMessageId: string, gmailThreadId: string): Promise<void> {
+  await ex.execute(sql`
+    insert into mail_fetch_queue (user_id, account_id, gmail_message_id, gmail_thread_id, source, needs_classify)
+    values (${account.userId}::uuid, ${account.id}::uuid, ${gmailMessageId}, ${gmailThreadId}, 'outbound', false)
+    on conflict (account_id, gmail_message_id)
+    do update set source = 'outbound', needs_classify = false, gmail_thread_id = excluded.gmail_thread_id, attempts = 0,
+      next_attempt_at = now(), last_error = null, deferred_at = null, defer_count = 0
+  `);
+}
+
+/**
+ * Due queue rows: history/resync/outbound first, then backfill inbox, then backfill sent, then oldest first.
  * New rows get next_attempt_at from the database clock and retries from the app clock, so a row
  * is due once either clock has passed it (small skew between the two can't strand fresh rows).
  */
@@ -130,7 +147,7 @@ export async function dueQueueRows(ex: Executor, accountId: string, now: Date, l
       ),
     )
     .orderBy(
-      sql`case ${mailFetchQueue.source} when 'history' then 0 when 'resync' then 0 when 'backfill_inbox' then 1 else 2 end`,
+      sql`case ${mailFetchQueue.source} when 'history' then 0 when 'resync' then 0 when 'outbound' then 0 when 'backfill_inbox' then 1 else 2 end`,
       asc(mailFetchQueue.createdAt),
       asc(mailFetchQueue.id),
     )
@@ -139,6 +156,16 @@ export async function dueQueueRows(ex: Executor, accountId: string, now: Date, l
 
 export async function deleteQueueRow(ex: Executor, id: string): Promise<void> {
   await ex.delete(mailFetchQueue).where(eq(mailFetchQueue.id, id));
+}
+
+/**
+ * Deletes a row that `row` (as loaded) decided to drop. If it was loaded from another source but has
+ * since been converted to `outbound` (enqueueOutbound ran while it was being processed), it is kept:
+ * the outbound decision wins (plan §6.4, R7).
+ */
+export async function dropQueueRow(ex: Executor, row: Pick<MailFetchQueueRow, "id" | "source">): Promise<void> {
+  if (row.source === "outbound") return deleteQueueRow(ex, row.id);
+  await ex.delete(mailFetchQueue).where(and(eq(mailFetchQueue.id, row.id), ne(mailFetchQueue.source, "outbound")));
 }
 
 export async function deleteQueueRowForMessage(ex: Executor, accountId: string, gmailMessageId: string): Promise<void> {
@@ -180,7 +207,7 @@ export async function deferQueueRow(
 ): Promise<"deferred" | "dropped"> {
   const attempts = opts.consumeAttempt === false ? row.attempts : row.attempts + 1;
   if (attempts >= maxAttempts) {
-    await deleteQueueRow(ex, row.id);
+    await dropQueueRow(ex, row);
     return "dropped";
   }
   await ex
@@ -192,7 +219,8 @@ export async function deferQueueRow(
       deferCount: row.deferCount + 1,
       ...(opts.gmailThreadId && !row.gmailThreadId ? { gmailThreadId: opts.gmailThreadId } : {}),
     })
-    .where(eq(mailFetchQueue.id, row.id));
+    // A row converted to outbound meanwhile is left alone (see dropQueueRow).
+    .where(and(eq(mailFetchQueue.id, row.id), row.source === "outbound" ? undefined : ne(mailFetchQueue.source, "outbound")));
   return "deferred";
 }
 
@@ -211,18 +239,20 @@ export async function failQueueRow(
 ): Promise<"retry" | "parked"> {
   const attempts = row.attempts + 1;
   const limit = opts.transient ? opts.maxTransientAttempts : opts.maxAttempts;
+  // Round 2, F2: a row converted to outbound since it was loaded is left alone (see dropQueueRow).
+  const where = and(eq(mailFetchQueue.id, row.id), row.source === "outbound" ? undefined : ne(mailFetchQueue.source, "outbound"));
   if (attempts >= limit) {
     await ex
       .update(mailFetchQueue)
       .set({ attempts, nextAttemptAt: PARKED_AT, lastError: opts.error })
-      .where(eq(mailFetchQueue.id, row.id));
+      .where(where);
     return "parked";
   }
   const delayMs = Math.min(60 * 60_000, 30_000 * 2 ** Math.min(attempts - 1, 10));
   await ex
     .update(mailFetchQueue)
     .set({ attempts, nextAttemptAt: new Date(now.getTime() + delayMs), lastError: opts.error })
-    .where(eq(mailFetchQueue.id, row.id));
+    .where(where);
   return "retry";
 }
 

@@ -102,7 +102,8 @@ export const mailBackfillStatus = pgEnum("mail_backfill_status", [
   "hydrating",
   "complete",
 ]);
-export const mailFetchSource = pgEnum("mail_fetch_source", ["backfill_inbox", "backfill_sent", "history", "resync"]);
+/** `outbound` (Phase 2d): the SENT copy of a new message Alex sent, stored even though its thread isn't. */
+export const mailFetchSource = pgEnum("mail_fetch_source", ["backfill_inbox", "backfill_sent", "history", "resync", "outbound"]);
 export const mailRenderKind = pgEnum("mail_render_kind", ["html", "text", "none"]);
 
 /** Sync cursor, watch, backfill progress and lease for one Google account (1:1). */
@@ -344,6 +345,11 @@ export const approvalItems = pgTable(
     errorCode: text("error_code"),
     /** Set by ingestion when another message lands in thread_id while the item awaits approval (Q6). */
     threadChangedAt: timestamp("thread_changed_at", { withTimezone: true }),
+    /**
+     * Phase 2d: how many first-time recipients this approval counted against the daily cap. Set by
+     * approve, cleared by edit. A count only, never addresses.
+     */
+    newRecipientCount: integer("new_recipient_count"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
     completedAt: timestamp("completed_at", { withTimezone: true }),
@@ -355,7 +361,35 @@ export const approvalItems = pgTable(
     index("approval_items_thread_idx").on(t.threadId),
     index("approval_items_account_message_id_idx").on(t.accountId, t.messageIdHeader),
     check("approval_items_email_send_account_chk", sql`${t.kind} <> 'email.send' OR ${t.accountId} IS NOT NULL`),
+    // Phase 2d backstop: a new message (threading null) is never linked to a thread or a parent.
+    check(
+      "approval_items_new_message_shape_chk",
+      sql`${t.kind} <> 'email.send' OR ${t.payload}->'threading' <> 'null'::jsonb OR (${t.threadId} IS NULL AND ${t.parentMessageId} IS NULL)`,
+    ),
   ],
+);
+
+/**
+ * Phase 2d (review round 1, D1): what each approval charged against the user's daily
+ * first-time-recipient cap. Keyed by item id with no foreign key to approval_items or
+ * connected_accounts, so disconnecting an account (which cascade-deletes its items) doesn't give the
+ * day's allowance back. Only the user FK cascades. A charge counts while its item is in a counted
+ * status (approved, executing, succeeded, unknown), or when the item is gone because its account
+ * was deleted (the only app path that deletes items). Counts only, no addresses.
+ */
+export const approvalRecipientCharges = pgTable(
+  "approval_recipient_charges",
+  {
+    itemId: uuid("item_id").primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** The item's account at approval, with no foreign key: a charge whose item is gone counts while this account is gone too. */
+    accountId: uuid("account_id"),
+    approvedAt: timestamp("approved_at", { withTimezone: true }).notNull(),
+    newRecipients: integer("new_recipients").notNull(),
+  },
+  (t) => [index("approval_recipient_charges_user_approved_idx").on(t.userId, t.approvedAt)],
 );
 
 // ---------------------------------------------------------------------------------------------

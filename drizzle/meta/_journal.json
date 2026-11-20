@@ -29,6 +29,13 @@
       "when": 1795138335383,
       "tag": "0003_ai",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1795183366377,
+      "tag": "0004_compose",
+      "breakpoints": true
     }
   ]
 }

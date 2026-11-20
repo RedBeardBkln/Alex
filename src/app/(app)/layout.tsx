@@ -14,6 +14,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <a href="/inbox" className="text-sm underline-offset-4 hover:underline">
             Inbox
           </a>
+          <a href="/compose" className="text-sm underline-offset-4 hover:underline">
+            Compose
+          </a>
           <a href="/queue" className="text-sm underline-offset-4 hover:underline">
             Queue
             {waiting > 0 && (
