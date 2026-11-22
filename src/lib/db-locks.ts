@@ -1,6 +1,7 @@
 import { eq } from "drizzle-orm";
 import type { Executor } from "@/db";
 import { connectedAccounts } from "@/db/schema";
+import { audit } from "@/lib/audit";
 
 /**
  * Lock order for Disconnect (phase-2-followups-1, owner Q6). Every transaction that writes a row the
@@ -19,4 +20,25 @@ import { connectedAccounts } from "@/db/schema";
 export async function lockAccountForWrite(tx: Executor, accountId: string): Promise<boolean> {
   const rows = await tx.select({ id: connectedAccounts.id }).from(connectedAccounts).where(eq(connectedAccounts.id, accountId)).for("key share");
   return rows.length > 0;
+}
+
+type AuditEntry = { userId: string; accountId: string; action: string; detail?: Record<string, unknown> };
+
+async function auditAs(tx: Executor, entry: AuditEntry, accountId: string | null): Promise<boolean> {
+  await audit({ userId: entry.userId, accountId, action: entry.action, detail: entry.detail }, tx);
+  return accountId !== null;
+}
+
+/**
+ * O2 (phase-2-followups-2): writes one audit row for an account that may have been disconnected
+ * meanwhile (for example while an AI call was in flight), without an FK error. One transaction that
+ * locks the account first: if it still exists, the row carries its id; if it is gone, the row has a
+ * null account id, which is what the row would have become at the disconnect anyway (SET NULL).
+ * While the KEY SHARE lock is held, a Disconnect waits. Returns whether the account still existed.
+ */
+export async function auditForAccount(ex: Executor, entry: AuditEntry): Promise<boolean> {
+  return ex.transaction(async (tx) => {
+    if (!(await lockAccountForWrite(tx, entry.accountId))) return auditAs(tx, entry, null);
+    return auditAs(tx, entry, entry.accountId);
+  });
 }

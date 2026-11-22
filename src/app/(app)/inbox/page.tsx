@@ -22,6 +22,15 @@ const CATEGORY_LABEL: Record<string, string> = {
   spam_suspect: "Suspected spam",
 };
 
+/**
+ * O2 (phase-2-followups-2, owner Q7): fixed notices, looked up by an allowlisted key. Any other
+ * `notice` value shows nothing; the parameter is never echoed.
+ */
+const NOTICES: Record<string, string> = {
+  account_disconnected:
+    "That thread is no longer available: its account was disconnected (or the thread was removed) while Alex was working on it. Nothing was saved. Any AI call already made still counts in AI usage.",
+};
+
 const cursorSchema = z.object({ at: z.iso.datetime({ offset: true }), id: z.uuid() });
 
 function parseCursor(raw: string | undefined): InboxCursor | undefined {
@@ -31,11 +40,12 @@ function parseCursor(raw: string | undefined): InboxCursor | undefined {
   return parsed.success ? { lastMessageAt: new Date(parsed.data.at), id: parsed.data.id } : undefined;
 }
 
-export default async function InboxPage({ searchParams }: { searchParams: Promise<{ before?: string; view?: string }> }) {
+export default async function InboxPage({ searchParams }: { searchParams: Promise<{ before?: string; view?: string; notice?: string }> }) {
   const user = await requireUser();
   const params = await searchParams;
   const before = parseCursor(params.before);
   const needsReply = params.view === "needs_reply";
+  const notice = typeof params.notice === "string" && Object.hasOwn(NOTICES, params.notice) ? NOTICES[params.notice] : null;
   const viewParam = needsReply ? "&view=needs_reply" : "";
   const [threads, accounts, status] = await Promise.all([
     listInboxThreads(db(), user.id, { before, limit: PAGE_SIZE + 1, needsReply }),
@@ -49,6 +59,11 @@ export default async function InboxPage({ searchParams }: { searchParams: Promis
 
   return (
     <div className="space-y-6">
+      {notice && (
+        <p role="status" className="rounded-md bg-[var(--warn-bg)] px-3 py-2 text-sm">
+          {notice}
+        </p>
+      )}
       <section>
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-semibold">Inbox</h1>

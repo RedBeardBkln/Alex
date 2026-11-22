@@ -2,6 +2,7 @@ import { and, asc, eq } from "drizzle-orm";
 import type { Database } from "@/db";
 import { connectedAccounts, type ConnectedAccount } from "@/db/schema";
 import { decrypt, encrypt } from "@/lib/crypto";
+import { sqlState } from "@/lib/pg-errors";
 import type { GoogleIdentity } from "@/lib/google";
 
 export type TokenSet = {
@@ -96,8 +97,6 @@ const DEADLOCK_DETECTED = "40P01";
 /** Disconnect tries the DELETE at most this many times when it loses a deadlock (owner Q6). */
 export const DELETE_ACCOUNT_ATTEMPTS = 3;
 
-const pgCode = (err: unknown): unknown => (err as { cause?: { code?: unknown } })?.cause?.code ?? (err as { code?: unknown })?.code;
-
 /**
  * Deletes the user's account; its mail, items and sync rows cascade. The single DELETE statement is
  * rolled back whole when Postgres picks it as a deadlock victim (40P01), so it is retried, up to
@@ -121,7 +120,7 @@ export async function deleteAccount(
         .where(and(eq(connectedAccounts.id, accountId), eq(connectedAccounts.userId, userId)));
       return;
     } catch (err) {
-      if (attempt >= attempts || pgCode(err) !== DEADLOCK_DETECTED) throw err;
+      if (attempt >= attempts || sqlState(err) !== DEADLOCK_DETECTED) throw err;
       console.error("disconnect deadlocked, retrying", { accountId, attempt });
       await sleep(50 + Math.floor(random() * 200));
     }

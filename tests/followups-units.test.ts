@@ -251,6 +251,10 @@ describe("lock order: every audited transition locks the account first (AC-DL-1,
     expect(store.map((x) => locksFirst(x.first))).toEqual([true, false, false]); // storeMessage; changeLabels and deleteStoredMessage (out of scope)
     expect(firstStatements(src("lib", "gmail", "sync.ts")).every((x) => locksFirst(x.first))).toBe(true);
     expect(firstStatements(src("lib", "ai-ledger", "ledger.ts")).every((x) => locksFirst(x.first))).toBe(true);
+    // phase-2-followups-2 (O2 and its triage sibling): finishDraftCall, auditForAccount, triageOne and the skipped_cap write.
+    expect(firstStatements(src("lib", "ai-ledger", "ledger.ts"))).toHaveLength(2);
+    expect(firstStatements(src("lib", "db-locks.ts")).map((x) => locksFirst(x.first))).toEqual([true]);
+    expect(firstStatements(src("lib", "ai", "triage.ts")).map((x) => locksFirst(x.first))).toEqual([true, true]);
     // Any new transaction in src must be added to these lists deliberately.
     const counts: Record<string, number> = {};
     const walk = (dir: string) => {
@@ -264,7 +268,7 @@ describe("lock order: every audited transition locks the account first (AC-DL-1,
       }
     };
     walk(path.resolve(import.meta.dirname, "..", "src"));
-    expect(counts).toEqual({ "lib/approvals/service.ts": 9, "lib/gmail/store.ts": 3, "lib/gmail/sync.ts": 1, "lib/ai-ledger/ledger.ts": 1 });
+    expect(counts).toEqual({ "lib/approvals/service.ts": 9, "lib/gmail/store.ts": 3, "lib/gmail/sync.ts": 1, "lib/ai-ledger/ledger.ts": 2, "lib/db-locks.ts": 1, "lib/ai/triage.ts": 2 });
   });
 
   it("the lock helper takes FOR KEY SHARE on the account row", () => {

@@ -614,7 +614,7 @@ describe.skipIf(!testDbUrl)("tester phase-2-followups-1 (Postgres, two connectio
 
   // ---- Probes (not part of the suite): the open item and a pre-existing gap ---------------------
 
-  it("O1: draftReply when the account is disconnected right before startDraftCall: not_found, no provider call, no ai_calls row, no audit", async () => {
+  it("O1: draftReply when the account is disconnected right before startDraftCall: account_disconnected (Q7 of phase-2-followups-2), no provider call, no ai_calls row, no audit", async () => {
     const t = await thread(accountA, [{ id: "p1", at: Date.now() - HOUR }]);
     let called = 0;
     const provider: DraftProvider = { id: "anthropic-opus", draft: async () => (called++, { status: "ok", body: "x", notes: "", errorCode: null, usage: emptyUsage("anthropic-opus", "claude-opus-5-5") }) };
@@ -635,7 +635,8 @@ describe.skipIf(!testDbUrl)("tester phase-2-followups-1 (Postgres, two connectio
       (err: unknown) => `throws:${pgCode(err)}`,
     );
     note(`startDraftCall-after-disconnect: ${out} providerCalls=${called}`);
-    expect(out).toBe(JSON.stringify({ ok: false, code: "not_found" }));
+    // phase-2-followups-2, owner Q7: startDraftCall finding the account gone now answers account_disconnected.
+    expect(out).toBe(JSON.stringify({ ok: false, code: "account_disconnected" }));
     expect(called).toBe(0);
     expect(await database.select().from(schema.aiCalls)).toEqual([]);
     expect((await database.select().from(schema.auditLog)).filter((a) => a.action.startsWith("ai."))).toEqual([]);

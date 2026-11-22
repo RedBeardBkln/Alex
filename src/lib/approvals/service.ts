@@ -1,4 +1,4 @@
-import { randomBytes, randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { and, desc, eq, inArray, isNull, lt, or, sql, type SQL } from "drizzle-orm";
 import type { Executor } from "@/db";
 import { approvalItems, connectedAccounts, mailMessages, mailThreads, type ApprovalItem, type ConnectedAccount } from "@/db/schema";
@@ -339,28 +339,50 @@ export async function proposeNewMessage(ex: Executor, input: NewMessageInput): P
 }
 
 /**
- * True if the thread holds a message newer than the parent that isn't one of Alex's own sends (a
- * SENT copy carrying an approval item's Message-ID in the same account), the rule the ingest hook
- * uses.
+ * The Q6 rule, in one place: a stored message of the user's thread that isn't the parent, is newer
+ * than the baseline, and isn't one of Alex's own sends (a SENT copy carrying an approval item's
+ * Message-ID in the same account). It is the rule the ingest hook uses.
  */
+function newerMessageWhere(userId: string, threadId: string, parentId: string | null, baseline: Date): SQL {
+  return and(
+    eq(mailMessages.threadId, threadId),
+    eq(mailMessages.userId, userId),
+    parentId === null ? undefined : sql`${mailMessages.id} <> ${parentId}::uuid`,
+    sql`${mailMessages.internalDate} > ${baseline.toISOString()}::timestamptz`,
+    sql`not (${mailMessages.isSent} and ${mailMessages.rfc822MessageId} is not null and exists (
+      select 1 from ${approvalItems} a
+      where a.account_id = ${mailMessages.accountId} and a.message_id_header = ${mailMessages.rfc822MessageId}
+    ))`,
+  )!;
+}
+
+/** True if the thread holds a message newer than the parent under the Q6 rule (newerMessageWhere). */
 export async function newerMessageInThread(ex: Executor, userId: string, threadId: string, parentId: string, parentInternalDate: Date): Promise<boolean> {
-  const [row] = await ex
+  const [row] = await ex.select({ id: mailMessages.id }).from(mailMessages).where(newerMessageWhere(userId, threadId, parentId, parentInternalDate)).limit(1);
+  return !!row;
+}
+
+/**
+ * SF2 (phase-2-followups-2, owner Q1 option c): the ids of the stored messages that count as new for
+ * the item under the Q6 rule, with the hook's baseline (parent_internal_date, else created_at). None
+ * for an item without a thread (a new message, or a reply whose thread is gone).
+ */
+export async function newerMessageIds(
+  ex: Executor,
+  item: Pick<ApprovalItem, "userId" | "threadId" | "parentMessageId" | "parentInternalDate" | "createdAt">,
+): Promise<string[]> {
+  if (!item.threadId) return [];
+  const rows = await ex
     .select({ id: mailMessages.id })
     .from(mailMessages)
-    .where(
-      and(
-        eq(mailMessages.threadId, threadId),
-        eq(mailMessages.userId, userId),
-        sql`${mailMessages.id} <> ${parentId}::uuid`,
-        sql`${mailMessages.internalDate} > ${parentInternalDate.toISOString()}::timestamptz`,
-        sql`not (${mailMessages.isSent} and ${mailMessages.rfc822MessageId} is not null and exists (
-          select 1 from ${approvalItems} a
-          where a.account_id = ${mailMessages.accountId} and a.message_id_header = ${mailMessages.rfc822MessageId}
-        ))`,
-      ),
-    )
-    .limit(1);
-  return !!row;
+    .where(newerMessageWhere(item.userId, item.threadId, item.parentMessageId, item.parentInternalDate ?? item.createdAt));
+  return rows.map((r) => r.id);
+}
+
+/** sha256 hex of the sorted ids joined with ",", or "" for none. The same for any order of the ids. */
+export function newerDigest(ids: readonly string[]): string {
+  if (ids.length === 0) return "";
+  return createHash("sha256").update([...ids].sort().join(",")).digest("hex");
 }
 
 /**
@@ -517,6 +539,14 @@ export async function approveItem(
      * warning (review B1). Omitted counts as null. Approval requires the stored value to be exactly this.
      */
     shownThreadChangedAt?: number | null;
+    /**
+     * SF2 (owner Q1 option c): the newer-message digest the approval page rendered (newerDigest, "" for
+     * none). Recomputed inside the approve transaction; a different value, or a non-empty one without
+     * the tick, is ack_required. The approve action always passes it (a missing form field is ""), so
+     * the check always runs from the app. Only a direct library caller that omits it skips this check
+     * (the thread_changed_at checks still apply).
+     */
+    shownNewer?: string;
     messageIdHost: string;
     /**
      * Phase 2d, owner Q2: the recipients the owner ticked on the approval page. Required to equal
@@ -567,6 +597,13 @@ export async function approveItem(
     // was cascaded with it: stale, as the UPDATE below would find, but without first writing a
     // new_recipient_limit audit row whose account FK would fail.
     if (item.accountId && !(await lockAccountForWrite(tx, item.accountId))) return { kind: "stale" as const, status: item.status };
+    // SF2 (owner Q1 option c): approval is bound to the newer-message set the page showed, recomputed
+    // here after the lock. A message whose post-commit re-check failed (or never ran) is in this set
+    // once it is committed, so it can't be approved past unseen.
+    if (input.shownNewer !== undefined) {
+      const digest = newerDigest(await newerMessageIds(tx, item));
+      if (digest !== input.shownNewer || (digest !== "" && !input.ackThreadChange)) return { kind: "blocked" as const, reason: "ack_required" as const };
+    }
     // Phase 2d, owner Q3 (amended): the daily first-time-recipient cap, for every email.send item.
     // Serialized per user with a transaction-scoped advisory lock (as the AI draft caps), so two
     // parallel approves can't both fit under the limit.
@@ -924,6 +961,10 @@ export type ItemView = {
   threadHaystack: string;
   /** Phase 2d: a new message (threading null), not a reply. */
   isNew: boolean;
+  /** SF2 (owner Q1 option c): how many stored messages count as new for this item (Q6 rule). */
+  newerCount: number;
+  /** SF2: newerDigest of those messages, sent back by the approve form as `shownNewer`. */
+  newerDigest: string;
   /** Phase 2d: the shown recipients (lowercased) that are first-time recipients right now (owner Q3, Q4). */
   firstTime: string[];
   /** Phase 2d, owner Q7: the Unicode form of each shown recipient's punycode domain, keyed by the address as shown. */
@@ -1004,6 +1045,7 @@ export async function getItemView(
     : null;
   const ctx = item.threadId ? await threadContext(ex, userId, item.threadId) : { addresses: [], haystack: "" };
   const ownAccounts = (await ex.select({ email: connectedAccounts.email }).from(connectedAccounts).where(eq(connectedAccounts.userId, userId))).map((a) => a.email);
+  const newer = await newerMessageIds(ex, item);
 
   // Phase 2d: first-time markers, IDN display, the cap, and the sent new message's thread.
   const isNew = isNewMessage(shown);
@@ -1035,6 +1077,8 @@ export async function getItemView(
     ownAccounts,
     threadHaystack: ctx.haystack,
     isNew,
+    newerCount: newer.length,
+    newerDigest: newerDigest(newer),
     firstTime,
     idn,
     cap: { limit, usedToday, remaining: capRemaining(usedToday, limit) },

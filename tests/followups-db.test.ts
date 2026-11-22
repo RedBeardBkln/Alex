@@ -751,7 +751,8 @@ describe.skipIf(!testDbUrl)("phase-2-followups-1 (Postgres, two connections)", (
         return typeof v === "function" ? v.bind(tt) : v;
       },
     }) as Database;
-    expect(await draftReply({ db: deleteFirst, provider, caps: BIG }, { userId, threadId: t.thread.id, mode: "reply", instruction: null })).toEqual({ ok: false, code: "not_found" });
+    // phase-2-followups-2 (O2, owner Q7): this case now answers account_disconnected (was not_found).
+    expect(await draftReply({ db: deleteFirst, provider, caps: BIG }, { userId, threadId: t.thread.id, mode: "reply", instruction: null })).toEqual({ ok: false, code: "account_disconnected" });
     expect(calls).toBe(0);
     expect(await database.select().from(schema.aiCalls)).toEqual([]);
     expect(await startDraftCall(database, { userId, accountId: b.id, threadId: t.thread.id, provider: "fake", model: "claude-opus-5-5", now: new Date(), caps: BIG })).toEqual({ kind: "not_found" });

@@ -22,6 +22,7 @@ const DRAFT_ERRORS: Record<string, string> = {
   in_flight: "A draft for this thread is already being written. Wait for it to finish (up to about a minute), then check the Queue.",
   not_found: "This thread is no longer available.",
   proposal: "The draft couldn't be saved (for example no readable recipient). Write the reply yourself.",
+  account_disconnected: "The account was disconnected while the draft was being written. Nothing was saved.",
 };
 const TRIAGE_OUTCOMES: Record<string, string> = {
   triaged: "Triaged.",
@@ -30,6 +31,7 @@ const TRIAGE_OUTCOMES: Record<string, string> = {
   capped: "Today's AI triage limit is reached. It resets at midnight UTC.",
   failed: "AI triage failed; try again later.",
   not_configured: "AI not configured.",
+  account_disconnected: "The account was disconnected during triage. Nothing was saved.",
 };
 
 export type AiPanelProps = {
