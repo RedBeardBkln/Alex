@@ -138,6 +138,9 @@ export default async function QueueItemPage({
   const overLimit = view.firstTime.length > view.cap.limit;
   const overLimitText = `This email has ${view.firstTime.length} first-time ${view.firstTime.length === 1 ? "recipient" : "recipients"}; the daily limit is ${view.cap.limit}, so it can't be sent as it is, on any day. Remove some recipients, or raise EMAIL_NEW_RECIPIENTS_PER_DAY.`;
   const open = item.status === "pending" || item.status === "failed";
+  // Q6: the warning and the required tick show when a message was flagged, or (SF2, owner Q1 option c)
+  // when the thread holds newer messages right now, even if no flag was written for them.
+  const threadChanged = item.threadChangedAt !== null || view.newerCount > 0;
   const now = Date.now();
   const executingFor = item.executingSince ? now - item.executingSince.getTime() : 0;
   const subjectWarning = subjectWarnings(shown.subject, parent?.subject ?? thread?.subject ?? null);
@@ -286,7 +289,7 @@ export default async function QueueItemPage({
           {!isNew && shown.threading && shown.threading.inReplyTo === null && (
             <Warning>The original message has no usable Message-ID, so threading relies on Gmail&apos;s thread id only.</Warning>
           )}
-          {!isNew && item.threadChangedAt && open && (
+          {!isNew && threadChanged && open && (
             <Warning>
               New messages arrived in this thread since this was written.{" "}
               {thread && (
@@ -409,6 +412,7 @@ export default async function QueueItemPage({
             <input type="hidden" name="revision" value={item.revision} />
             <input type="hidden" name="contentHash" value={item.contentHash} />
             <input type="hidden" name="shownThreadChangedAt" value={item.threadChangedAt ? String(item.threadChangedAt.getTime()) : ""} />
+            <input type="hidden" name="shownNewer" value={view.newerDigest} />
             {isNew && (
               <fieldset className="space-y-1">
                 <legend className="font-medium">
@@ -435,7 +439,7 @@ export default async function QueueItemPage({
                 {view.cap.remaining} left.
               </p>
             )}
-            {!isNew && item.threadChangedAt && (
+            {!isNew && threadChanged && (
               <label className="flex items-center gap-2">
                 <input type="checkbox" name="ackThreadChange" required />
                 <span>I&apos;ve seen the new messages in this thread</span>

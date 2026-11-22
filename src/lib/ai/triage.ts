@@ -5,9 +5,9 @@ import { aiCaps, nextUtcMidnight, type Caps } from "@/lib/ai-ledger/config";
 import { ambiguousFailureCost } from "@/lib/ai-ledger/pricing";
 import { auditCapReachedOnce, auditProviderErrorDeduped, capState, logAiCall, SPEND_LIMIT_CODE } from "@/lib/ai-ledger/ledger";
 import { extractAddresses } from "@/lib/approvals/addresses";
-import { audit } from "@/lib/audit";
+import { auditForAccount, lockAccountForWrite } from "@/lib/db-locks";
 import { TRIAGE_MODEL, TRIAGE_PROMPT_VERSION } from "./prompts";
-import type { ThreadTextMessage, TriageProvider } from "./types";
+import type { ThreadTextMessage, TriageOutcome, TriageProvider } from "./types";
 
 /**
  * Triage (Phase 2c, owner Q1/Q2): one Haiku call per recent INBOX message, sequentially, inside
@@ -127,29 +127,74 @@ async function writeTriageRow(ex: Executor, account: Pick<ConnectedAccount, "id"
     .onConflictDoUpdate({ target: [mailTriage.messageId, mailTriage.promptVersion], set: values });
 }
 
-/** Triages one message (any age). Returns the outcome; caps are checked by the caller. */
-async function triageOne(deps: TriageStageDeps, account: Pick<ConnectedAccount, "id" | "userId">, m: Candidate, now: Date) {
-  const out = await deps.provider.triage({ message: toTriageMessage(m) }, AbortSignal.timeout(TRIAGE_TIMEOUT_MS));
-  if (out.status === "error") await auditProviderErrorDeduped(deps.db, account.userId, account.id, "triage", out.errorCode ?? "error");
-  const call = await logAiCall(deps.db, {
+/** O2 sibling (phase-2-followups-2, owner Q10): the ai_calls code of a finished call whose account was disconnected meanwhile. */
+const DISCONNECTED = "account_disconnected";
+
+type Recorded = { cost: number; accountLive: boolean };
+
+async function writeTriageOutcome(
+  tx: Executor,
+  account: Pick<ConnectedAccount, "id" | "userId">,
+  m: Candidate,
+  provider: string,
+  out: TriageOutcome,
+  now: Date,
+  live: { account: boolean; message: boolean },
+): Promise<Recorded> {
+  const accountId = live.account ? account.id : null;
+  if (out.status === "error") await auditProviderErrorDeduped(tx, account.userId, accountId, "triage", out.errorCode ?? "error");
+  const call = await logAiCall(tx, {
     userId: account.userId,
-    accountId: account.id,
+    accountId,
     purpose: "triage",
     status: out.status,
-    errorCode: out.errorCode,
-    messageId: m.id,
+    // Owner Q6 rules: a finished call whose account is gone records account_disconnected; a failed
+    // call keeps the provider's code (the reserve and the "estimated" column depend on it).
+    errorCode: !live.account && out.status === "ok" ? DISCONNECTED : out.errorCode,
+    messageId: live.message ? m.id : null,
     // Round 4, B1: an ambiguous failure is recorded at the triage reserve (no usage came back).
     usage: ((r) => (r !== null ? { ...out.usage, costUsdMicros: r } : out.usage))(ambiguousFailureCost("triage", out.status, out.errorCode)),
   });
-  if (out.status === "ok" && out.result) {
-    await writeTriageRow(deps.db, account, m, deps.provider.id, { status: "ok", category: out.result.category, needsReply: out.result.needsReply, summary: out.result.summary, countAttempt: true }, now);
-  } else if (out.status === "error") {
-    const attempts = (m.attempts ?? 0) + 1;
-    await writeTriageRow(deps.db, account, m, deps.provider.id, { status: "error", nextAttemptAt: new Date(now.getTime() + backoffMs(attempts)), countAttempt: true }, now);
-  } else {
-    await writeTriageRow(deps.db, account, m, deps.provider.id, { status: out.status, countAttempt: true }, now);
+  // No triage row for a message that is gone (with its account, or deleted on its own).
+  if (live.account && live.message) {
+    if (out.status === "ok" && out.result) {
+      await writeTriageRow(tx, account, m, provider, { status: "ok", category: out.result.category, needsReply: out.result.needsReply, summary: out.result.summary, countAttempt: true }, now);
+    } else if (out.status === "error") {
+      const attempts = (m.attempts ?? 0) + 1;
+      await writeTriageRow(tx, account, m, provider, { status: "error", nextAttemptAt: new Date(now.getTime() + backoffMs(attempts)), countAttempt: true }, now);
+    } else {
+      await writeTriageRow(tx, account, m, provider, { status: out.status, countAttempt: true }, now);
+    }
   }
-  return { status: out.status, errorCode: out.errorCode, cost: call.costUsdMicros ?? 0 };
+  return { cost: call.costUsdMicros ?? 0, accountLive: live.account };
+}
+
+/**
+ * Triages one message (any age). Returns the outcome; caps are checked by the caller.
+ *
+ * O2 sibling (owner Q10): the call's row, its provider-error audit and the triage row are written in
+ * one transaction that locks the account first. If the account was disconnected during the call, the
+ * billed call is still recorded (null account and message ids, real usage) and no triage row is
+ * written. The message row is locked too, so a message deleted on its own is handled the same way.
+ */
+async function triageOne(deps: TriageStageDeps, account: Pick<ConnectedAccount, "id" | "userId">, m: Candidate, now: Date) {
+  const out = await deps.provider.triage({ message: toTriageMessage(m) }, AbortSignal.timeout(TRIAGE_TIMEOUT_MS));
+  const recorded = await deps.db.transaction(async (tx) => {
+    if (!(await lockAccountForWrite(tx, account.id))) return writeTriageOutcome(tx, account, m, deps.provider.id, out, now, { account: false, message: false });
+    const [message] = await tx.select({ id: mailMessages.id }).from(mailMessages).where(eq(mailMessages.id, m.id)).for("key share");
+    return writeTriageOutcome(tx, account, m, deps.provider.id, out, now, { account: true, message: !!message });
+  });
+  return { status: out.status, errorCode: out.errorCode, cost: recorded.cost, accountLive: recorded.accountLive };
+}
+
+/** The ai.triage_run audit; written with a null account id if the account is gone (O2 sibling). */
+async function auditTriageRun(ex: Executor, account: Pick<ConnectedAccount, "id" | "userId">, r: { triaged: number; failed: number; skippedCap: number; costUsdMicros: number }) {
+  await auditForAccount(ex, {
+    userId: account.userId,
+    accountId: account.id,
+    action: "ai.triage_run",
+    detail: { triaged: r.triaged, failed: r.failed, skipped_cap: r.skippedCap, costUsdMicros: r.costUsdMicros },
+  });
 }
 
 /**
@@ -168,32 +213,29 @@ export async function runTriageStage(deps: TriageStageDeps, account: Pick<Connec
     const cap = await capState(deps.db, account.userId, "triage", now(), caps);
     if (cap.capped) {
       await auditCapReachedOnce(deps.db, account.userId, "triage", cap.cap, now());
-      for (const m of candidates.slice(i)) {
-        await writeTriageRow(deps.db, account, m, deps.provider.id, { status: "skipped_cap", nextAttemptAt: nextUtcMidnight(now()), countAttempt: false }, now());
-        result.skippedCap++;
-      }
+      const rest = candidates.slice(i);
+      // Lock order (O2 sibling): the account first; if it is gone, so are its messages, and nothing is written.
+      result.skippedCap += await deps.db.transaction(async (tx) => {
+        if (!(await lockAccountForWrite(tx, account.id))) return 0;
+        for (const m of rest) {
+          await writeTriageRow(tx, account, m, deps.provider.id, { status: "skipped_cap", nextAttemptAt: nextUtcMidnight(now()), countAttempt: false }, now());
+        }
+        return rest.length;
+      });
       break;
     }
     const r = await triageOne(deps, account, candidates[i]!, now());
     result.costUsdMicros += r.cost;
     if (r.status === "ok") result.triaged++;
     else result.failed++;
+    // The account was disconnected during the call: its other messages are gone too, so stop.
+    if (!r.accountLive) break;
     if (r.errorCode === SPEND_LIMIT_CODE) {
       await auditCapReachedOnce(deps.db, account.userId, "triage", "spend_limit", now());
       break;
     }
   }
-  if (result.triaged + result.failed + result.skippedCap > 0) {
-    await audit(
-      {
-        userId: account.userId,
-        accountId: account.id,
-        action: "ai.triage_run",
-        detail: { triaged: result.triaged, failed: result.failed, skipped_cap: result.skippedCap, costUsdMicros: result.costUsdMicros },
-      },
-      deps.db,
-    );
-  }
+  if (result.triaged + result.failed + result.skippedCap > 0) await auditTriageRun(deps.db, account, result);
   return result;
 }
 
@@ -205,7 +247,7 @@ export async function triageThreadNow(
   deps: TriageStageDeps,
   userId: string,
   threadId: string,
-): Promise<"triaged" | "already" | "not_found" | "capped" | "failed"> {
+): Promise<"triaged" | "already" | "not_found" | "capped" | "failed" | "account_disconnected"> {
   const now = (deps.now ?? (() => new Date()))();
   const [m] = await deps.db
     .select({ ...candidateColumns, accountId: mailMessages.accountId, triageStatus: mailTriage.status })
@@ -224,9 +266,8 @@ export async function triageThreadNow(
   }
   const account = { id: m.accountId, userId };
   const r = await triageOne(deps, account, m, now);
-  await audit(
-    { userId, accountId: m.accountId, action: "ai.triage_run", detail: { triaged: r.status === "ok" ? 1 : 0, failed: r.status === "ok" ? 0 : 1, skipped_cap: 0, costUsdMicros: r.cost } },
-    deps.db,
-  );
+  await auditTriageRun(deps.db, account, { triaged: r.status === "ok" ? 1 : 0, failed: r.status === "ok" ? 0 : 1, skippedCap: 0, costUsdMicros: r.cost });
+  // O2 sibling: the thread went with its account, so the owner gets a clean answer, not a 500.
+  if (!r.accountLive) return "account_disconnected";
   return r.status === "ok" ? "triaged" : "failed";
 }

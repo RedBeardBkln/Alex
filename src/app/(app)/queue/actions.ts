@@ -180,6 +180,9 @@ export async function approveItemAction(formData: FormData) {
       ackThreadChange: z.enum(["on"]).optional(),
       // The thread_changed_at the page rendered (epoch ms), empty if it showed no new-message warning (B1).
       shownThreadChangedAt: z.string().regex(/^[0-9]{0,16}$/).default(""),
+      // SF2 (owner Q1 option c): the newer-message digest the page rendered; empty if it showed none.
+      // A page rendered before this field existed sends nothing, which counts as "".
+      shownNewer: z.string().regex(/^([0-9a-f]{64})?$/).default(""),
     })
     .parse({
       itemId: field(formData, "itemId"),
@@ -187,6 +190,7 @@ export async function approveItemAction(formData: FormData) {
       contentHash: field(formData, "contentHash"),
       ackThreadChange: field(formData, "ackThreadChange"),
       shownThreadChangedAt: field(formData, "shownThreadChangedAt"),
+      shownNewer: field(formData, "shownNewer"),
     });
   // Phase 2d, owner Q2: the ticked recipient boxes (new messages). Bounded before use.
   const confirmedRecipients = z
@@ -200,6 +204,7 @@ export async function approveItemAction(formData: FormData) {
     contentHash: input.contentHash,
     ackThreadChange: input.ackThreadChange === "on",
     shownThreadChangedAt: input.shownThreadChangedAt === "" ? null : Number(input.shownThreadChangedAt),
+    shownNewer: input.shownNewer,
     messageIdHost: messageIdHost(),
     confirmedRecipients,
     newRecipientLimit: newRecipientLimit(),

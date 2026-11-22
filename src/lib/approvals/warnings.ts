@@ -90,35 +90,38 @@ export function isIPv4(s: string): boolean {
   return parts.every((p) => /^(0|[1-9][0-9]{0,2})$/.test(p) && Number(p) <= 255);
 }
 
-/** A link found in text: what is shown, and its host (null when it has none or it can't be parsed). */
-type Link = { display: string; host: string | null; ip: boolean };
-
-const BACKSLASH = String.fromCharCode(92);
-const isSchemeChar = (c: string) => (c >= "a" && c <= "z") || (c >= "0" && c <= "9") || c === "+" || c === "." || c === "-";
-const isLetter = (c: string) => c >= "a" && c <= "z";
-
-/** `s` from `from` up to the first `/`, `?`, `#` or backslash (an authority). Linear. */
-function authorityAt(s: string, from: number): string {
-  let end = from;
-  while (end < s.length) {
-    const c = s[end]!;
-    if (c === "/" || c === "?" || c === "#" || c === BACKSLASH) break;
-    end++;
-  }
-  return s.slice(from, end);
-}
+/** A host a link may lead to (normalized; see normalizeHost), and whether it is an IPv4 address. */
+type Host = { host: string; ip: boolean };
 
 /**
- * The host of an authority (userinfo up to the last `@` and the port dropped), parsed with the
- * WHATWG URL parser as an http host: IDNA/punycode, lowercasing, fullwidth dots, percent-decoding
- * and IPv4 normalisation (decimal, hex and octal forms), as for http links. Null if it is empty,
- * can't be parsed, or is neither an IPv4 address nor a plausible domain.
+ * A link found in one token (phase-2-followups-2, SF1): what is shown, every host it may lead to,
+ * and whether some part of it is a scheme link with no parseable host (then it is always flagged,
+ * owner Q10).
  */
-function hostOfAuthority(authority: string): { host: string; ip: boolean } | null {
-  const at = authority.lastIndexOf("@");
-  let h = at >= 0 ? authority.slice(at + 1) : authority;
-  const colon = h.indexOf(":");
-  if (colon >= 0) h = h.slice(0, colon);
+type Link = { display: string; hosts: Host[]; hostless: boolean };
+
+const BACKSLASH = String.fromCharCode(92);
+/** Schemes whose host is read without `//` (owner Q4): WHATWG's special schemes minus `file`. */
+const SPECIAL_SCHEMES = new Set(["http", "https", "ws", "wss", "ftp"]);
+/** A host substring longer than this is treated as unparseable (no slice longer than this is made). */
+const MAX_HOST_CHARS = 1024;
+
+const CC_SLASH = 47;
+const CC_BACKSLASH = 92;
+const CC_QUESTION = 63;
+const CC_HASH = 35;
+const CC_COLON = 58;
+const CC_AT = 64;
+/** Lowercase scheme characters: letters, digits, `+`, `.` and `-`. */
+const isSchemeCode = (c: number) => (c >= 97 && c <= 122) || (c >= 48 && c <= 57) || c === 43 || c === 46 || c === 45;
+const isLetterCode = (c: number) => c >= 97 && c <= 122;
+
+/**
+ * A host string parsed with the WHATWG URL parser as an http host: IDNA/punycode, lowercasing,
+ * fullwidth dots, percent-decoding and IPv4 normalisation (decimal, hex and octal forms). Null if it
+ * is empty, can't be parsed, or is neither an IPv4 address nor a plausible domain.
+ */
+function parseHost(h: string): Host | null {
   if (h === "") return null;
   let parsed: string;
   try {
@@ -143,60 +146,196 @@ function stripTrailing(s: string): string {
 }
 
 /**
- * The link in one token, if any (S1/N2 follow-up):
- * - a `scheme://` link anywhere in the token (the scheme is the run of letters, digits, `+`, `.`
- *   and `-` before a `://`, starting at its first letter; the first `://` that has one counts). Shown from the scheme on. Its
- *   host may be null (`file:///x`, `x://`), and then it is always flagged (owner Q10).
- * - a protocol-relative `//host` link, only if the host is a domain or an IPv4 address (so `//`
- *   comments such as `// note` or `//TODO` aren't links). Shown as the token.
- * - otherwise a bare domain (as before: after the last `@`, before the first `/`), or a bare strict
- *   dotted-quad IPv4 address (after the last `@`, before `/`, `?`, `#` or `:port`), shown as the host.
+ * Per-position lookups for one token, each built in one pass (SF1 linear-time requirement), so every
+ * candidate costs O(1) plus at most one memoised host parse of at most MAX_HOST_CHARS characters.
  */
-function linkInToken(raw: string): Link | null {
-  const lower = stripTrailing(raw).toLowerCase();
-  // Round 2 (D2): a `://` with no valid scheme before it (`://`, `0://`, `-://`) doesn't end the
-  // search; the next one is tried. Linear: each backward scan stops at the `:` or `/` of the previous
-  // `://`, so the scanned runs don't overlap.
-  for (let sep = lower.indexOf("://"); sep >= 0; sep = lower.indexOf("://", sep + 1)) {
-    let start = sep;
-    while (start > 0 && isSchemeChar(lower[start - 1]!)) start--;
-    while (start < sep && !isLetter(lower[start]!)) start++;
-    if (start < sep) {
-      const host = hostOfAuthority(authorityAt(lower, sep + 3));
-      return { display: lower.slice(start), host: host?.host ?? null, ip: host?.ip ?? false };
+function indexToken(s: string) {
+  const n = s.length;
+  /** Next `/`, `?`, `#` or backslash at or after i (an authority end, stopping at backslash). */
+  const endWithBackslash = new Int32Array(n + 1);
+  /** Next `/`, `?` or `#` at or after i (an authority end, not stopping at backslash). */
+  const endNoBackslash = new Int32Array(n + 1);
+  const nextColon = new Int32Array(n + 1);
+  /** Next position at or after i that is neither `/` nor a backslash. */
+  const nextNonSlash = new Int32Array(n + 1);
+  const nextLetter = new Int32Array(n + 1);
+  /** The last `@` before position i, or -1. */
+  const prevAt = new Int32Array(n + 1);
+  endWithBackslash[n] = endNoBackslash[n] = nextColon[n] = nextNonSlash[n] = nextLetter[n] = n;
+  for (let i = n - 1; i >= 0; i--) {
+    const c = s.charCodeAt(i);
+    const delim = c === CC_SLASH || c === CC_QUESTION || c === CC_HASH;
+    endNoBackslash[i] = delim ? i : endNoBackslash[i + 1]!;
+    endWithBackslash[i] = delim || c === CC_BACKSLASH ? i : endWithBackslash[i + 1]!;
+    nextColon[i] = c === CC_COLON ? i : nextColon[i + 1]!;
+    nextNonSlash[i] = c === CC_SLASH || c === CC_BACKSLASH ? nextNonSlash[i + 1]! : i;
+    nextLetter[i] = isLetterCode(c) ? i : nextLetter[i + 1]!;
+  }
+  prevAt[0] = -1;
+  for (let i = 0; i < n; i++) prevAt[i + 1] = s.charCodeAt(i) === CC_AT ? i : prevAt[i]!;
+
+  const memo = new Map<number, Host | null>();
+  /** The host range of the authority [a, end): after its last `@`, up to its first `:`; null if empty or too long. */
+  const hostRange = (a: number, end: number): [number, number] | null => {
+    const at = prevAt[end]!;
+    const hs = at >= a ? at + 1 : a;
+    const he = Math.min(nextColon[hs]!, end);
+    return he > hs && he - hs <= MAX_HOST_CHARS ? [hs, he] : null;
+  };
+  const hostIn = (r: [number, number]): Host | null => {
+    const key = r[0] * (n + 1) + r[1];
+    let h = memo.get(key);
+    if (h === undefined) {
+      h = parseHost(s.slice(r[0], r[1]));
+      memo.set(key, h);
+    }
+    return h;
+  };
+  /**
+   * The hosts of the authority starting at `a`, read both stopping and not stopping at a backslash
+   * (owner Q3). `strictIp` keeps an IPv4 host only if it is written as a strict dotted quad.
+   */
+  const hostsAt = (a: number, strictIp = false): Host[] => {
+    const out: Host[] = [];
+    for (const end of [endWithBackslash[a]!, endNoBackslash[a]!]) {
+      const r = hostRange(a, end);
+      if (!r) continue;
+      const h = hostIn(r);
+      if (!h || out.some((o) => o.host === h.host)) continue;
+      if (strictIp && h.ip && !isIPv4(s.slice(r[0], r[1]))) continue;
+      out.push(h);
+    }
+    return out;
+  };
+  return { nextColon, nextNonSlash, nextLetter, hostsAt };
+}
+
+/** The first `/`, `?`, `#` or backslash in `s` at or after `from`, or `s.length`. */
+function authorityEnd(s: string, from: number): number {
+  let i = from;
+  while (i < s.length) {
+    const c = s.charCodeAt(i);
+    if (c === CC_SLASH || c === CC_QUESTION || c === CC_HASH || c === CC_BACKSLASH) break;
+    i++;
+  }
+  return i;
+}
+
+/** R5: every `:`-separated segment of s[from, to) that is a plausible domain or a strict IPv4 address (owner Q5). */
+function bareHosts(s: string, from: number, to: number, out: Host[]): void {
+  let i = from;
+  while (i <= to) {
+    let j = s.indexOf(":", i);
+    if (j < 0 || j > to) j = to;
+    if (j > i && j - i <= MAX_HOST_CHARS) {
+      const seg = s.slice(i, j);
+      if (isIPv4(seg)) out.push({ host: seg, ip: true });
+      else {
+        const domain = normalizeHost(seg);
+        if (domain) out.push({ host: domain, ip: false });
+      }
+    }
+    i = j + 1;
+  }
+}
+
+/**
+ * The links in one token (SF1, phase-2-followups-2). The token is stripped of trailing sentence
+ * punctuation and lowercased. Every host candidate in it counts (owner Q2):
+ * - R1: a `:` after a special scheme (`http`, `https`, `ws`, `wss`, `ftp`; owner Q4), with or
+ *   without slashes: any run of `/` and backslashes is skipped, then the authority is read.
+ * - R2: `://` after any other scheme (the run of scheme characters before it, from its first letter).
+ * - R3: `://` with no valid scheme before it (`://`, `_://`, `0://`, a look-alike such as a Cyrillic
+ *   letter): read as a `//host`, and a link only if that gives a domain or a strict IPv4 address.
+ * - R4: a token that starts with `//`: a link only if it gives a domain or an IPv4 address.
+ * - R5: bare hosts: the text after the token's last `@`, and the token's authority after its own last
+ *   `@`, each cut at `/`, `?`, `#` or backslash; every `:` segment that is a plausible domain or a
+ *   strict IPv4 address counts. Shown as the host.
+ * An authority's host is after its last `@` and before its first `:`, read both stopping and not
+ * stopping at a backslash (owner Q3). R1–R4 candidates in a token form one link, shown from the
+ * earliest candidate's start (the scheme, or the token for R3/R4), with all their hosts; it is
+ * host-less (always flagged) if an R1 or R2 candidate has no parseable host. R5 hosts already in the
+ * token are skipped.
+ */
+function linksInToken(raw: string): Link[] {
+  const s = stripTrailing(raw).toLowerCase();
+  if (s === "") return [];
+  let url: { start: number; hosts: Host[]; hostless: boolean } | null = null;
+  // Round 2 (D1): a Set, so a token with many distinct hosts stays linear (no scan of the list per host).
+  const urlHosts = new Set<string>();
+  const addUrl = (start: number, hosts: Host[], hostless: boolean) => {
+    if (!url) url = { start, hosts: [], hostless: false };
+    url.start = Math.min(url.start, start);
+    url.hostless ||= hostless;
+    for (const h of hosts) {
+      if (urlHosts.has(h.host)) continue;
+      urlHosts.add(h.host);
+      url.hosts.push(h);
+    }
+  };
+
+  const startsSlashSlash = s.startsWith("//");
+  if (startsSlashSlash || s.includes(":")) {
+    const ix = indexToken(s);
+    if (startsSlashSlash) {
+      const hosts = ix.hostsAt(2);
+      if (hosts.length > 0) addUrl(0, hosts, false);
+    }
+    // Left to right over every `:`. The backward scheme scans don't overlap (a scheme can't contain
+    // `:`), so all of this is linear in the token.
+    for (let p = ix.nextColon[0]!; p < s.length; p = ix.nextColon[p + 1]!) {
+      let run = p;
+      while (run > 0 && isSchemeCode(s.charCodeAt(run - 1))) run--;
+      const schemeStart = ix.nextLetter[run]!;
+      const hasScheme = schemeStart < p;
+      const slashes = s.charCodeAt(p + 1) === CC_SLASH && s.charCodeAt(p + 2) === CC_SLASH;
+      if (hasScheme && p - schemeStart <= 5 && SPECIAL_SCHEMES.has(s.slice(schemeStart, p))) {
+        const hosts = ix.hostsAt(ix.nextNonSlash[p + 1]!);
+        addUrl(schemeStart, hosts, hosts.length === 0);
+      } else if (slashes && hasScheme) {
+        const hosts = ix.hostsAt(p + 3);
+        addUrl(schemeStart, hosts, hosts.length === 0);
+      } else if (slashes) {
+        const hosts = ix.hostsAt(p + 3, true);
+        if (hosts.length > 0) addUrl(0, hosts, false);
+      }
     }
   }
-  if (lower.startsWith("//")) {
-    const host = hostOfAuthority(authorityAt(lower, 2));
-    return host ? { display: lower, host: host.host, ip: host.ip } : null;
+
+  const out: Link[] = [];
+  const seen = new Set<string>();
+  const found = url as { start: number; hosts: Host[]; hostless: boolean } | null;
+  if (found) {
+    out.push({ display: s.slice(found.start), hosts: found.hosts, hostless: found.hostless });
+    for (const h of found.hosts) seen.add(h.host);
   }
-  const at = lower.lastIndexOf("@");
-  const candidate = at >= 0 ? lower.slice(at + 1) : lower;
-  const domain = normalizeHost(candidate.split("/")[0]!);
-  if (domain) return { display: domain, host: domain, ip: false };
-  let end = 0;
-  while (end < candidate.length) {
-    const c = candidate[end]!;
-    if (c === "/" || c === "?" || c === "#" || c === ":") break;
-    end++;
+  const bare: Host[] = [];
+  const lastAt = s.lastIndexOf("@");
+  bareHosts(s, lastAt + 1, authorityEnd(s, lastAt + 1), bare);
+  const end0 = authorityEnd(s, 0);
+  const at0 = end0 > 0 ? s.lastIndexOf("@", end0 - 1) : -1;
+  if (at0 !== lastAt) bareHosts(s, at0 + 1, end0, bare);
+  for (const h of bare) {
+    if (seen.has(h.host)) continue;
+    seen.add(h.host);
+    out.push({ display: h.host, hosts: [h], hostless: false });
   }
-  const ip = candidate.slice(0, end);
-  return isIPv4(ip) ? { display: ip, host: ip, ip: true } : null;
+  return out;
 }
 
 /** Every link in `text`, de-duplicated by what is shown. */
 function linkEntries(text: string): Link[] {
   const found = new Map<string, Link>();
   for (const raw of tokens(text)) {
-    const link = linkInToken(raw);
-    if (link && !found.has(link.display)) found.set(link.display, link);
+    for (const link of linksInToken(raw)) if (!found.has(link.display)) found.set(link.display, link);
   }
   return [...found.values()];
 }
 
 /**
- * URLs (any `scheme://` and `//host` link), domains (including the domains of email addresses) and
- * bare IPv4 addresses mentioned in `text`, lowercased and de-duplicated.
+ * URLs (scheme links with or without `//`, `//host` links), domains (including the domains of email
+ * addresses and `host:port` forms) and bare IPv4 addresses mentioned in `text`, lowercased and
+ * de-duplicated. See linksInToken for the rules.
  */
 export function linksIn(text: string): string[] {
   return linkEntries(text).map((l) => l.display);
@@ -205,7 +344,7 @@ export function linksIn(text: string): string[] {
 /** The hosts of every URL, domain and IPv4 address in `text` (normalized; see normalizeHost). */
 export function hostsIn(text: string): Set<string> {
   const hosts = new Set<string>();
-  for (const link of linkEntries(text)) if (link.host) hosts.add(link.host);
+  for (const link of linkEntries(text)) for (const h of link.hosts) hosts.add(h.host);
   return hosts;
 }
 
@@ -224,17 +363,17 @@ function underHost(host: string, known: string): boolean {
  * IPv4 host is known only if exactly that address appears in the thread (owner Q9); a link with no
  * host or an unparseable one is always flagged (owner Q10).
  *
+ * SF1 (phase-2-followups-2): a link may have several hosts (every candidate in its token, both
+ * backslash readings); it is flagged if any of them is unknown.
+ *
  * Note: this can't catch a link the sender put in their own email; it only flags links that came
  * from nowhere in the thread.
  */
 export function linksNotInThread(body: string, threadHaystack: string): string[] {
   const known = hostsIn(threadHaystack);
   const knownDomains = [...known];
+  const isKnown = (h: Host) => (h.ip ? known.has(h.host) : knownDomains.some((k) => underHost(h.host, k)));
   return linkEntries(body)
-    .filter((link) => {
-      if (!link.host) return true;
-      if (link.ip) return !known.has(link.host);
-      return !knownDomains.some((k) => underHost(link.host!, k));
-    })
+    .filter((link) => link.hostless || link.hosts.length === 0 || !link.hosts.every(isKnown))
     .map((l) => l.display);
 }

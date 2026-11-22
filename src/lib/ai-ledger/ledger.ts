@@ -311,3 +311,52 @@ export async function finishAiCall(
     .where(and(eq(aiCalls.id, callId), eq(aiCalls.status, "pending")));
   return { costUsdMicros: cost };
 }
+
+// ---- Closing a draft call when the account may be gone (phase-2-followups-2, O2) ---------------
+
+/** The closing audit of a draft: `ai.draft_failed {code}` or `ai.draft_proposed {itemId, model, costUsdMicros}`. */
+export type DraftClosing = { action: "ai.draft_failed" | "ai.draft_proposed"; detail: Record<string, unknown> };
+
+export type FinishDraftInput = {
+  callId: string;
+  userId: string;
+  accountId: string;
+  status: Exclude<AiCall["status"], "pending">;
+  errorCode: string | null;
+  usage: AiUsage;
+  /** Linked only if the account still exists (otherwise the item cascaded with it). */
+  approvalItemId?: string | null;
+  /** Audits `ai.provider_error` (deduped) first, with this status, when set. */
+  providerError?: string | null;
+  /** The error code recorded instead when the account is gone (owner Q6); omitted keeps `errorCode`. */
+  errorCodeIfGone?: string;
+  /** The closing audit, given whether the account still exists and the recorded cost. */
+  closing: (r: { accountLive: boolean; costUsdMicros: number | null }) => DraftClosing;
+};
+
+async function closeDraftCall(tx: Executor, input: FinishDraftInput, accountLive: boolean) {
+  const accountId = accountLive ? input.accountId : null;
+  if (input.providerError) await auditProviderErrorDeduped(tx, input.userId, accountId, "draft", input.providerError);
+  const call = await finishAiCall(tx, input.callId, {
+    status: input.status,
+    errorCode: accountLive ? input.errorCode : (input.errorCodeIfGone ?? input.errorCode),
+    usage: input.usage,
+    approvalItemId: accountLive ? (input.approvalItemId ?? null) : null,
+  });
+  const closing = input.closing({ accountLive, costUsdMicros: call.costUsdMicros });
+  await audit({ userId: input.userId, accountId, action: closing.action, detail: closing.detail }, tx);
+  return { costUsdMicros: call.costUsdMicros, accountLive };
+}
+
+/**
+ * Finishes a started draft call and writes its closing audit in one transaction that locks the
+ * account first (O2). If the account was disconnected while the call ran, the row is still finished
+ * with the real usage (so the caps and the report stay right) and no item link, and the audits carry
+ * a null account id instead of failing their FK. A Disconnect that arrives meanwhile waits for this.
+ */
+export async function finishDraftCall(ex: Executor, input: FinishDraftInput): Promise<{ costUsdMicros: number | null; accountLive: boolean }> {
+  return ex.transaction(async (tx) => {
+    if (!(await lockAccountForWrite(tx, input.accountId))) return closeDraftCall(tx, input, false);
+    return closeDraftCall(tx, input, true);
+  });
+}

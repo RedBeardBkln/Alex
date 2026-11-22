@@ -13,6 +13,7 @@ import { gmailClientFor } from "@/lib/gmail/runtime";
 import { stopWatchBeforeDisconnect } from "@/lib/gmail/watch-stop";
 import { googleClient } from "@/lib/google";
 import { checkGoogleConnection } from "@/lib/google-api";
+import { errorName, sqlState } from "@/lib/pg-errors";
 import { destroySession, requireUser } from "@/lib/session";
 
 const idSchema = z.uuid();
@@ -48,7 +49,19 @@ export async function disconnect(formData: FormData) {
   }
   // Deleting the account also deletes its stored mail (ON DELETE CASCADE). The default form retries
   // a lost deadlock (40P01) up to DELETE_ACCOUNT_ATTEMPTS times.
-  await deleteAccount(db(), user.id, id);
+  try {
+    await deleteAccount(db(), user.id, id);
+  } catch (err) {
+    // Security N3 (phase-2-followups-2): a Disconnect that still fails is audited (ids and a
+    // content-free code only, never the address) and stays a visible failure. The account row still
+    // exists, so the audit's account FK holds; if the audit fails too (database down), that's only logged.
+    try {
+      await audit({ userId: user.id, accountId: id, action: "account.disconnect_failed", detail: { code: sqlState(err) ?? errorName(err) } });
+    } catch (auditErr) {
+      console.error("disconnect failure audit failed", { accountId: id, error: errorName(auditErr), code: sqlState(auditErr) });
+    }
+    throw err;
+  }
   await audit({ userId: user.id, action: "account.disconnected", detail: accountDisconnectedDetail(account) });
   revalidatePath("/");
 }

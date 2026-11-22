@@ -1,26 +1,21 @@
 import type { Executor } from "@/db";
 import { audit } from "@/lib/audit";
+import { errorName, sqlState } from "@/lib/pg-errors";
 
 /**
  * E5 follow-up (owner Q5): the post-commit Q6 re-checks (afterMessageCommitted after storeMessage,
  * and the one at the end of proposeReply) are advisory. A failure is logged and audited here, with
  * ids and a content-free code only, and the caller carries on: the sync run continues and a saved
  * reply stays saved.
+ *
+ * SF2 (phase-2-followups-2, owner Q1 option c): a failed or skipped re-check can no longer let the
+ * owner approve past an unseen message: approveItem recomputes the thread's newer-message set and
+ * requires it to equal what the approval page showed. The audit stays as a diagnostic.
  */
 export type RecheckStage = "ingest" | "propose";
 
-/** A Postgres SQLSTATE (five characters, digits and capitals) from a drizzle or postgres-js error, or null. */
-export function sqlState(err: unknown): string | null {
-  const e = err as { code?: unknown; cause?: { code?: unknown } } | null | undefined;
-  const code = typeof e?.cause?.code === "string" ? e.cause.code : typeof e?.code === "string" ? e.code : null;
-  return code !== null && /^[0-9A-Z]{5}$/.test(code) ? code : null;
-}
-
-/** The error's class name if it looks like one, otherwise "unknown" (never the message). */
-export function errorName(err: unknown): string {
-  const name = err instanceof Error ? err.name : "";
-  return /^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(name) ? name : "unknown";
-}
+// N6 (phase-2-followups-2): the helpers live in src/lib/pg-errors.ts; re-exported for existing importers.
+export { errorName, sqlState };
 
 /**
  * Logs and audits one failed re-check, outside any transaction. If the audit write fails too (for
