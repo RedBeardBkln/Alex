@@ -14,7 +14,8 @@ import { costUsdMicros, DRAFT_RESERVED_COST_MICROS, TRIAGE_RESERVED_COST_MICROS 
 import { draftReply } from "@/lib/ai/draft";
 import { runTriageStage, triageThreadNow } from "@/lib/ai/triage";
 import type { DraftOutcome, DraftProvider, TriageOutcome, TriageProvider } from "@/lib/ai/types";
-import { approveItem, getItemView, getOwnItem, newerDigest, proposeReply } from "@/lib/approvals/service";
+import { getItemView, getOwnItem, newerDigest, proposeReply } from "@/lib/approvals/service";
+import { approveItem } from "./helpers/approve";
 import { makeGoogleAccount, makeUser, openTestDb, testDbUrl } from "./test-db";
 
 // Tester, phase-2-followups-2 (Postgres only, disposable local database via TEST_DATABASE_URL).

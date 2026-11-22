@@ -71,6 +71,9 @@ const EDIT_ERRORS: Record<string, string> = {
   idn_not_punycode: "Internationalised domains must be typed in their xn-- (punycode) form.",
 };
 
+/** S3 (phase-2-followups-3): shown on AI items when the link check saw only the newest part of the thread. Fixed text. */
+const HAYSTACK_TRUNCATED_NOTE = "This thread is very long, so only its newest part was checked: a link may be flagged even if it appears in an older message.";
+
 /** Phase 2d: the account_mismatch notice for a new message, which has no thread. */
 const NEW_MESSAGE_ACCOUNT_MISMATCH = "This message's account is no longer one of your connected accounts, or the item was changed, so it can't be sent.";
 
@@ -150,6 +153,8 @@ export default async function QueueItemPage({
   const bodyInvisible = invisibleCharacters(shown.bodyText);
   const quoteInvisible = invisibleCharacters(shown.quote?.included ? shown.quote.text : "");
   const unknownLinks = isAi ? linksNotInThread(shown.bodyText, view.threadHaystack) : [];
+  // S3 (phase-2-followups-3): only the newest part of a very long thread was checked for links.
+  const haystackTruncated = isAi && view.threadHaystackTruncated;
   const parentHasText = !!(parent && (parent.bodyText ?? parent.renderedText ?? "").trim() !== "");
   const errorText = item.errorCode ? (ERROR_CODES[item.errorCode] ?? (item.errorCode.startsWith("gmail_") ? `Gmail refused it (${item.errorCode.slice(6)}).` : "It wasn't sent.")) : null;
 
@@ -260,8 +265,10 @@ export default async function QueueItemPage({
           {unknownLinks.length > 0 && (
             <Warning>
               The AI draft mentions links or domains that don&apos;t appear in this thread: <span className="font-mono">{unknownLinks.join(", ")}</span>. Check them before sending.
+              {haystackTruncated && <> {HAYSTACK_TRUNCATED_NOTE}</>}
             </Warning>
           )}
+          {unknownLinks.length === 0 && haystackTruncated && <Warning>{HAYSTACK_TRUNCATED_NOTE}</Warning>}
           {shown.replyToNotice && (
             <Warning>
               Reply-To differs from the sender. This reply goes to the Reply-To address

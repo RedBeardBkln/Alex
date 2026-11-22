@@ -328,7 +328,9 @@ describe("S1/N2: the links warning covers scheme://, //host and bare IPv4", () =
     expect(["256.0.0.1", "1.2.3", "1.2.3.4.5", "00.1.1.1", "1.2.3.-1", "1.2.3.4a", "1..2.3", "+1.2.3.4", " 1.2.3.4"].some(isIPv4)).toBe(false);
   });
 
-  it("linear time: 1 MB of scheme:// and // repeats, and a long punctuation run", () => {
+  // phase-2-followups-3 round 4: an explicit timeout. The per-case bound below is the linearity check;
+  // the 11 cases take about 3.6 s in total on main, too close to vitest's 5 s default under full-suite load.
+  it("linear time: 1 MB of scheme:// and // repeats, and a long punctuation run", { timeout: 30_000 }, () => {
     const time = (s: string) => {
       const t0 = performance.now();
       linksNotInThread(s, s);

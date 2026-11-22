@@ -16,7 +16,6 @@ import { runTriageStage } from "@/lib/ai/triage";
 import type { DraftProvider, ThreadTextMessage, TriageInput, TriageProvider } from "@/lib/ai/types";
 import { emailSendPayload } from "@/lib/approvals/payload";
 import {
-  approveItem,
   cancelItem,
   claimItem,
   editItem,
@@ -29,6 +28,7 @@ import {
   recordOutcome,
   rejectItem,
 } from "@/lib/approvals/service";
+import { approveItem } from "./helpers/approve";
 import { parseMessage } from "@/lib/gmail/mime";
 import { getSyncState, storeMessage, type StoreMessageInput } from "@/lib/gmail/store";
 import { syncAccount, type SyncDeps } from "@/lib/gmail/sync";

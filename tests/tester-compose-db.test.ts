@@ -9,10 +9,9 @@ import type { Database } from "@/db";
 import type { ConnectedAccount } from "@/db/schema";
 import { deleteAccount, upsertGoogleAccount } from "@/lib/accounts";
 import { utcDayStart } from "@/lib/ai-ledger/config";
-import { approveAndSend, executeClaimed, type ExecutorDeps, type Sender } from "@/lib/approvals/execute";
+import { executeClaimed, type ExecutorDeps, type Sender } from "@/lib/approvals/execute";
 import { contentHash, emailSendPayload } from "@/lib/approvals/payload";
 import {
-  approveItem,
   cancelItem,
   claimItem,
   editItem,
@@ -24,6 +23,7 @@ import {
   rejectItem,
   type NewMessageInput,
 } from "@/lib/approvals/service";
+import { approveAndSend, approveItem } from "./helpers/approve";
 import { newRecipientsUsedToday, seenAddresses } from "@/lib/approvals/seen";
 import type { SendOutcome } from "@/lib/gmail/send";
 import { deferQueueRow, dropQueueRow, dueQueueRows, enqueueMessages, enqueueOutbound, failQueueRow, getSyncState, PARKED_AT } from "@/lib/gmail/store";

@@ -5,11 +5,10 @@ import * as schema from "@/db/schema";
 import type { Database } from "@/db";
 import type { ConnectedAccount } from "@/db/schema";
 import { ReauthRequiredError } from "@/lib/accounts";
-import { approveAndSend, executeClaimed, type ExecutorDeps, type Sender } from "@/lib/approvals/execute";
+import { executeClaimed, type ExecutorDeps, type Sender } from "@/lib/approvals/execute";
 import { contentHash, emailSendPayload, outgoingBody } from "@/lib/approvals/payload";
 import { reconcileApprovals } from "@/lib/approvals/reconcile";
 import {
-  approveItem,
   cancelItem,
   claimItem,
   countNeedingOwner,
@@ -24,6 +23,7 @@ import {
   replyContext,
   replyFormDefaults,
 } from "@/lib/approvals/service";
+import { approveAndSend, approveItem } from "./helpers/approve";
 import type { GmailClient } from "@/lib/gmail/client";
 import { buildMessage } from "@/lib/gmail/compose";
 import { sendRawMessage, type SendOutcome } from "@/lib/gmail/send";

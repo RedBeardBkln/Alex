@@ -13,6 +13,7 @@ import { capAllows, capRemaining, confirmationMatches, idnDisplay, newRecipientL
 import { recordRecheckFailure } from "./recheck";
 import { firstTimeRecipients, newRecipientsUsedToday, recordRecipientCharge, replyParentOf } from "./seen";
 import { hasDisallowedControl, sliceOnCodePoint, stripAllControls, wellFormed } from "./text";
+import { cutAtTokenBoundary } from "./warnings";
 
 /**
  * The approval queue's state machine (Phase 2b, plan §5). Every transition is one conditional
@@ -541,12 +542,12 @@ export async function approveItem(
     shownThreadChangedAt?: number | null;
     /**
      * SF2 (owner Q1 option c): the newer-message digest the approval page rendered (newerDigest, "" for
-     * none). Recomputed inside the approve transaction; a different value, or a non-empty one without
-     * the tick, is ack_required. The approve action always passes it (a missing form field is ""), so
-     * the check always runs from the app. Only a direct library caller that omits it skips this check
-     * (the thread_changed_at checks still apply).
+     * none). Required (S1, phase-2-followups-3): recomputed inside the approve transaction on every
+     * call; a value that doesn't equal the recomputed digest, or a non-empty one without the tick, is
+     * ack_required. The approve action always passes it (a missing form field is ""). An untyped
+     * caller that passes undefined gets ack_required, even on a thread with no newer messages.
      */
-    shownNewer?: string;
+    shownNewer: string;
     messageIdHost: string;
     /**
      * Phase 2d, owner Q2: the recipients the owner ticked on the approval page. Required to equal
@@ -600,10 +601,8 @@ export async function approveItem(
     // SF2 (owner Q1 option c): approval is bound to the newer-message set the page showed, recomputed
     // here after the lock. A message whose post-commit re-check failed (or never ran) is in this set
     // once it is committed, so it can't be approved past unseen.
-    if (input.shownNewer !== undefined) {
-      const digest = newerDigest(await newerMessageIds(tx, item));
-      if (digest !== input.shownNewer || (digest !== "" && !input.ackThreadChange)) return { kind: "blocked" as const, reason: "ack_required" as const };
-    }
+    const digest = newerDigest(await newerMessageIds(tx, item));
+    if (digest !== input.shownNewer || (digest !== "" && !input.ackThreadChange)) return { kind: "blocked" as const, reason: "ack_required" as const };
     // Phase 2d, owner Q3 (amended): the daily first-time-recipient cap, for every email.send item.
     // Serialized per user with a transaction-scoped advisory lock (as the AI draft caps), so two
     // parallel approves can't both fit under the limit.
@@ -959,6 +958,8 @@ export type ItemView = {
   ownAccounts: string[];
   /** The thread's stored text, rendered HTML and headers, for the AI links warning. Never shown. */
   threadHaystack: string;
+  /** S3 (phase-2-followups-3): the haystack holds only the newest part of the thread's bodies (a cap cut or left out a field). */
+  threadHaystackTruncated: boolean;
   /** Phase 2d: a new message (threading null), not a reply. */
   isNew: boolean;
   /** SF2 (owner Q1 option c): how many stored messages count as new for this item (Q6 rule). */
@@ -975,21 +976,83 @@ export type ItemView = {
   sentThread: { id: string; subject: string | null; messageCount: number } | null;
 };
 
-/** Addresses and text of a thread's stored messages (for the Phase 2c approval warnings). */
-export async function threadContext(ex: Executor, userId: string, threadId: string): Promise<{ addresses: string[]; haystack: string }> {
+/**
+ * S3 (phase-2-followups-3, owner Q3): the link-check haystack's caps, in UTF-16 units, for the body
+ * fields (body_text, rendered_text, rendered_html). Headers and subjects are always added in full.
+ */
+export const HAYSTACK_FIELD_CAP = 262_144;
+export const HAYSTACK_CAP = 2_097_152;
+/** Messages per query B statement (4 parameters each). */
+const HAYSTACK_QUERY_CHUNK = 1000;
+
+/**
+ * Addresses and text of a thread's stored messages (for the Phase 2c approval warnings).
+ *
+ * S3 (phase-2-followups-3, owner Q3): the body fields in the haystack are bounded. Query A reads every
+ * message's headers and subject (uncapped: the recipients warning needs whole addresses) and each body
+ * field's stored size (`octet_length`, which Postgres reads from the value's header without
+ * decompressing it), newest message first. The fields are then planned in that order (per message:
+ * body text, rendered text, rendered HTML), each within min(HAYSTACK_FIELD_CAP, what is left of
+ * HAYSTACK_CAP). A field's UTF-8 size is at least its UTF-16 length, so reserving min(budget, size)
+ * never lets the total pass the cap. Query B fetches only the planned fields, with `left()`, so the DB
+ * never ships a huge body. A field longer than its budget is cut on a code point, then back to a token
+ * boundary (cutAtTokenBoundary), so a cut can't turn "bank.com" into a known "bank.co". `truncated`
+ * is true when any field was cut or left out; a cap can only add link warnings, never remove one.
+ */
+export async function threadContext(ex: Executor, userId: string, threadId: string): Promise<{ addresses: string[]; haystack: string; truncated: boolean }> {
   const rows = await ex
     .select({
+      id: mailMessages.id,
       fromHeader: mailMessages.fromHeader,
       toHeader: mailMessages.toHeader,
       ccHeader: mailMessages.ccHeader,
       replyToHeader: mailMessages.replyToHeader,
       subject: mailMessages.subject,
-      bodyText: mailMessages.bodyText,
-      renderedText: mailMessages.renderedText,
-      renderedHtml: mailMessages.renderedHtml,
+      bodyTextSize: sql<number | null>`octet_length(${mailMessages.bodyText})`.mapWith(Number),
+      renderedTextSize: sql<number | null>`octet_length(${mailMessages.renderedText})`.mapWith(Number),
+      renderedHtmlSize: sql<number | null>`octet_length(${mailMessages.renderedHtml})`.mapWith(Number),
     })
     .from(mailMessages)
-    .where(and(eq(mailMessages.threadId, threadId), eq(mailMessages.userId, userId)));
+    .where(and(eq(mailMessages.threadId, threadId), eq(mailMessages.userId, userId)))
+    .orderBy(desc(mailMessages.internalDate), desc(mailMessages.id));
+
+  // Plan the body fields, newest message first: each gets a budget, or 0 if it is empty or left out.
+  let remaining = HAYSTACK_CAP;
+  let truncated = false;
+  const budgets = new Map<string, [number, number, number]>();
+  for (const r of rows) {
+    const sizes = [r.bodyTextSize, r.renderedTextSize, r.renderedHtmlSize];
+    const b: [number, number, number] = [0, 0, 0];
+    for (let f = 0; f < 3; f++) {
+      const size = sizes[f];
+      if (!size) continue;
+      if (remaining <= 0) {
+        truncated = true;
+        continue;
+      }
+      b[f] = Math.min(HAYSTACK_FIELD_CAP, remaining);
+      remaining -= Math.min(b[f], size);
+    }
+    if (b[0] + b[1] + b[2] > 0) budgets.set(r.id, b);
+  }
+
+  // Query B: only the planned fields, at most budget + 1 characters each (the extra one shows a cut).
+  const texts = new Map<string, [string | null, string | null, string | null]>();
+  const planned = [...budgets.entries()];
+  const n = (budget: number) => (budget > 0 ? budget + 1 : 0);
+  for (let i = 0; i < planned.length; i += HAYSTACK_QUERY_CHUNK) {
+    const chunk = planned.slice(i, i + HAYSTACK_QUERY_CHUNK);
+    const values = sql.join(
+      chunk.map(([id, b]) => sql`(${id}::uuid, ${n(b[0])}::int, ${n(b[1])}::int, ${n(b[2])}::int)`),
+      sql`, `,
+    );
+    const got = await ex.execute(sql`
+      select m.id, left(m.body_text, v.a) as body_text, left(m.rendered_text, v.b) as rendered_text, left(m.rendered_html, v.c) as rendered_html
+      from ${mailMessages} m join (values ${values}) as v(id, a, b, c) on m.id = v.id
+      where m.user_id = ${userId}::uuid`);
+    for (const g of got as unknown as { id: string; body_text: string | null; rendered_text: string | null; rendered_html: string | null }[]) texts.set(g.id, [g.body_text, g.rendered_text, g.rendered_html]);
+  }
+
   const addresses = new Set<string>();
   const parts: string[] = [];
   for (const r of rows) {
@@ -997,9 +1060,21 @@ export async function threadContext(ex: Executor, userId: string, threadId: stri
       for (const a of extractAddresses(h).addresses) addresses.add(a.toLowerCase());
       if (h) parts.push(h);
     }
-    for (const t of [r.subject, r.bodyText, r.renderedText, r.renderedHtml]) if (t) parts.push(t);
+    if (r.subject) parts.push(r.subject);
+    const b = budgets.get(r.id);
+    const t = texts.get(r.id);
+    if (!b) continue;
+    for (let f = 0; f < 3; f++) {
+      let text = t?.[f] ?? null;
+      if (b[f] === 0 || !text) continue;
+      if (text.length > b[f]) {
+        text = cutAtTokenBoundary(sliceOnCodePoint(text, b[f]));
+        truncated = true;
+      }
+      if (text) parts.push(text);
+    }
   }
-  return { addresses: [...addresses], haystack: parts.join(" ") };
+  return { addresses: [...addresses], haystack: parts.join(" "), truncated };
 }
 
 /** Everything the detail page shows, or null if it isn't the user's item. */
@@ -1043,7 +1118,7 @@ export async function getItemView(
         .where(and(eq(mailMessages.id, item.parentMessageId), eq(mailMessages.userId, userId)))
         .limit(1))[0] ?? null)
     : null;
-  const ctx = item.threadId ? await threadContext(ex, userId, item.threadId) : { addresses: [], haystack: "" };
+  const ctx = item.threadId ? await threadContext(ex, userId, item.threadId) : { addresses: [], haystack: "", truncated: false };
   const ownAccounts = (await ex.select({ email: connectedAccounts.email }).from(connectedAccounts).where(eq(connectedAccounts.userId, userId))).map((a) => a.email);
   const newer = await newerMessageIds(ex, item);
 
@@ -1076,6 +1151,7 @@ export async function getItemView(
     threadAddresses: ctx.addresses,
     ownAccounts,
     threadHaystack: ctx.haystack,
+    threadHaystackTruncated: ctx.truncated,
     isNew,
     newerCount: newer.length,
     newerDigest: newerDigest(newer),

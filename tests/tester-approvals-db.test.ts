@@ -7,12 +7,11 @@ import * as schema from "@/db/schema";
 import type { Database } from "@/db";
 import type { ConnectedAccount } from "@/db/schema";
 import { getAccessToken } from "@/lib/accounts";
-import { approveAndSend, type ExecutorDeps, type Sender } from "@/lib/approvals/execute";
+import { type ExecutorDeps, type Sender } from "@/lib/approvals/execute";
 import { emailSendPayload, MAX_QUOTE_CHARS, outgoingBody, quoteText } from "@/lib/approvals/payload";
 import { onMessageStored } from "@/lib/approvals/ingest-hook";
 import { reconcileApprovals } from "@/lib/approvals/reconcile";
 import {
-  approveItem,
   cancelItem,
   editItem,
   getOwnItem,
@@ -23,6 +22,7 @@ import {
   replyContext,
   replyFormDefaults,
 } from "@/lib/approvals/service";
+import { approveAndSend, approveItem } from "./helpers/approve";
 import type { GmailClient } from "@/lib/gmail/client";
 import { sendRawMessage, type SendOutcome } from "@/lib/gmail/send";
 import { getSyncState } from "@/lib/gmail/store";
