@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import type { Executor } from "@/db";
 import { mailMessages, mailTriage, type ConnectedAccount } from "@/db/schema";
 import { aiCaps, nextUtcMidnight, type Caps } from "@/lib/ai-ledger/config";
@@ -130,7 +130,7 @@ async function writeTriageRow(ex: Executor, account: Pick<ConnectedAccount, "id"
 /** O2 sibling (phase-2-followups-2, owner Q10): the ai_calls code of a finished call whose account was disconnected meanwhile. */
 const DISCONNECTED = "account_disconnected";
 
-type Recorded = { cost: number; accountLive: boolean };
+type Recorded = { cost: number; accountLive: boolean; messageLive: boolean };
 
 async function writeTriageOutcome(
   tx: Executor,
@@ -166,7 +166,7 @@ async function writeTriageOutcome(
       await writeTriageRow(tx, account, m, provider, { status: out.status, countAttempt: true }, now);
     }
   }
-  return { cost: call.costUsdMicros ?? 0, accountLive: live.account };
+  return { cost: call.costUsdMicros ?? 0, accountLive: live.account, messageLive: live.message };
 }
 
 /**
@@ -184,7 +184,7 @@ async function triageOne(deps: TriageStageDeps, account: Pick<ConnectedAccount, 
     const [message] = await tx.select({ id: mailMessages.id }).from(mailMessages).where(eq(mailMessages.id, m.id)).for("key share");
     return writeTriageOutcome(tx, account, m, deps.provider.id, out, now, { account: true, message: !!message });
   });
-  return { status: out.status, errorCode: out.errorCode, cost: recorded.cost, accountLive: recorded.accountLive };
+  return { status: out.status, errorCode: out.errorCode, cost: recorded.cost, accountLive: recorded.accountLive, messageLive: recorded.messageLive };
 }
 
 /** The ai.triage_run audit; written with a null account id if the account is gone (O2 sibling). */
@@ -215,12 +215,20 @@ export async function runTriageStage(deps: TriageStageDeps, account: Pick<Connec
       await auditCapReachedOnce(deps.db, account.userId, "triage", cap.cap, now());
       const rest = candidates.slice(i);
       // Lock order (O2 sibling): the account first; if it is gone, so are its messages, and nothing is written.
+      // Security N1 (phase-2-followups-3): then the candidate messages, in one statement, so one deleted
+      // since triageCandidates gets no row (its FK would fail) and isn't counted.
       result.skippedCap += await deps.db.transaction(async (tx) => {
         if (!(await lockAccountForWrite(tx, account.id))) return 0;
+        const present = new Set(
+          (await tx.select({ id: mailMessages.id }).from(mailMessages).where(inArray(mailMessages.id, rest.map((m) => m.id))).for("key share")).map((r) => r.id),
+        );
+        let written = 0;
         for (const m of rest) {
+          if (!present.has(m.id)) continue;
           await writeTriageRow(tx, account, m, deps.provider.id, { status: "skipped_cap", nextAttemptAt: nextUtcMidnight(now()), countAttempt: false }, now());
+          written++;
         }
-        return rest.length;
+        return written;
       });
       break;
     }
@@ -228,12 +236,14 @@ export async function runTriageStage(deps: TriageStageDeps, account: Pick<Connec
     result.costUsdMicros += r.cost;
     if (r.status === "ok") result.triaged++;
     else result.failed++;
-    // The account was disconnected during the call: its other messages are gone too, so stop.
-    if (!r.accountLive) break;
+    // N-2 (phase-2-followups-3): the spend-limit audit is user-level (no account id), so it is written
+    // even when the account was disconnected during the call.
     if (r.errorCode === SPEND_LIMIT_CODE) {
       await auditCapReachedOnce(deps.db, account.userId, "triage", "spend_limit", now());
       break;
     }
+    // The account was disconnected during the call: its other messages are gone too, so stop.
+    if (!r.accountLive) break;
   }
   if (result.triaged + result.failed + result.skippedCap > 0) await auditTriageRun(deps.db, account, result);
   return result;
@@ -269,5 +279,7 @@ export async function triageThreadNow(
   await auditTriageRun(deps.db, account, { triaged: r.status === "ok" ? 1 : 0, failed: r.status === "ok" ? 0 : 1, skippedCap: 0, costUsdMicros: r.cost });
   // O2 sibling: the thread went with its account, so the owner gets a clean answer, not a 500.
   if (!r.accountLive) return "account_disconnected";
+  // N-3 (phase-2-followups-3): the message was deleted during the call (the account is still live).
+  if (!r.messageLive) return "not_found";
   return r.status === "ok" ? "triaged" : "failed";
 }

@@ -6,11 +6,10 @@ import postgres from "postgres";
 import * as schema from "@/db/schema";
 import type { Database } from "@/db";
 import type { ConnectedAccount } from "@/db/schema";
-import { approveAndSend, executeClaimed, type ExecutorDeps, type Sender } from "@/lib/approvals/execute";
+import { executeClaimed, type ExecutorDeps, type Sender } from "@/lib/approvals/execute";
 import { emailSendPayload } from "@/lib/approvals/payload";
 import { reconcileApprovals } from "@/lib/approvals/reconcile";
 import {
-  approveItem,
   claimItem,
   editItem,
   getItemView,
@@ -19,6 +18,7 @@ import {
   proposeReply,
   type NewMessageInput,
 } from "@/lib/approvals/service";
+import { approveAndSend, approveItem } from "./helpers/approve";
 import { seenAddresses } from "@/lib/approvals/seen";
 import type { SendOutcome } from "@/lib/gmail/send";
 import { deferQueueRow, dropQueueRow, dueQueueRows, enqueueMessages, enqueueOutbound, failQueueRow, getSyncState, knownThreadIds, PARKED_AT } from "@/lib/gmail/store";

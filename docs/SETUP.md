@@ -106,14 +106,21 @@ Pub/Sub signs every push request with an OIDC token for a service account you ch
    - **Enable authentication:** ticked, with the service account from 6.2
    - **Audience:** set it explicitly to `https://alex.ericandeva.com/api/gmail/push`
    - Leave payload unwrapping off (wrapped delivery, the default).
+   - **Expiration period:** Never expire. The default is 31 days: a subscription with no activity (such as a successful push) for that long is deleted, and push stops.
 2. The equivalent `gcloud` command is:
    ```bash
    gcloud pubsub subscriptions create gmail-push-alex \
      --topic=gmail-push \
      --push-endpoint=https://alex.ericandeva.com/api/gmail/push \
      --push-auth-service-account=alex-pubsub-push@<PROJECT_ID>.iam.gserviceaccount.com \
-     --push-auth-token-audience=https://alex.ericandeva.com/api/gmail/push
+     --push-auth-token-audience=https://alex.ericandeva.com/api/gmail/push \
+     --expiration-period=never
    ```
+3. **Already created it?** Set the expiration on the existing subscription, either in the Console (the subscription → **Edit** → **Expiration period** → never expire) or with:
+   ```bash
+   gcloud pubsub subscriptions update gmail-push-alex --expiration-period=never
+   ```
+   If push does stop, mail still arrives through the 5-minute `gmail-sync` cron, just later.
 
 ### 6.4 Vercel environment variables
 
@@ -148,6 +155,8 @@ curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/gmai
 ```
 
 Email HTML is rendered at ingest in a background worker. Its bundle, `.alex-build/render-worker.mjs`, is built automatically by `npm run build` and `npm test` (or by hand with `npm run build:worker`). `npm run dev` (`scripts/dev.mjs`) builds it, rebuilds it whenever a file it includes changes (the log shows `render worker rebundled`) and starts `next dev`. A worker that is already running keeps the old code until it is replaced, so restart `npm run dev` to test a sanitizer edit end to end; flags after `--` are passed to `next dev`, for example `npm run dev -- --port 3001`. If it is missing, HTML mail is stored as plain text and re-rendered by a later cron run once the worker is available.
+
+Line endings: `.gitattributes` (`* text=auto eol=lf`) makes Git check out every text file with LF, even where `core.autocrlf=true` is set (Git for Windows sets it system-wide). The repository itself already stores LF. A working copy from before this file existed may still have CRLF files; refresh it once by deleting the tracked files and checking them out again. This discards uncommitted edits to tracked files, so commit or stash first, and run it only behind the clean-tree guard: `test -z "$(git status --porcelain)" && git ls-files -z | xargs -0 rm -- && git checkout -- .` (if the tree isn't clean, the guard fails and nothing is deleted). If it stops halfway (for example because a running dev server holds a file), stop the server and run `git checkout -- .` to restore the tracked files.
 
 Disconnecting an account stops its Gmail notifications and deletes all of its stored mail. If you disconnect while an AI draft or triage is running, nothing is saved for it, you land on the Inbox with a note saying so, and the call still counts in AI usage. If the delete itself fails, the error is shown and `account.disconnect_failed` is audited; try again.
 
@@ -341,6 +350,11 @@ There is no preview deployment for this, and no production secret is copied anyw
    - Read the whole text and any warnings (new recipient, invisible characters, links not in the thread).
    - **What the links warning can't do:** it only flags links that appear nowhere in the thread. If the sender put a phishing link in their own email and the AI repeats it, the warning stays silent, because that link is "in the thread". It also doesn't flag a link on **any subdomain of a domain that already appears in the thread**: for example, if the thread mentions a big hosting or document platform, a link to anyone's site or file on a subdomain of that platform counts as "in the thread". Check every link in an AI draft yourself, whatever the warnings say.
      - What counts as a link: web links (also written without slashes or with backslashes, such as `https:example.test`), bare domains (including the domain of an email address, and forms with a port, `?`, `#` or a word and colon in front, such as `example.test:8080` or `Link:example.test`), links with any other scheme (`ftp://`, `smb://` and so on), `://` with an odd or look-alike scheme in front, links starting with `//`, and bare IPv4 addresses (an IP counts as known only if exactly that IP is in the thread). Every link in a word is checked, so a link hidden after another one (`https://known.test/?next=https://other.test`) is flagged too. It doesn't check other schemes without `//` (such as `javascript:` or `data:`; a domain after them still counts as a bare domain), bare IPv6 addresses, single-word hosts such as `localhost:3000`, or percent-encoded links inside another link. A four-part version number such as `1.2.3.4` is flagged too, because it looks like an IP, and so are glued forms such as `file.txt:12`.
+     - **Always flagged, even if the thread mentions them:** network-share links (a word starting with two slashes of which at least one is a backslash, such as `\\host\share`, also after quotes or punctuation such as `“\\host\share”` or `:\\host`, or right after an `=`, such as `href=\\host\share`; `file:` followed by `/` or `\`; `smb:` followed by `/` or `\`), and the Windows handler schemes `search-ms:`, `search:` and `ms-…:` (such as `ms-msdt:`). A file-share link in a reply from your account is almost never legitimate.
+     - Also checked: `//host` right after an `=` (such as `href=//other.test/x`), and domains whose last part is in punycode (`xn--…`, such as `example.xn--p1ai`; a bare domain counts only if that last part is typed in ASCII). A web link to such a domain (`http://example.xn--p1ai/`) is now flagged only if that domain isn't in the thread; before, it was always flagged.
+     - A link inside a known link's path or query that has no real host (`https://known.test/x?next=http://localhost:3000`, `…?u=myapp://open`) no longer flags the whole link. Hosts inside it still count, also when more query text is glued on (`…?next=https://other.test&v=1` checks `other.test`, and so do `…?next=https://known.test@other.test&v=1` and `…?next=https://other.test&email=a@known.test`; a percent-encoded `@`, `%40`, is always flagged), and the always-flagged forms above still flag.
+     - **Very long threads:** only the newest part is checked: at most 262,144 characters of each stored body field (text, rendered text, rendered HTML) and 2,097,152 characters in total, newest emails first, cut only between words. Headers and subjects are always checked in full. When the thread was cut, the page says so ("This thread is very long, so only its newest part was checked…"). A cut can only add warnings: a link that appears only in an older email may be flagged.
+     - Not checked: bare domains with a non-ASCII last part (`example.рф`), a fullwidth colon (`https：//…`), and a number-only host after an odd scheme (`_://3405803785/`).
    - **Cost limits per draft:** everything the model sees from each email (sender, date, subject, body text and the formatting around them) is capped: 6,000 characters per email and 30,000 per thread, newest emails first; older emails beyond that are left out. Subjects are cut to 300 characters, dates to 100 and sender addresses to 254. Triage sees one email within 6,000.
      - The reserved estimate ($0.448 per draft, $0.0013 per triage) assumes at most about one token per character. Ordinary text uses far fewer. Unusual scripts or symbols could use more, so a draft on a thread built for it could cost somewhat more than the estimate: up to about $0.69 if they took 3 tokens per character. Alex can't check this exactly (Anthropic doesn't document tokens per character).
      - The estimate also allows 2,000 tokens for Alex's own instructions. The smoke run on 2026-11-20 measured about 1,584 for a draft and 1,539 for triage; a long instruction of your own (up to 2,000 characters) can take a draft slightly over that, by a fraction of a cent.

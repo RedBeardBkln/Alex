@@ -13,7 +13,6 @@ import { draftReply } from "@/lib/ai/draft";
 import type { DraftProvider } from "@/lib/ai/types";
 import { emailSendPayload } from "@/lib/approvals/payload";
 import {
-  approveItem,
   cancelItem,
   claimItem,
   editItem,
@@ -26,6 +25,7 @@ import {
   recordOutcome,
   rejectItem,
 } from "@/lib/approvals/service";
+import { approveItem } from "./helpers/approve";
 import { parseMessage } from "@/lib/gmail/mime";
 import { storeMessage, type StoreMessageInput } from "@/lib/gmail/store";
 import { toFull } from "./mail-fixtures";

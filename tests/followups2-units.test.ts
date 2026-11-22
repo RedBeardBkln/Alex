@@ -59,7 +59,10 @@ describe("SF1: link forms the warning used to miss (AC-SF1-1)", () => {
     expect(new URL(`https://bank.test${BS}@evil.test/`).hostname).toBe("bank.test");
     expect(linksNotInThread(`https://bank.test${BS}@evil.test/`, T)).toHaveLength(1);
     expect([...hostsIn(`smb://bank.test${BS}@evil.test/`)].sort()).toEqual(["bank.test", "evil.test"]);
-    expect(linksNotInThread(`smb://bank.test${BS}x`, T)).toEqual([]);
+    // phase-2-followups-3 (owner Q1b): smb: links are now always flagged, so the "known via the R2
+    // backslash reading" case uses another non-special scheme.
+    expect(linksNotInThread(`sftp://bank.test${BS}x`, T)).toEqual([]);
+    expect(linksNotInThread(`smb://bank.test${BS}x`, T)).toEqual([`smb://bank.test${BS}x`]);
   });
 
   it("batch 1's decoy rule still holds: no-scheme `://` decoys don't hide a later link", () => {
