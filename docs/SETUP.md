@@ -24,7 +24,7 @@ This guide sets up one Google OAuth client, a Neon Postgres database and a Verce
    - `http://localhost:3000/api/accounts/google/callback` (local development)
 5. Copy the **client ID** and **client secret**.
 
-**About Testing status:** while the app is in Testing, Google expires each account's refresh token 7 days after you grant consent. Alex shows a "reconnect by" date on each account, and reconnecting takes one click. Removing that limit for Gmail access means publishing the app and passing Google's verification, which includes a paid third-party security assessment for restricted scopes such as `gmail.modify`.
+**About Testing status:** while the app is in Testing, Google expires each account's refresh token 7 days after you grant consent. Alex shows a "reconnect by" date on each account, and reconnecting takes one click. To get out of the 7-day limit, section 13 publishes the app **In production without verification**, which Google allows for apps with a limited audience (fewer than 100 users, who click through an "unverified app" warning). Whether Google then grants `gmail.modify` and keeps the tokens past 7 days can only be checked live; section 13 has the checks and the way back to Testing. Full verification, which includes a paid third-party security assessment for restricted scopes such as `gmail.modify`, isn't part of this.
 
 A business account on Google Workspace has another option. You can create a separate OAuth client in that Workspace's own Cloud project, with user type **Internal**. It isn't subject to the 7-day limit, but it only works for accounts in that domain. Alex doesn't support more than one OAuth client yet. Ask if you want it.
 
@@ -50,7 +50,7 @@ A business account on Google Workspace has another option. You can create a sepa
    | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | From step 1 |
    | `ALEX_ALLOWED_EMAILS` | Comma-separated Google emails allowed to sign in, e.g. your personal and business addresses |
    | `ALEX_ENCRYPTION_KEY` | Output of `npm run gen:key`. Back it up somewhere safe: if it's lost, every account has to be reconnected. |
-   | `GOOGLE_OAUTH_TESTING_MODE` | `true` while the Google app is in Testing |
+   | `GOOGLE_OAUTH_TESTING_MODE` | `true` while the Google app is in Testing; `false` once it's published (unset means `true`) |
 
 3. Deploy.
 
@@ -387,3 +387,47 @@ DATABASE_URL='<the pooled connection string>' npm run db:migrate
 | `EMAIL_NEW_RECIPIENTS_PER_DAY` | `10` | First-time recipients (addresses Alex hasn't seen in your mail) that can be approved per UTC day, across new emails and replies. `0` means none. Empty or invalid means `10`. |
 
 Set it in Vercel (Production) only if you want a different limit, then redeploy.
+
+## 13. Publishing the Google app (Phase 0)
+
+This gets the Google app out of Testing, so refresh tokens no longer expire after 7 days. The app is published **In production without verification**. Google allows that for apps with a limited audience (fewer than 100 users); each user clicks through a "Google hasn't verified this app" screen when connecting. Google's console only enables **Publish app** once the Branding page has a home page, a privacy policy and a terms of service link. Alex serves those as public pages: `/about`, `/privacy` and `/terms`.
+
+**What `GOOGLE_OAUTH_TESTING_MODE` does.** It only changes the Accounts page. When it's `true`, each account shows "Google test mode: reconnect by <date>" (7 days after consent), and after that date it shows "Reconnect needed" even if the token still works. When it's `false`, there's no deadline, and only an account Google has actually rejected (for example after a revoked or expired token) shows "Reconnect needed". It changes nothing in the Google sign-in request, the scopes or the token handling. **Unset means `true`**, so it has to be set to `false` explicitly.
+
+Tokens granted while the app was in Testing are expected to keep their 7-day expiry (Google's docs don't say otherwise). That's why every account is reconnected once, **after** publishing (step 7).
+
+1. **After merge and deploy:** in a private browser window, open `https://alex.ericandeva.com/about`, `/privacy` and `/terms`. Each should load without signing in. `/` should still go to the sign-in page.
+2. **Fill in the contact first,** if it wasn't done before merging: the `OWNER_CONTACT` constant in `src/app/(public)/site-info.ts` is what the pages show as the contact. Change `LAST_UPDATED` in the same file whenever the privacy policy or terms text changes.
+3. **Google Auth Platform → Branding:**
+   - App name `Alex`.
+   - User support email: pick from the drop-down.
+   - **No logo.** Uploading one makes Google verify the app before it's shown.
+   - Application home page `https://alex.ericandeva.com/about`.
+   - Application privacy policy link `https://alex.ericandeva.com/privacy`.
+   - Application terms of service link `https://alex.ericandeva.com/terms`.
+   - Authorized domains: make sure `ericandeva.com` is listed, and add it if not. Google says to add authorized domains before the URLs.
+   - Developer contact email.
+   - Save.
+4. **If the console asks for domain verification:** verify `ericandeva.com` in Google Search Console with a Google account that is an owner or editor of the Cloud project. A Domain property is verified with a DNS TXT record, added wherever DNS for `ericandeva.com` is managed. Add a **new** TXT record; never edit or replace an existing TXT record (it usually holds SPF, and overwriting it breaks the domain's mail). This doesn't affect the main site. Skip this step if the console doesn't ask.
+5. **Google Auth Platform → Audience → Publish app**, then confirm.
+   - **Before publishing,** check that `ALEX_ALLOWED_EMAILS` in Vercel (Production) lists only your own addresses. Publishing removes Google's test-user gate: anyone with a Google account can then complete Google's sign-in for Alex, and the allow list is the only thing that keeps them out.
+   - After publishing, refused sign-ins from strangers appear in the activity log as `login.denied` rows (they record only the email domain). That's expected, not an incident.
+   - Don't click "Prepare for verification" or submit anything for verification.
+   - If a "Verify branding" button appears, ignore it. Verification only matters for showing the app name and logo.
+   - If Publish stays disabled or Google asks for verification, stop and tell the main session.
+6. **Vercel → Project → Settings → Environment Variables:** set `GOOGLE_OAUTH_TESTING_MODE` to `false` for Production. The value must be exactly lowercase `false`: `False` or an empty value breaks most of the app. The signed-in pages, the cron jobs, the Google sign-in and connect routes and the server actions all read the configuration and fail; only the static `/about`, `/privacy` and `/terms` pages keep working. `/login` still loads when you aren't signed in, but signing in fails, and `/api/health` reports the database as unreachable even though it's fine. Don't delete it: unset means `true`. Then redeploy, so the new value is used.
+7. **Reconnect every Google account** from the Accounts page (Reconnect, or Connect personal/business).
+   - Expect Google's "Google hasn't verified this app" screen. Before clicking through it, check that the address bar shows `accounts.google.com` and that the screen names Alex's own app. Then choose **Advanced**, then the option to continue to the app's domain, then tick **every** permission. (Google's exact link wording wasn't verified.)
+   - Sign-in only asks for name and email. Google's docs don't say whether it shows the warning screen too.
+8. **Check:**
+   - No account shows a "reconnect by" date.
+   - **Test connection** works on each account.
+   - About 8 days later, check that each account is still Active. That is the live check that production tokens don't expire after 7 days.
+9. **Workspace account:** if connecting a Google Workspace account fails with an "access blocked" or admin-policy message, that Workspace's admin restricts third-party apps. The admin can mark Alex's OAuth client as **Trusted** under Admin console → Security → Access and data control → API controls → Manage App Access. If the console allows it, limit the setting to your own user or organizational unit. **Never set up domain-wide delegation**: Alex doesn't need it, and it would let the client act for every user in the domain. (These Admin console options weren't verified.) If you aren't the admin, ask them, or leave that account disconnected. An account in Google's Advanced Protection Program may block non-Google apps altogether.
+10. **Fallback, if Google refuses `gmail.modify` for the unverified published app:**
+    - Audience → **Back to testing**.
+    - Make sure every account is still a test user.
+    - Set `GOOGLE_OAUTH_TESTING_MODE=true` and redeploy.
+    - Reconnect, and go back to weekly reconnects.
+    - Tell the main session. Full verification (including the paid security assessment) is a separate decision.
+11. **Keep the pages current:** if Alex starts using Google data in a new way (for example Calendar events in a later phase), update `/privacy` **before** that ships, and change `LAST_UPDATED`. That PR's plan must list it.
