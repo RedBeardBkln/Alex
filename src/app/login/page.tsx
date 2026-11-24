@@ -26,6 +26,19 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
       >
         Sign in with Google
       </a>
+      <nav className="mt-10 text-center text-sm text-[var(--muted)]">
+        <a href="/about" className="underline-offset-4 hover:underline">
+          About
+        </a>
+        {" · "}
+        <a href="/privacy" className="underline-offset-4 hover:underline">
+          Privacy
+        </a>
+        {" · "}
+        <a href="/terms" className="underline-offset-4 hover:underline">
+          Terms
+        </a>
+      </nav>
     </main>
   );
 }

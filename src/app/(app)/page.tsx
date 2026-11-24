@@ -48,6 +48,16 @@ export default async function AccountsPage({
         </p>
       )}
 
+      <p className="text-sm text-[var(--muted)]">
+        Connecting a Google account lets Alex read its mail (the last 30 days, then new mail), store it here, send it to
+        Anthropic&apos;s Claude for sorting and for drafts you ask for, and send emails only after you approve them. It
+        also requests Calendar and Drive access; today Calendar is used only to test the connection, and Drive isn&apos;t
+        used. See the{" "}
+        <a href="/privacy" className="underline">
+          privacy policy
+        </a>
+        .
+      </p>
       <div className="flex flex-wrap gap-2">
         <a href="/api/accounts/google/connect?label=personal" className="rounded-md bg-[var(--accent)] px-3 py-2 text-sm font-medium text-[var(--bg)]">
           Connect personal Google account
