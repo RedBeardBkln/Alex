@@ -14,7 +14,7 @@ Alex is a personal executive assistant. It connects several Google accounts (per
 | 2c | AI triage (Haiku 5.5, advisory) and reply drafts on request (Opus 5.5), sent only after you approve; daily cost caps | Done |
 | 2d | Composing new plain-text emails: you pick the account and type every recipient, tick each recipient to approve, with a daily cap on first-time recipients | Done |
 | Phase 2 follow-ups | Three hardening batches after 2a–2d (approval and AI safety, link warnings, bounded link checks) | Done |
-| 0 | Google OAuth publishing (owner-run console steps, no code) | Pending (owner) |
+| 0 | Google OAuth publishing: public About, Privacy and Terms pages (done), then the owner-run console steps in [SETUP §13](docs/SETUP.md) (pending) | Pending (owner) |
 | H1 | Link-warning hardening (percent-encoded links inside links and other gaps) and docs fixes | Done |
 | T | Tasks: to-dos with deadlines, "Add task" from a thread, in-app reminders | Planned |
 | H2 | AI and approval hardening, and older nits | Planned |
