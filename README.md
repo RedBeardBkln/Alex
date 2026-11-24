@@ -9,13 +9,21 @@ Alex is a personal executive assistant. It connects several Google accounts (per
 | Phase | Scope | Status |
 |---|---|---|
 | 1 | Sign-in, connecting Google accounts (encrypted tokens), database, deployment | Done |
-| 2a | Mail ingestion (Gmail push via Pub/Sub, polling fallback, 30-day backfill) and a combined inbox | **In progress** (branch `phase-2-inbox`) |
-| 2b | Approval queue and replies (plain text, sent only after you approve) | **In progress** (branch `phase-2-inbox`) |
-| 2c | AI triage (Haiku 5.5, advisory) and reply drafts on request (Opus 5.5), sent only after you approve; daily cost caps | **In progress** (branch `phase-2-inbox`) |
-| 2d | Composing new plain-text emails: you pick the account and type every recipient, tick each recipient to approve, with a daily cap on first-time recipients | **In progress** (branch `phase-2-inbox`) |
-| 3 | Calendar: free/busy across accounts, proposing times, invites | Planned |
-| 4 | Slack | Planned |
-| 5 | reMarkable handwriting turned into tasks and meetings | Planned |
+| 2a | Mail ingestion (Gmail push via Pub/Sub, polling fallback, 30-day backfill) and a combined inbox | Done |
+| 2b | Approval queue and replies (plain text, sent only after you approve) | Done |
+| 2c | AI triage (Haiku 5.5, advisory) and reply drafts on request (Opus 5.5), sent only after you approve; daily cost caps | Done |
+| 2d | Composing new plain-text emails: you pick the account and type every recipient, tick each recipient to approve, with a daily cap on first-time recipients | Done |
+| Phase 2 follow-ups | Three hardening batches after 2a–2d (approval and AI safety, link warnings, bounded link checks) | Done |
+| 0 | Google OAuth publishing (owner-run console steps, no code) | Pending (owner) |
+| H1 | Link-warning hardening (percent-encoded links inside links and other gaps) and docs fixes | Done |
+| T | Tasks: to-dos with deadlines, "Add task" from a thread, in-app reminders | Planned |
+| H2 | AI and approval hardening, and older nits | Planned |
+| C1 | Calendar, read side (formerly Phase 3): free/busy across accounts, agenda, pending invites, finding slots, proposing times in a reply | Planned |
+| C2 | Calendar, write side: creating events with invites and answering invites, only through the approval queue | Planned |
+| D | Delegation assistant: a typed request runs a Claude tool-use loop over Alex's data | Planned |
+| S | Slack (formerly Phase 4): mentions, and replies through the approval queue | Planned |
+| R | reMarkable (formerly Phase 5): handwriting turned into suggested tasks and proposed meetings | Planned |
+| H3 | Sanitizer and dev-tooling nits | Planned |
 
 See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the design and [docs/SETUP.md](docs/SETUP.md) to deploy.
 

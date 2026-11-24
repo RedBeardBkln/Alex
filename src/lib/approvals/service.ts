@@ -978,10 +978,17 @@ export type ItemView = {
 
 /**
  * S3 (phase-2-followups-3, owner Q3): the link-check haystack's caps, in UTF-16 units, for the body
- * fields (body_text, rendered_text, rendered_html). Headers and subjects are always added in full.
+ * fields (body_text, rendered_text, rendered_html). Headers and subjects have their own budget below.
  */
 export const HAYSTACK_FIELD_CAP = 262_144;
 export const HAYSTACK_CAP = 2_097_152;
+/**
+ * Sec N4 (phase-h1-link-hardening, owner Q7 a): the haystack's copy of each From/To/Cc/Reply-To
+ * header and subject, and of all of them together, in UTF-16 units. Only the copy is bounded:
+ * stored data and the recipients warning (whole headers) are unchanged.
+ */
+export const HAYSTACK_HEADER_FIELD_CAP = 16_384;
+export const HAYSTACK_HEADER_CAP = 262_144;
 /** Messages per query B statement (4 parameters each). */
 const HAYSTACK_QUERY_CHUNK = 1000;
 
@@ -998,6 +1005,11 @@ const HAYSTACK_QUERY_CHUNK = 1000;
  * never ships a huge body. A field longer than its budget is cut on a code point, then back to a token
  * boundary (cutAtTokenBoundary), so a cut can't turn "bank.com" into a known "bank.co". `truncated`
  * is true when any field was cut or left out; a cap can only add link warnings, never remove one.
+ *
+ * Sec N4 (owner Q7 a): the headers' and subjects' copies in the haystack have their own budget, also
+ * newest message first: each at most HAYSTACK_HEADER_FIELD_CAP, all together at most
+ * HAYSTACK_HEADER_CAP, cut the same way (a cut or omission sets `truncated`). `addresses` is still
+ * built from the whole headers, and normal-size headers give exactly the haystack they gave before.
  */
 export async function threadContext(ex: Executor, userId: string, threadId: string): Promise<{ addresses: string[]; haystack: string; truncated: boolean }> {
   const rows = await ex
@@ -1055,12 +1067,25 @@ export async function threadContext(ex: Executor, userId: string, threadId: stri
 
   const addresses = new Set<string>();
   const parts: string[] = [];
+  let headerRemaining = HAYSTACK_HEADER_CAP;
+  /** The haystack's copy of one header or subject, within the header budget (Sec N4). */
+  const pushHeader = (value: string | null) => {
+    if (!value) return;
+    const budget = Math.min(HAYSTACK_HEADER_FIELD_CAP, headerRemaining);
+    let text = value;
+    if (text.length > budget) {
+      text = budget > 0 ? cutAtTokenBoundary(sliceOnCodePoint(text, budget)) : "";
+      truncated = true;
+    }
+    headerRemaining -= text.length;
+    if (text) parts.push(text);
+  };
   for (const r of rows) {
     for (const h of [r.fromHeader, r.toHeader, r.ccHeader, r.replyToHeader]) {
       for (const a of extractAddresses(h).addresses) addresses.add(a.toLowerCase());
-      if (h) parts.push(h);
+      pushHeader(h);
     }
-    if (r.subject) parts.push(r.subject);
+    pushHeader(r.subject);
     const b = budgets.get(r.id);
     const t = texts.get(r.id);
     if (!b) continue;

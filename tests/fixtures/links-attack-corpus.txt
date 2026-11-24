@@ -1,0 +1,2421 @@
+# H1 link attack corpus (phase-h1-link-hardening, A2): one draft string per line, used by tests/h1-links-differential.test.ts.
+# Collected from every string the existing link tests pass to linksIn/hostsIn/linksNotInThread (followups*, tester-followups*,
+# ai-units, ai-round2-units, tester-ai-units; generated inputs over 2,000 units skipped), the probe code spans of
+# phase-2-followups-3's test report, review and security review, and the H1 plan's shapes. Only .test, example.* and
+# documentation-IP hosts (lines whose hosts are anything else were left out). Lines starting with '#' are comments;
+# a line starting with 'json:' is a JSON string (for control characters, lone surrogates and similar).
+Please see ftp://files.evil.test/invoice.pdf today.
+Hi, please log in at https://bank.test/login or call. bank.test team
+Please see javascript://evil.test/%0aalert(1) today.
+Please see smb://share.evil.test/x today.
+Please see HTTPS://EVIL.TEST today.
+Please see Link:https://evil.test/x today.
+Please see ftp://bank.test@evil.test/ today.
+Please see ftp://bank.test.evil.test/ today.
+Please see ftp://bаnk.test/ today.
+Please see //evil.test/login today.
+Please see //evil.test:8080/x today.
+Please see 203.0.113.9 today.
+Please see 203.0.113.9/login today.
+Please see 203.0.113.9:8443/x today.
+Please see user@203.0.113.9 today.
+Please see http://203.0.113.9/ today.
+Please see http://3405803785/ today.
+Please see file:///etc/passwd today.
+Version 1.2.3
+Hello, Version 1.2.3, thanks.
+e.g.
+Hello, e.g., thanks.
+U.S.
+Hello, U.S., thanks.
+10:30
+Hello, 10:30, thanks.
+ratio 3:1
+Hello, ratio 3:1, thanks.
+and/or
+Hello, and/or, thanks.
+a/b
+Hello, a/b, thanks.
+// note
+Hello, // note, thanks.
+//TODO
+Hello, //TODO, thanks.
+///
+Hello, ///, thanks.
+C:\Users\x
+Hello, C:\Users\x, thanks.
+C:/Users/x
+Hello, C:/Users/x, thanks.
+Re: lunch
+Hello, Re: lunch, thanks.
+Note: see below
+Hello, Note: see below, thanks.
+203.0.113.4.5
+Hello, 203.0.113.4.5, thanks.
+256.1.1.1
+Hello, 256.1.1.1, thanks.
+1.2.3.999
+Hello, 1.2.3.999, thanks.
+01.02.03.04
+Hello, 01.02.03.04, thanks.
+[date]
+Hello, [date], thanks.
+ftp://files.example.org/x
+see example.org
+//example.org/x
+sftp://example.org
+https://example.org.
+203.0.113.9
+go to http://203.0.113.9/
+http://203.0.113.9/x
+http://3405803785/
+203.0.113.90
+203.0.113.1
+198.51.100.9
+http://203.0.113.99/
+https://files.example.org/a
+ftp://files.example.org/b
+https://cdn.example.org/a
+//cdn.example.org/b
+//198.51.100.7/a
+198.51.100.7:8443
+FtP://EviL.Test/X
+ftp://evil.test/x.
+ftp://evil.test/x?!:.
+203.0.113.9.
+//evil.test:
+ftp://%62ank.test/
+ftp://bank%2etest.evil.test/
+ftp://evil．test/
+ftp://bank．test/
+ftp://ev​il.test/
+ftp://bank.test:pa@ss@evil.test/
+ftp://user:bank.test@evil.test
+//bank.test@evil.test/
+//bank.test:1@203.0.113.5/
+x://
+http://[2001:db8::1]/
+ftp://bank.test/x sftp://www.bank.test //bank.test/y
+203.0.113.0
+198.51.100.255
+256.0.0.1
+203.0.113.256
+203.0.113
+203.0.113.9.1
+203.0.113.09
+203.0.113.-1
+0x7f.0.0.1
+203.0.113.9e
++203.0.113.9
+?! // U.S. 50% Re: -- 10:30 #3 Mr. - i.e. Mr. x2 3:1 e.g. -- $4.50 #3 the - U.S. a ?! the 10:30 a e.g. I'm -- the Re: U.S. - OK. 3:1 // a a ... ?! i.e. 50% e.g. 3:1 x2 Mr. -- e.g. 10:30 3:1 lunch 50% $4.50 $4.50 p.m. lunch 9.5 // 9.5 Note:
+the, 1.2.3, -, #3, p.m., lunch, x2, 9.5, 10:30, $4.50, e.g., --, U.S., Note:, 100.0, ..., p.m., //, ?!, v1.2, ?!, v1.2, x2, 3:1, //, U.S., $4.50, 100.0, Mr., //, ..., 3:1, lunch, $4.50, 3:1, OK., p.m., lunch, -, U.S., Note:, 100.0, Re:, $4.50, $4.50, i.e., and/or, Re:, 50%, v1.2, e.g., #3, Mr., v1.2, OK., and/or, Note:, Mr., 1.2.3, the
+json:"#3 Mr. p.m. e.g. ?! - e.g. a $4.50 $4.50 3:1 10:30 v1.2 the i.e. 100.0 ?! 100.0 Re: Re: ... 3:1 and/or // and/or $4.50 and/or v1.2 p.m. v1.2 - #3 ... ?! i.e. v1.2 3:1 3:1 50% i.e. Re: $4.50 3:1 Note: 3:1 a ?! e.g. - 1.2.3 $4.50 p.m. OK. // Re: Mr. -- U.S. p.m. //"
+json:"#3 OK. e.g. 1.2.3 ... 100.0 - Mr. U.S. x2 a a Re: -- 50% I'm 100.0 OK. #3 U.S. U.S. ?! v1.2 // Mr. $4.50 v1.2 9.5 #3 v1.2 U.S. Re: 1.2.3 the lunch 50% x2 9.5 Mr. - $4.50 Re: 10:30 Note: a 3:1 // ... x2 OK. I'm e.g. 50% -- // - // and/or v1.2 3:1"
+--
+...
+50%
+//
+Note:
+the
+Re:
+9.5
+a
+Mr.
+lunch
+1.2.3
+i.e.
+$4.50
+100.0
+I'm
+OK.
+v1.2
+3:1
+-
+json:"#3"
+x2
+p.m.
+i.e., -, 10:30, 10:30, x2, --, -, ?!, Note:, I'm, $4.50, p.m., Note:, a, the, v1.2, i.e., i.e., 100.0, ?!, U.S., v1.2, 50%, the, x2, OK., 1.2.3, e.g., I'm, --, Note:, lunch, I'm, //, Mr., OK., -, 9.5, Re:, Re:, ..., 50%, e.g., I'm, i.e., Note:, 50%, ?!, ..., e.g., p.m., --, x2, a, 9.5, ?!, 10:30, a, v1.2, $4.50
+?!
+a, ..., -, //, -, I'm, Note:, x2, ?!, 9.5, U.S., -, the, p.m., a, --, -, $4.50, ..., #3, U.S., 50%, 100.0, 100.0, 100.0, OK., 9.5, OK., Re:, lunch, 100.0, the, -, Mr., $4.50, I'm, v1.2, U.S., //, p.m., 50%, 10:30, Re:, 1.2.3, x2, a, Note:, i.e., #3, 1.2.3, #3, 100.0, and/or, OK., x2, the, $4.50, Mr., 10:30, ?!
+-, 1.2.3, U.S., #3, 3:1, -, --, 100.0, Re:, ?!, lunch, 50%, OK., //, ?!, U.S., 1.2.3, ?!, Re:, 100.0, e.g., $4.50, $4.50, ..., ..., #3, p.m., I'm, the, a, lunch, p.m., the, the, --, a, x2, #3, the, and/or, U.S., v1.2, e.g., x2, 50%, a, #3, ?!, U.S., ?!, and/or, ?!, and/or, ?!, e.g., Note:, $4.50, x2, 10:30, p.m.
+// ?! v1.2 50% 100.0 Mr. $4.50 v1.2 p.m. -- p.m. i.e. Re: 3:1 100.0 -- 100.0 the 50% ?! 100.0 10:30 9.5 i.e. 9.5 3:1 -- 1.2.3 i.e. 3:1 9.5 #3 3:1 -- 1.2.3 // Re: ... p.m. 50% ... Mr. ?! U.S. // #3 // ?! 50% #3 and/or Re: the $4.50 1.2.3 v1.2 the Note: 50% 10:30
+and/or 100.0 i.e. // a Re: a Note: v1.2 I'm -- // 1.2.3 100.0 x2 // v1.2 x2 3:1 ?! 10:30 Note: U.S. 1.2.3 Note: 9.5 a I'm ?! a #3 Mr. e.g. U.S. i.e. 100.0 // and/or the and/or a 1.2.3 - and/or the 9.5 I'm i.e. Note: e.g. $4.50 OK. 100.0 U.S. Mr. i.e. $4.50 -- U.S. e.g.
+U.S., p.m., 9.5, i.e., Note:, the, 9.5, 50%, #3, lunch, #3, $4.50, OK., the, U.S., i.e., --, 1.2.3, lunch, 10:30, p.m., 100.0, ..., e.g., the, OK., a, p.m., v1.2, 9.5, 9.5, I'm, Re:, 1.2.3, 10:30, a, #3, ..., ?!, 50%, ?!, a, Mr., $4.50, #3, and/or, OK., i.e., and/or, lunch, 9.5, e.g., i.e., ?!, #3, ..., and/or, and/or, v1.2, //
+Mr., and/or, 1.2.3, --, a, 3:1, 100.0, 9.5, ..., --, e.g., lunch, Mr., 3:1, 3:1, 100.0, 50%, i.e., 3:1, e.g., i.e., p.m., 100.0, #3, 1.2.3, I'm, Re:, ?!, //, ?!, v1.2, -, -, -, 50%, i.e., $4.50, OK., #3, Note:, v1.2, Re:, Mr., lunch, --, I'm, 10:30, the, -, a, OK., -, i.e., #3, ..., --, U.S., 100.0, Re:, the
+OK. -- lunch 10:30 i.e. OK. // Note: 3:1 #3 x2 x2 9.5 - Mr. p.m. $4.50 U.S. 1.2.3 e.g. a -- #3 10:30 100.0 100.0 x2 100.0 i.e. OK. a 3:1 -- #3 100.0 I'm x2 OK. 100.0 OK. Mr. ?! p.m. 1.2.3 ... a 1.2.3 e.g. x2 e.g. 50% i.e. I'm 3:1 the Re: e.g. 9.5 100.0 v1.2
+p.m. x2 i.e. v1.2 Re: ?! p.m. $4.50 OK. U.S. $4.50 x2 i.e. 10:30 and/or i.e. 9.5 Re: ... U.S. v1.2 p.m. 9.5 x2 e.g. e.g. -- Mr. and/or U.S. a a #3 1.2.3 Note: #3 Mr. e.g. lunch the e.g. i.e. 9.5 p.m. and/or - v1.2 -- i.e. 10:30 $4.50 - - 100.0 -- a p.m. -- 50% Note:
+- U.S. #3 1.2.3 i.e. $4.50 p.m. 9.5 I'm OK. #3 e.g. e.g. Note: p.m. $4.50 - ... 3:1 ?! Mr. 3:1 and/or 100.0 Mr. x2 the -- p.m. i.e. lunch a and/or 10:30 U.S. U.S. ?! a 9.5 v1.2 #3 v1.2 - OK. x2 U.S. 3:1 e.g. lunch - i.e. I'm ... ?! p.m. #3 x2 3:1 Re: a
+x2 ... // a 3:1 Note: p.m. I'm I'm -- 10:30 3:1 ?! x2 e.g. 9.5 9.5 a v1.2 Mr. ... i.e. the OK. 9.5 I'm e.g. 3:1 3:1 e.g. 10:30 100.0 lunch 1.2.3 Note: e.g. e.g. i.e. 100.0 10:30 3:1 x2 e.g. Mr. -- $4.50 Note: Mr. -- Re: OK. 50% lunch lunch lunch 100.0 $4.50 1.2.3 x2 Re:
+the 10:30 OK. i.e. $4.50 x2 50% Re: p.m. -- OK. I'm i.e. Mr. ?! the e.g. #3 p.m. 10:30 ... 3:1 #3 a 10:30 -- lunch Note: e.g. U.S. Re: Re: x2 // 3:1 a ?! 50% x2 Note: #3 OK. Note: OK. a and/or 1.2.3 ?! 3:1 a - and/or x2 - 100.0 ?! OK. ... p.m. #3
+Mr., p.m., a, and/or, 9.5, //, ..., //, 10:30, --, v1.2, p.m., 10:30, 10:30, OK., ..., e.g., x2, v1.2, 50%, #3, p.m., and/or, e.g., 1.2.3, 3:1, x2, OK., -, Mr., 10:30, a, ?!, p.m., --, 50%, OK., 50%, $4.50, //, 1.2.3, 10:30, Mr., Note:, 1.2.3, x2, a, I'm, 50%, and/or, -, Note:, and/or, v1.2, 9.5, 100.0, 10:30, OK., a, p.m.
+50%, the, 9.5, Re:, a, Re:, e.g., 100.0, U.S., 10:30, a, the, 100.0, x2, Mr., 9.5, 1.2.3, Mr., 9.5, 50%, e.g., I'm, a, ..., ..., 3:1, ..., 10:30, and/or, Re:, x2, U.S., 50%, $4.50, --, #3, ..., ..., lunch, e.g., Note:, 3:1, Re:, i.e., Note:, p.m., and/or, 50%, $4.50, -, U.S., Mr., Note:, 9.5, 9.5, U.S., e.g., -, v1.2, -
+-- 10:30 50% 1.2.3 // Note: a e.g. // Note: 100.0 v1.2 i.e. ?! a 50% Re: Note: 10:30 x2 50% 100.0 v1.2 1.2.3 - Note: U.S. i.e. lunch Note: 3:1 3:1 ... x2 i.e. i.e. v1.2 10:30 p.m. 1.2.3 e.g. e.g. e.g. I'm 3:1 100.0 e.g. // U.S. $4.50 #3 and/or p.m. the 50% #3 $4.50 100.0 p.m. p.m.
+100.0, v1.2, 10:30, i.e., lunch, 100.0, -, Note:, $4.50, //, e.g., U.S., ?!, e.g., U.S., Mr., -, ..., //, Re:, Re:, //, lunch, ?!, ..., the, $4.50, 3:1, Note:, 9.5, Note:, i.e., Note:, 10:30, I'm, the, 50%, 9.5, 9.5, ..., i.e., #3, i.e., ..., the, i.e., and/or, x2, 9.5, a, #3, Re:, lunch, 50%, lunch, ..., the, $4.50, //, -
+3:1 lunch $4.50 100.0 the i.e. I'm Note: 9.5 U.S. 1.2.3 i.e. 100.0 1.2.3 100.0 a v1.2 e.g. #3 a Mr. ... -- v1.2 50% ... Mr. $4.50 #3 - and/or lunch - x2 ... 100.0 U.S. ... p.m. x2 U.S. a 10:30 50% ... $4.50 - U.S. // e.g. // e.g. 100.0 a #3 $4.50 $4.50 p.m. - 3:1
+lunch the 3:1 U.S. x2 ?! v1.2 ?! x2 ... U.S. 1.2.3 $4.50 3:1 100.0 50% p.m. #3 100.0 lunch the #3 9.5 a ?! Re: 9.5 $4.50 and/or 3:1 50% Mr. - 9.5 Note: and/or 10:30 OK. -- I'm 50% lunch I'm U.S. 50% p.m. Note: Re: v1.2 50% Re: - lunch 100.0 ... x2 10:30 the Mr. ...
+the, lunch, Mr., 50%, and/or, and/or, 3:1, and/or, ?!, e.g., --, Note:, Note:, i.e., 3:1, e.g., 1.2.3, I'm, Re:, 1.2.3, 3:1, 3:1, 100.0, lunch, OK., e.g., -, 10:30, 10:30, ?!, and/or, U.S., ?!, Mr., a, i.e., OK., $4.50, x2, e.g., $4.50, Mr., and/or, Mr., 3:1, e.g., $4.50, --, a, 3:1, Mr., OK., i.e., ?!, 9.5, 1.2.3, -, --, ..., U.S.
+json:"#3 Mr. $4.50 I'm the U.S. -- 10:30 U.S. I'm ?! the i.e. $4.50 v1.2 ?! 9.5 - - Mr. and/or and/or -- 10:30 OK. lunch lunch -- U.S. i.e. $4.50 OK. lunch - 100.0 a 10:30 e.g. i.e. $4.50 p.m. U.S. -- I'm a lunch 1.2.3 e.g. Mr. x2 the - -- i.e. e.g. e.g. I'm and/or 1.2.3 100.0"
+?!, v1.2, 10:30, I'm, Note:, e.g., v1.2, -, Mr., the, x2, 3:1, 10:30, //, ?!, ?!, OK., the, Mr., v1.2, a, 10:30, I'm, 10:30, OK., i.e., //, p.m., #3, p.m., //, -, OK., ?!, 9.5, Note:, Note:, lunch, --, x2, 1.2.3, 9.5, Mr., the, #3, lunch, 3:1, 1.2.3, a, --, --, U.S., ?!, v1.2, v1.2, 9.5, OK., OK., OK., x2
+-- 10:30 OK. x2 - I'm I'm ... OK. #3 // 1.2.3 10:30 OK. ?! #3 and/or x2 v1.2 1.2.3 1.2.3 e.g. // and/or Note: Re: 9.5 -- - $4.50 the I'm v1.2 U.S. $4.50 9.5 #3 Mr. 50% 10:30 ?! 3:1 3:1 - - U.S. 9.5 a 3:1 1.2.3 U.S. OK. the #3 -- $4.50 // p.m. 10:30 100.0
+?!, ?!, 1.2.3, i.e., i.e., 50%, --, 9.5, and/or, 10:30, OK., p.m., Note:, i.e., //, I'm, -, ..., 3:1, and/or, v1.2, 3:1, OK., 9.5, Note:, I'm, -, --, ?!, #3, Re:, 10:30, U.S., ?!, p.m., U.S., and/or, //, I'm, 100.0, #3, and/or, v1.2, and/or, and/or, --, ..., and/or, and/or, 3:1, I'm, Note:, 3:1, e.g., e.g., a, p.m., i.e., 100.0, 100.0
+9.5 v1.2 3:1 and/or lunch OK. and/or OK. a Re: - 3:1 50% 9.5 50% - #3 3:1 9.5 Re: - a a p.m. Mr. // 100.0 e.g. OK. Mr. a 50% 100.0 lunch 50% I'm ... Mr. ?! 1.2.3 // #3 10:30 OK. the p.m. 1.2.3 1.2.3 v1.2 I'm 3:1 I'm i.e. and/or - -- e.g. 3:1 Re: a
+lunch, lunch, x2, OK., #3, and/or, U.S., I'm, Re:, ..., 10:30, Note:, //, #3, //, $4.50, lunch, ?!, i.e., a, p.m., U.S., i.e., OK., //, lunch, Mr., i.e., and/or, $4.50, OK., v1.2, --, I'm, 10:30, 10:30, #3, OK., #3, 1.2.3, #3, ?!, v1.2, 1.2.3, //, 9.5, --, -, a, x2, v1.2, the, x2, OK., e.g., the, x2, a, lunch, 9.5
+// p.m. 10:30 a Re: Re: 1.2.3 ... Mr. $4.50 v1.2 a 9.5 // the 100.0 3:1 the $4.50 U.S. #3 9.5 U.S. #3 #3 and/or the U.S. // x2 lunch #3 10:30 Re: ?! i.e. ... OK. 1.2.3 Note: 100.0 x2 x2 50% and/or lunch ... $4.50 Mr. lunch - U.S. 50% U.S. x2 p.m. I'm lunch // and/or
+a, #3, 1.2.3, p.m., 50%, lunch, ?!, U.S., and/or, 9.5, -, i.e., Re:, $4.50, 50%, lunch, e.g., e.g., 9.5, 3:1, U.S., 50%, 3:1, 1.2.3, e.g., v1.2, ?!, 3:1, i.e., --, p.m., OK., i.e., a, I'm, -, ?!, --, 50%, p.m., #3, OK., ?!, ..., I'm, the, ..., Mr., i.e., -, Re:, $4.50, -, Re:, --, 10:30, i.e., p.m., 50%, lunch
+-, ..., Mr., 10:30, Mr., ..., I'm, 9.5, a, a, Mr., x2, #3, ..., Mr., the, Re:, #3, ?!, -, i.e., i.e., v1.2, $4.50, $4.50, Re:, ..., x2, Mr., x2, 3:1, Re:, a, e.g., lunch, 10:30, 10:30, ..., 1.2.3, 9.5, 50%, p.m., $4.50, -, --, 9.5, Re:, //, ..., p.m., x2, 1.2.3, -, --, Re:, OK., 1.2.3, lunch, e.g., 1.2.3
+lunch // #3 - ?! $4.50 - p.m. #3 1.2.3 p.m. 9.5 Note: 3:1 Re: ?! 3:1 U.S. v1.2 i.e. 3:1 9.5 3:1 - Re: ... I'm lunch 3:1 a Note: OK. e.g. $4.50 the #3 - v1.2 v1.2 U.S. 10:30 10:30 50% #3 OK. Mr. the 10:30 lunch $4.50 Mr. U.S. e.g. ... Mr. 50% 100.0 i.e. 1.2.3 v1.2
+?!, $4.50, 3:1, the, Note:, I'm, 1.2.3, ..., 3:1, lunch, Re:, ..., 3:1, x2, 9.5, 9.5, OK., Re:, 3:1, -, Re:, OK., ..., $4.50, v1.2, I'm, $4.50, ..., p.m., Mr., $4.50, Re:, OK., OK., 10:30, Re:, --, #3, p.m., 9.5, Mr., 100.0, 10:30, #3, ..., lunch, 100.0, a, p.m., //, e.g., 10:30, U.S., e.g., OK., and/or, 100.0, --, a, x2
+3:1, a, Note:, 50%, $4.50, i.e., 1.2.3, 50%, 10:30, 100.0, U.S., 10:30, and/or, Re:, 1.2.3, #3, 1.2.3, --, ..., -, I'm, lunch, 1.2.3, --, #3, 9.5, p.m., 1.2.3, OK., 50%, -, 100.0, -, ?!, lunch, p.m., Re:, -, 9.5, OK., --, p.m., x2, e.g., e.g., e.g., //, //, -, U.S., $4.50, -, x2, OK., and/or, 50%, lunch, 50%, Mr., lunch
+100.0, $4.50, I'm, 50%, Note:, ..., Re:, x2, 9.5, ?!, and/or, -, 9.5, 3:1, 10:30, #3, ?!, #3, e.g., 10:30, 10:30, 1.2.3, 1.2.3, 100.0, ?!, e.g., #3, i.e., --, 50%, 100.0, Mr., Mr., lunch, lunch, ..., ?!, -, e.g., ?!, and/or, Re:, Mr., e.g., ..., the, Mr., e.g., 50%, e.g., 100.0, i.e., 10:30, OK., //, -, Note:, ?!, //, Note:
+100.0 100.0 lunch x2 100.0 10:30 Mr. // 3:1 p.m. e.g. 3:1 lunch v1.2 #3 i.e. 100.0 Mr. 3:1 100.0 v1.2 - e.g. - // x2 #3 ?! 100.0 Mr. - -- I'm x2 x2 10:30 $4.50 U.S. // p.m. ... OK. 1.2.3 e.g. 50% // a I'm #3 e.g. v1.2 $4.50 ... // Note: 9.5 U.S. Re: ?! 10:30
+v1.2 - Re: i.e. the e.g. 9.5 10:30 the lunch and/or 10:30 Mr. 3:1 10:30 lunch 10:30 50% OK. Re: 3:1 I'm 100.0 Note: 10:30 $4.50 ?! i.e. i.e. Re: 50% // I'm #3 // 1.2.3 p.m. v1.2 a -- 50% and/or 1.2.3 -- Re: $4.50 U.S. p.m. OK. v1.2 and/or // $4.50 10:30 a the p.m. e.g. the x2
+... // 3:1 i.e. and/or Re: 9.5 OK. -- ... the 10:30 i.e. lunch 3:1 OK. $4.50 the Note: x2 Re: and/or Note: a ?! U.S. // // I'm Note: #3 a x2 I'm $4.50 50% Mr. 1.2.3 e.g. Mr. #3 - 50% // the 100.0 $4.50 p.m. ?! U.S. 100.0 lunch 10:30 100.0 3:1 50% 9.5 $4.50 100.0 --
+--, 9.5, #3, ..., lunch, and/or, //, $4.50, Re:, 50%, a, U.S., --, and/or, i.e., --, -, the, Mr., Note:, $4.50, --, 100.0, a, 9.5, lunch, x2, and/or, -, 10:30, a, I'm, I'm, 9.5, --, a, #3, Note:, 10:30, //, a, //, 9.5, a, 10:30, 9.5, e.g., the, and/or, ?!, $4.50, U.S., ..., Note:, U.S., Mr., 100.0, --, i.e., 50%
+//, I'm, OK., -, #3, and/or, 10:30, Re:, 100.0, the, lunch, 100.0, i.e., e.g., i.e., x2, Re:, --, i.e., U.S., 100.0, ..., Mr., 50%, and/or, 100.0, U.S., e.g., //, $4.50, Mr., //, v1.2, lunch, --, U.S., $4.50, //, #3, //, 10:30, --, 1.2.3, U.S., Note:, i.e., i.e., U.S., U.S., 50%, OK., 1.2.3, #3, Note:, v1.2, ?!, 10:30, v1.2, OK., a
+p.m., 3:1, OK., e.g., 10:30, p.m., e.g., $4.50, a, e.g., U.S., the, v1.2, 10:30, //, -, --, Mr., --, --, 10:30, Re:, the, I'm, Mr., Re:, Re:, Re:, Mr., --, lunch, --, OK., ..., p.m., U.S., --, -, i.e., ?!, i.e., 3:1, the, //, the, U.S., $4.50, --, e.g., -, x2, OK., 9.5, the, Mr., ?!, lunch, ..., $4.50, 1.2.3
+a, --, the, i.e., ?!, OK., --, and/or, x2, 50%, 100.0, I'm, --, Note:, a, x2, //, 50%, OK., #3, Mr., ..., 50%, $4.50, the, ?!, and/or, and/or, the, 100.0, 100.0, I'm, //, U.S., Re:, #3, 9.5, 50%, e.g., 50%, and/or, the, and/or, a, the, U.S., Re:, the, ?!, a, Note:, 3:1, Note:, lunch, 9.5, $4.50, 10:30, -, v1.2, 10:30
+lunch, 3:1, 9.5, ..., 100.0, -, U.S., a, x2, #3, the, ..., v1.2, v1.2, $4.50, --, e.g., 1.2.3, ?!, 1.2.3, 3:1, ..., ..., the, $4.50, v1.2, e.g., U.S., --, OK., a, lunch, 50%, p.m., a, Note:, lunch, U.S., $4.50, I'm, lunch, a, Note:, Mr., and/or, $4.50, lunch, e.g., p.m., v1.2, p.m., $4.50, U.S., Mr., 1.2.3, $4.50, 1.2.3, $4.50, ?!, U.S.
+v1.2 Mr. I'm Re: ?! lunch e.g. v1.2 i.e. i.e. -- 10:30 a e.g. 50% // e.g. $4.50 lunch x2 v1.2 1.2.3 Mr. -- Re: i.e. e.g. 9.5 the 9.5 - OK. Mr. Note: - 10:30 100.0 9.5 v1.2 e.g. 9.5 1.2.3 a 9.5 lunch 1.2.3 p.m. 50% a 1.2.3 $4.50 100.0 i.e. 1.2.3 e.g. Re: #3 v1.2 U.S. $4.50
+I'm, Re:, OK., e.g., 1.2.3, and/or, and/or, #3, I'm, $4.50, #3, and/or, 50%, --, e.g., a, a, ..., 9.5, --, 9.5, OK., ?!, 1.2.3, Mr., ?!, 3:1, i.e., //, I'm, Re:, v1.2, U.S., the, v1.2, -, i.e., v1.2, //, ..., the, Mr., 100.0, ..., i.e., 100.0, 10:30, x2, 100.0, Re:, //, 100.0, ..., U.S., 50%, x2, 10:30, 1.2.3, x2, and/or
+// ... 9.5 -- v1.2 Re: Re: 1.2.3 100.0 OK. U.S. // U.S. x2 1.2.3 9.5 100.0 e.g. 100.0 ... the 10:30 a ... ?! Re: v1.2 9.5 I'm Note: 3:1 i.e. Note: #3 Mr. 50% x2 I'm Mr. 100.0 ... x2 I'm 100.0 x2 $4.50 9.5 10:30 #3 100.0 $4.50 e.g. Mr. i.e. the Mr. p.m. e.g. 50% --
+..., Mr., a, 1.2.3, Mr., I'm, #3, -, 100.0, Mr., --, 100.0, OK., 9.5, a, $4.50, 10:30, 3:1, x2, the, 50%, #3, 3:1, $4.50, ..., OK., OK., 100.0, ..., the, 100.0, 9.5, Note:, i.e., lunch, i.e., -, #3, lunch, $4.50, OK., e.g., --, Re:, Note:, i.e., ..., v1.2, 50%, 9.5, lunch, U.S., I'm, #3, e.g., ?!, v1.2, 50%, ..., p.m.
+-, 1.2.3, e.g., x2, ?!, ..., ?!, 10:30, 9.5, Note:, x2, lunch, 1.2.3, 9.5, I'm, #3, the, p.m., 3:1, the, 50%, I'm, 10:30, p.m., OK., OK., i.e., a, ..., 50%, lunch, v1.2, x2, OK., x2, x2, p.m., ..., v1.2, Re:, 100.0, the, 10:30, -, Re:, -, x2, //, --, p.m., 50%, ..., ..., Mr., Note:, i.e., Note:, p.m., I'm, Note:
+10:30, //, a, p.m., Note:, Re:, ..., ..., $4.50, Re:, a, 3:1, 100.0, 1.2.3, 1.2.3, v1.2, and/or, the, Note:, #3, p.m., $4.50, $4.50, ..., Re:, Note:, Mr., 50%, U.S., Mr., 3:1, e.g., ?!, Re:, -, U.S., e.g., -, and/or, #3, $4.50, 1.2.3, 3:1, x2, OK., 10:30, a, e.g., ..., #3, a, x2, and/or, Re:, ?!, 9.5, 1.2.3, U.S., ?!, the
+100.0 a 10:30 the and/or 3:1 I'm and/or e.g. 1.2.3 3:1 50% // v1.2 U.S. e.g. ?! // 50% OK. Mr. -- the ?! Note: - - -- OK. - // 9.5 - x2 Note: - Mr. #3 U.S. $4.50 1.2.3 I'm 50% i.e. x2 the and/or Re: e.g. the a p.m. OK. U.S. $4.50 #3 // v1.2 x2 -
+50% -- ?! v1.2 and/or a x2 $4.50 100.0 10:30 the Note: ?! 100.0 $4.50 p.m. and/or Re: 100.0 10:30 9.5 OK. Note: ... // 50% Mr. #3 i.e. p.m. e.g. 50% 10:30 i.e. -- #3 v1.2 p.m. OK. and/or ... lunch U.S. the -- #3 i.e. - U.S. $4.50 // lunch // lunch -- OK. 50% p.m. lunch ...
+100.0 x2 $4.50 ... a the // 100.0 i.e. 10:30 $4.50 #3 ?! 10:30 ?! I'm U.S. #3 100.0 U.S. e.g. p.m. ?! OK. 3:1 x2 9.5 and/or I'm p.m. ?! v1.2 and/or Note: the 3:1 3:1 v1.2 10:30 50% Re: v1.2 - U.S. 50% $4.50 $4.50 i.e. i.e. ... ... Note: 50% -- ... - ... // p.m. a
+the - the ... i.e. // - I'm a #3 a i.e. 3:1 $4.50 10:30 lunch a lunch #3 50% Note: e.g. v1.2 U.S. - 50% // x2 ... OK. and/or I'm I'm 1.2.3 #3 Note: ... the 3:1 #3 and/or 10:30 Mr. 3:1 #3 a I'm the #3 the i.e. x2 OK. Mr. Mr. I'm 3:1 OK. 9.5 and/or
+1.2.3 3:1 -- lunch v1.2 i.e. i.e. ... Note: 9.5 and/or -- 1.2.3 ?! 50% OK. #3 p.m. - a 9.5 100.0 ... U.S. OK. and/or p.m. lunch the 100.0 Note: 1.2.3 Note: U.S. 1.2.3 #3 x2 9.5 ?! #3 a U.S. #3 OK. OK. OK. $4.50 50% U.S. a lunch i.e. ... 3:1 p.m. #3 Note: p.m. - 1.2.3
+I'm Mr. the ?! 9.5 1.2.3 #3 the i.e. the 1.2.3 v1.2 1.2.3 ?! Note: U.S. // - I'm 3:1 a 10:30 10:30 ... 10:30 $4.50 100.0 ... Re: 3:1 the I'm I'm lunch 3:1 $4.50 U.S. Re: 3:1 100.0 e.g. x2 3:1 p.m. ... x2 e.g. i.e. p.m. 50% v1.2 Re: x2 // ?! lunch Note: $4.50 Re: e.g.
+x2 e.g. x2 Mr. -- $4.50 10:30 i.e. a e.g. 9.5 -- Mr. a U.S. v1.2 OK. OK. lunch 10:30 $4.50 $4.50 Re: ?! Note: Note: Note: lunch v1.2 x2 and/or 3:1 OK. e.g. e.g. -- 1.2.3 $4.50 v1.2 U.S. a ... lunch lunch $4.50 Note: 1.2.3 // e.g. v1.2 Mr. p.m. 10:30 Mr. a I'm ... I'm -- ?!
+and/or, //, $4.50, i.e., 10:30, --, and/or, OK., the, i.e., 1.2.3, 100.0, lunch, 9.5, a, -, 1.2.3, 1.2.3, --, Mr., x2, OK., Note:, 9.5, lunch, I'm, Re:, i.e., --, U.S., v1.2, #3, OK., 1.2.3, Note:, the, p.m., v1.2, 1.2.3, ..., -, 9.5, i.e., 100.0, --, ..., OK., the, a, Mr., --, $4.50, a, p.m., I'm, -, 50%, the, //, 3:1
+... 10:30 Re: I'm lunch ... a p.m. 100.0 e.g. 10:30 1.2.3 9.5 x2 ?! U.S. 50% lunch // lunch ?! the 50% 100.0 a // Mr. 9.5 OK. ... ?! $4.50 e.g. and/or the 50% Note: ?! Re: 9.5 9.5 // 10:30 and/or 10:30 v1.2 1.2.3 #3 Mr. 3:1 I'm v1.2 50% // - 100.0 lunch OK. Re: a
+Re: a ?! // 9.5 // 100.0 #3 p.m. U.S. // 100.0 and/or - x2 ... x2 3:1 and/or #3 #3 ... lunch 1.2.3 x2 3:1 10:30 I'm #3 a // e.g. the 1.2.3 p.m. ?! i.e. #3 $4.50 Note: #3 Mr. the lunch -- p.m. and/or i.e. -- 1.2.3 Mr. U.S. 3:1 the ... 1.2.3 Mr. v1.2 v1.2 $4.50
+?!, the, 100.0, p.m., --, U.S., lunch, U.S., a, ?!, $4.50, OK., v1.2, and/or, -, 100.0, --, v1.2, 10:30, 1.2.3, the, 50%, U.S., 50%, 50%, -, p.m., e.g., 50%, -, 9.5, lunch, x2, v1.2, the, $4.50, 50%, ?!, -, and/or, Re:, 1.2.3, OK., 100.0, a, and/or, $4.50, -, and/or, ?!, OK., e.g., #3, --, 10:30, a, U.S., 10:30, v1.2, ?!
+x2, the, 100.0, p.m., e.g., 50%, x2, p.m., and/or, U.S., the, a, 3:1, --, Note:, 100.0, lunch, v1.2, 50%, v1.2, lunch, a, the, ..., ?!, lunch, 1.2.3, Mr., Mr., 100.0, 3:1, //, e.g., //, --, 100.0, ..., 1.2.3, Re:, -, 50%, Re:, 3:1, 10:30, e.g., $4.50, 3:1, lunch, OK., lunch, //, ?!, 100.0, I'm, //, #3, U.S., --, 1.2.3, p.m.
+a, x2, I'm, #3, #3, ?!, U.S., //, the, //, lunch, 50%, $4.50, ..., v1.2, 10:30, $4.50, 3:1, p.m., a, and/or, v1.2, Re:, 100.0, //, 10:30, e.g., v1.2, Re:, 50%, ?!, 1.2.3, x2, ..., e.g., 100.0, lunch, x2, a, ..., p.m., //, //, ..., -, lunch, e.g., -, //, e.g., ?!, i.e., U.S., v1.2, lunch, x2, --, $4.50, and/or, lunch
+lunch, Note:, -, I'm, 50%, ..., --, I'm, v1.2, p.m., 1.2.3, i.e., e.g., e.g., i.e., lunch, #3, Note:, ?!, a, 100.0, Note:, 100.0, --, $4.50, ?!, 10:30, Re:, v1.2, Re:, Re:, x2, Re:, #3, #3, 10:30, Note:, -, p.m., 100.0, U.S., e.g., OK., 10:30, Note:, and/or, #3, the, Mr., e.g., ..., ?!, ..., 9.5, lunch, v1.2, e.g., ?!, --, #3
+OK. #3 50% 9.5 v1.2 the lunch - the I'm i.e. a and/or - OK. I'm and/or and/or I'm the 1.2.3 Re: -- Note: - Re: Note: x2 Note: -- - ?! I'm #3 9.5 I'm U.S. 50% -- I'm ... 100.0 OK. 100.0 $4.50 Mr. -- I'm p.m. 9.5 - $4.50 $4.50 // 9.5 100.0 #3 OK. - OK.
+//, v1.2, U.S., v1.2, Note:, the, Note:, 3:1, Mr., i.e., ..., 3:1, -, -, 9.5, i.e., 1.2.3, the, U.S., //, #3, p.m., 9.5, 3:1, Re:, the, 100.0, e.g., 10:30, a, v1.2, //, e.g., 100.0, I'm, e.g., Re:, 1.2.3, x2, ?!, v1.2, x2, 10:30, v1.2, Re:, 9.5, 100.0, p.m., $4.50, ?!, //, #3, 3:1, 3:1, 9.5, OK., ?!, Mr., $4.50, 100.0
+9.5 50% 10:30 50% 1.2.3 I'm I'm x2 and/or 1.2.3 3:1 i.e. v1.2 a #3 ... ?! - #3 1.2.3 10:30 #3 // i.e. 10:30 9.5 // I'm #3 ... 1.2.3 $4.50 v1.2 and/or I'm 10:30 ?! and/or e.g. Note: Mr. I'm 1.2.3 ... ... -- #3 the -- #3 // lunch $4.50 #3 Mr. Note: a U.S. 10:30 lunch
+Re: v1.2 x2 e.g. and/or - I'm and/or -- // i.e. 100.0 // #3 lunch -- I'm 10:30 Re: 100.0 ?! a -- U.S. e.g. lunch i.e. 3:1 lunch 10:30 3:1 1.2.3 10:30 a the ?! a I'm the 10:30 p.m. a Mr. Mr. I'm a lunch Re: - 9.5 #3 $4.50 Re: 50% 3:1 ?! #3 50% -- p.m.
+100.0, x2, #3, Re:, ..., -, ..., 100.0, 10:30, x2, lunch, lunch, and/or, 1.2.3, 1.2.3, //, --, --, 9.5, 50%, lunch, i.e., 1.2.3, $4.50, 10:30, p.m., #3, the, 10:30, v1.2, x2, Re:, 50%, 100.0, #3, U.S., 1.2.3, 10:30, 10:30, the, and/or, Re:, //, 1.2.3, x2, I'm, ..., a, --, Re:, I'm, 50%, a, e.g., //, x2, --, 50%, U.S., i.e.
+$4.50, ?!, and/or, #3, 3:1, v1.2, -, lunch, #3, Re:, the, #3, Note:, x2, --, x2, 1.2.3, U.S., ?!, Note:, x2, Note:, #3, Re:, 50%, the, e.g., lunch, ..., 3:1, I'm, Mr., ..., Note:, OK., and/or, -, 3:1, i.e., the, 1.2.3, v1.2, -, 3:1, p.m., and/or, Mr., Note:, -, 10:30, #3, #3, p.m., lunch, Mr., x2, and/or, p.m., lunch, -
+50%, ..., $4.50, i.e., i.e., lunch, Re:, Mr., the, ..., $4.50, Mr., x2, //, i.e., the, a, --, U.S., a, 10:30, -, 3:1, 9.5, //, a, --, OK., --, the, lunch, a, lunch, 10:30, lunch, lunch, v1.2, ..., --, the, Re:, //, p.m., U.S., Mr., the, ..., #3, --, Mr., x2, //, 100.0, and/or, 3:1, //, i.e., and/or, OK., 9.5
+50% U.S. $4.50 Re: the the -- $4.50 50% 1.2.3 1.2.3 50% I'm Mr. ... and/or OK. 50% ?! Mr. 50% Mr. Note: U.S. i.e. 3:1 I'm Note: a i.e. e.g. the a I'm lunch ... U.S. -- ... Re: v1.2 v1.2 1.2.3 v1.2 // and/or and/or a the v1.2 9.5 ... p.m. Note: ... #3 and/or #3 p.m. 100.0
+Mr., the, 100.0, //, the, 1.2.3, v1.2, --, I'm, 9.5, 3:1, U.S., 3:1, ?!, 50%, the, Re:, x2, Mr., Re:, #3, #3, e.g., --, a, 50%, 1.2.3, 10:30, 50%, p.m., lunch, -, x2, v1.2, $4.50, Note:, p.m., 100.0, Note:, Re:, i.e., ?!, and/or, #3, $4.50, //, ..., the, U.S., Mr., v1.2, the, 9.5, p.m., -, //, the, and/or, 1.2.3, 100.0
+lunch, lunch, 9.5, 1.2.3, 100.0, 3:1, v1.2, the, OK., OK., and/or, 50%, a, ?!, ?!, x2, 1.2.3, -, and/or, a, ..., I'm, I'm, i.e., ..., 1.2.3, //, -, 10:30, ?!, ..., a, x2, 3:1, ..., i.e., 50%, OK., v1.2, 1.2.3, #3, a, lunch, Note:, e.g., 50%, --, and/or, e.g., U.S., $4.50, 3:1, i.e., ..., Note:, e.g., a, the, OK., Re:
+and/or ... v1.2 x2 p.m. v1.2 v1.2 Note: e.g. -- Re: OK. #3 100.0 Re: I'm Re: v1.2 100.0 - a $4.50 x2 ?! e.g. lunch 50% and/or ?! 100.0 lunch OK. lunch -- ... 10:30 50% Note: 3:1 a #3 OK. v1.2 $4.50 - and/or Mr. i.e. I'm the e.g. 3:1 Note: i.e. 50% 100.0 p.m. ... ... a
+... -- a e.g. // a 3:1 i.e. // U.S. x2 100.0 50% lunch OK. 3:1 9.5 and/or 10:30 U.S. the 50% // -- - the lunch 3:1 ?! Re: Re: $4.50 10:30 1.2.3 a a 50% e.g. lunch 1.2.3 ?! - x2 ... I'm - 10:30 // 1.2.3 the 50% 9.5 $4.50 10:30 a Mr. 9.5 I'm p.m. Note:
+lunch // OK. i.e. #3 // Mr. #3 lunch 10:30 OK. // Mr. $4.50 // i.e. and/or and/or and/or - #3 - 9.5 OK. and/or #3 -- x2 - Note: Note: I'm e.g. $4.50 v1.2 e.g. i.e. U.S. the 9.5 1.2.3 50% the v1.2 9.5 - I'm 3:1 and/or 50% $4.50 i.e. lunch I'm I'm i.e. 1.2.3 50% 9.5 $4.50
+9.5, the, 50%, x2, OK., i.e., OK., and/or, i.e., Mr., -, OK., Re:, ?!, ?!, 10:30, e.g., -, $4.50, i.e., the, 100.0, 50%, 100.0, v1.2, U.S., 100.0, 9.5, U.S., U.S., //, x2, e.g., lunch, v1.2, 100.0, 1.2.3, //, the, --, -, OK., and/or, U.S., 9.5, 3:1, lunch, #3, 100.0, lunch, Mr., ?!, 3:1, and/or, 9.5, I'm, lunch, OK., x2, 10:30
+i.e., #3, U.S., Note:, 50%, ..., Re:, //, OK., //, 10:30, 9.5, --, U.S., Note:, $4.50, a, lunch, 100.0, 3:1, 100.0, p.m., //, Mr., Re:, U.S., 50%, 3:1, 9.5, ?!, --, ..., --, --, e.g., Mr., 1.2.3, x2, Note:, -, p.m., U.S., //, ..., Re:, e.g., a, 10:30, lunch, v1.2, Note:, --, Re:, 10:30, and/or, #3, OK., 3:1, Note:, and/or
+50% Re: x2 Mr. - - i.e. and/or p.m. -- I'm p.m. 1.2.3 Re: ... Re: 50% a U.S. a ... the Note: 10:30 $4.50 lunch 50% x2 lunch lunch 100.0 #3 lunch v1.2 v1.2 $4.50 p.m. -- U.S. 3:1 9.5 and/or - 10:30 I'm 3:1 Mr. 3:1 I'm a x2 U.S. and/or ?! lunch i.e. $4.50 $4.50 Note: 100.0
+OK., 9.5, 3:1, 1.2.3, I'm, //, --, #3, U.S., the, I'm, i.e., i.e., 10:30, lunch, 1.2.3, 100.0, OK., -, $4.50, a, #3, ?!, Mr., Re:, 1.2.3, 50%, 50%, v1.2, OK., 10:30, //, U.S., 100.0, Note:, a, v1.2, #3, U.S., 100.0, U.S., 50%, 9.5, i.e., 100.0, 3:1, --, --, OK., lunch, 3:1, Mr., Mr., $4.50, --, lunch, U.S., #3, the, a
+I'm 100.0 ?! x2 // and/or a - I'm 100.0 - 3:1 100.0 ... 100.0 50% OK. $4.50 #3 Re: v1.2 -- // e.g. lunch ?! ... lunch $4.50 $4.50 the -- Note: ... a 10:30 // #3 a Note: a a x2 OK. e.g. - U.S. 10:30 // Note: a 1.2.3 v1.2 v1.2 i.e. I'm - i.e. 3:1 9.5
+9.5 Re: $4.50 // OK. - p.m. e.g. i.e. 10:30 - 100.0 100.0 - the Note: e.g. 3:1 Note: ?! OK. - $4.50 a 3:1 Note: Note: 10:30 -- v1.2 U.S. OK. p.m. e.g. // #3 p.m. p.m. #3 I'm U.S. lunch ... p.m. 3:1 ?! Note: 50% - i.e. $4.50 U.S. 100.0 ... - a the I'm 3:1 Note:
+100.0, ?!, i.e., 100.0, #3, Note:, Note:, Mr., e.g., e.g., and/or, v1.2, e.g., x2, lunch, Re:, -, ?!, 50%, i.e., #3, and/or, //, 3:1, ..., v1.2, i.e., i.e., lunch, a, e.g., //, OK., the, x2, a, #3, OK., 3:1, Re:, #3, the, //, Re:, U.S., Mr., ..., #3, OK., Mr., 3:1, Re:, -, v1.2, $4.50, --, 3:1, Note:, 3:1, 1.2.3
+... e.g. 100.0 p.m. 3:1 #3 - i.e. $4.50 Re: -- e.g. - 50% lunch 1.2.3 3:1 - $4.50 50% - e.g. - lunch 1.2.3 10:30 ... 9.5 I'm 10:30 Mr. -- 100.0 // Mr. e.g. - 10:30 -- v1.2 10:30 a lunch - p.m. x2 e.g. -- p.m. 50% $4.50 a p.m. 9.5 ?! ... 3:1 $4.50 Re: i.e.
+U.S., 10:30, ..., i.e., ?!, v1.2, I'm, ..., 10:30, 1.2.3, 100.0, lunch, --, 100.0, e.g., 9.5, #3, 10:30, -, Mr., 50%, -, p.m., 9.5, U.S., Mr., v1.2, 50%, Note:, v1.2, ..., Note:, 3:1, p.m., #3, U.S., #3, 10:30, U.S., OK., v1.2, -, 50%, ..., 10:30, a, 9.5, $4.50, 1.2.3, 100.0, ..., Re:, the, lunch, 10:30, Mr., I'm, p.m., 1.2.3, a
+... - i.e. I'm 50% I'm a #3 Mr. Mr. 9.5 Re: i.e. $4.50 Re: Note: #3 10:30 ?! lunch lunch // v1.2 p.m. v1.2 I'm ... Mr. - i.e. #3 U.S. ?! Re: 10:30 50% 50% #3 Note: -- Re: 10:30 // Mr. x2 lunch - -- OK. x2 50% Mr. and/or 1.2.3 v1.2 Note: Mr. ?! 1.2.3 p.m.
+100.0, Note:, $4.50, I'm, #3, --, 100.0, lunch, -, p.m., -, p.m., U.S., Mr., 1.2.3, 9.5, 100.0, 3:1, a, --, 100.0, x2, x2, 3:1, 1.2.3, e.g., i.e., a, //, Note:, --, ?!, ?!, OK., ..., the, 10:30, U.S., 9.5, the, a, the, 9.5, 3:1, OK., 3:1, 9.5, 3:1, -, #3, --, #3, $4.50, U.S., 100.0, ..., the, the, Re:, 1.2.3
+i.e., I'm, Mr., 50%, U.S., ?!, $4.50, and/or, Re:, ..., x2, 9.5, e.g., 10:30, #3, x2, v1.2, 10:30, the, and/or, i.e., 1.2.3, Mr., x2, --, -, p.m., -, e.g., $4.50, 3:1, OK., x2, a, the, -, Note:, a, x2, ?!, 3:1, --, v1.2, 10:30, and/or, 100.0, lunch, i.e., #3, U.S., lunch, I'm, #3, 50%, 10:30, 50%, OK., 100.0, Re:, ?!
+100.0 Re: 50% e.g. // 9.5 50% 1.2.3 100.0 e.g. I'm v1.2 - p.m. $4.50 i.e. the U.S. Mr. I'm e.g. $4.50 ... lunch 1.2.3 ?! 10:30 x2 I'm 1.2.3 p.m. p.m. 50% x2 Note: 1.2.3 x2 OK. // 3:1 OK. x2 $4.50 Note: 9.5 100.0 #3 #3 Mr. the v1.2 - p.m. p.m. 100.0 // and/or OK. p.m. OK.
+-, ..., Re:, and/or, 3:1, Note:, //, Re:, #3, Re:, //, --, //, x2, Mr., OK., I'm, lunch, 3:1, 50%, x2, I'm, U.S., p.m., and/or, x2, OK., 100.0, ..., 10:30, ?!, U.S., U.S., Note:, e.g., the, i.e., p.m., x2, the, $4.50, the, 50%, 3:1, 10:30, 100.0, ..., $4.50, p.m., ?!, 9.5, 9.5, 50%, ?!, Re:, Note:, Mr., v1.2, and/or, 10:30
+3:1 1.2.3 e.g. ... 1.2.3 1.2.3 i.e. Note: Note: #3 100.0 the a OK. p.m. v1.2 - ... ?! I'm e.g. 50% Re: x2 10:30 3:1 ?! I'm 50% $4.50 I'm p.m. -- U.S. and/or 3:1 I'm - Mr. ... Note: p.m. -- e.g. 10:30 x2 I'm i.e. Re: 3:1 ?! // lunch ?! lunch U.S. lunch ... ... Re:
+$4.50 9.5 OK. and/or v1.2 e.g. 9.5 #3 #3 OK. I'm e.g. U.S. 10:30 1.2.3 U.S. and/or Re: lunch e.g. OK. // e.g. Note: ... v1.2 3:1 // ... OK. x2 e.g. lunch - U.S. 3:1 Mr. U.S. the x2 Note: p.m. OK. $4.50 $4.50 U.S. lunch the i.e. Re: Re: and/or I'm the U.S. ?! v1.2 a 10:30 and/or
+Re: 10:30 U.S. 3:1 -- 9.5 Re: the e.g. e.g. e.g. ?! U.S. OK. - x2 Re: I'm 9.5 e.g. ?! Re: 10:30 $4.50 i.e. -- Re: I'm U.S. e.g. -- 10:30 lunch x2 $4.50 p.m. v1.2 100.0 10:30 Note: ... #3 - U.S. e.g. and/or p.m. OK. ... OK. $4.50 Re: Mr. Mr. - lunch // a Re: 50%
+100.0 1.2.3 #3 i.e. p.m. // 100.0 $4.50 #3 x2 Note: i.e. and/or $4.50 9.5 ?! // I'm - #3 50% 10:30 ... $4.50 e.g. i.e. v1.2 $4.50 9.5 100.0 I'm -- i.e. 50% U.S. ... a Re: a a Note: I'm #3 p.m. Note: OK. 50% 9.5 Note: 50% and/or 50% ... -- Note: 50% lunch 3:1 // I'm
+the, 1.2.3, $4.50, Mr., and/or, ..., v1.2, e.g., U.S., v1.2, x2, I'm, a, //, -, 100.0, the, 50%, 1.2.3, v1.2, 3:1, #3, I'm, 9.5, e.g., $4.50, and/or, OK., 1.2.3, Mr., U.S., I'm, Note:, p.m., Mr., a, ?!, OK., Note:, 3:1, a, --, Mr., Re:, --, lunch, 50%, e.g., Mr., OK., a, $4.50, #3, Note:, x2, 10:30, #3, 1.2.3, i.e., Re:
+1.2.3, 50%, 1.2.3, //, the, //, -, Re:, -, ?!, Mr., e.g., i.e., and/or, 3:1, i.e., Note:, OK., a, lunch, e.g., 9.5, and/or, -, i.e., -, --, i.e., v1.2, $4.50, //, 1.2.3, 50%, -, e.g., --, Mr., the, #3, Note:, lunch, $4.50, ..., p.m., 50%, lunch, $4.50, U.S., 1.2.3, v1.2, 50%, ?!, I'm, ?!, 50%, the, ?!, Note:, ..., v1.2
+p.m. - -- ... Re: lunch Mr. x2 3:1 100.0 U.S. $4.50 Note: - 50% a 100.0 the 9.5 x2 100.0 x2 Mr. Note: i.e. $4.50 OK. Mr. 1.2.3 $4.50 lunch p.m. 1.2.3 a lunch 1.2.3 #3 p.m. 1.2.3 p.m. Re: 100.0 // Mr. x2 -- ... 1.2.3 U.S. 9.5 the I'm Mr. 1.2.3 x2 #3 ?! 10:30 ?! e.g.
+e.g. $4.50 - x2 ?! I'm x2 ... e.g. - v1.2 9.5 v1.2 // // the and/or 9.5 x2 9.5 100.0 x2 - e.g. ?! Re: I'm lunch 50% - U.S. Re: 100.0 and/or OK. a a e.g. x2 1.2.3 10:30 9.5 i.e. 3:1 ... $4.50 -- i.e. - v1.2 and/or and/or 50% v1.2 Note: v1.2 50% Note: I'm 9.5
+10:30, ..., ..., #3, I'm, U.S., Note:, 100.0, 1.2.3, a, #3, //, -, 9.5, Note:, Note:, --, v1.2, #3, lunch, Mr., --, e.g., OK., 9.5, ..., the, Note:, v1.2, e.g., //, ..., p.m., 9.5, i.e., 3:1, U.S., p.m., p.m., I'm, Mr., ?!, ?!, p.m., i.e., p.m., ..., and/or, 50%, $4.50, #3, --, e.g., OK., OK., v1.2, Re:, $4.50, 3:1, v1.2
+50% ?! 9.5 U.S. a - the Mr. // a 100.0 #3 1.2.3 - // ?! #3 Mr. i.e. OK. 50% - ... i.e. U.S. a $4.50 -- -- 50% 3:1 v1.2 i.e. Mr. p.m. ?! #3 v1.2 3:1 the the Re: OK. 3:1 I'm Note: 9.5 #3 ... i.e. 10:30 100.0 OK. Note: p.m. #3 100.0 - ?! OK.
+100.0 ... and/or v1.2 #3 I'm v1.2 // ... ... e.g. lunch Mr. Mr. e.g. - 9.5 x2 p.m. p.m. -- a lunch Note: #3 v1.2 Re: Note: #3 v1.2 Mr. Note: 10:30 100.0 3:1 U.S. // p.m. $4.50 U.S. ... 9.5 1.2.3 the U.S. lunch and/or a 100.0 10:30 -- i.e. i.e. v1.2 #3 - Re: Note: 100.0 Note:
+Note: Mr. 10:30 50% 9.5 Note: 10:30 #3 100.0 x2 Re: ?! ?! lunch $4.50 p.m. -- 9.5 10:30 e.g. 10:30 x2 OK. e.g. #3 $4.50 v1.2 10:30 100.0 100.0 OK. OK. ... // x2 Re: ... 50% // OK. a U.S. ?! I'm 100.0 - p.m. Note: 100.0 1.2.3 v1.2 U.S. 10:30 v1.2 #3 ... #3 I'm ?! v1.2
+U.S., v1.2, -, 9.5, 10:30, and/or, e.g., --, v1.2, Note:, 3:1, a, ..., and/or, p.m., 3:1, v1.2, lunch, Note:, ?!, ?!, 50%, -, v1.2, -, U.S., i.e., 50%, Note:, a, lunch, v1.2, p.m., $4.50, OK., -, Mr., #3, U.S., 50%, 3:1, the, Note:, I'm, --, a, p.m., Note:, OK., ?!, v1.2, a, Re:, Mr., p.m., ?!, $4.50, p.m., 50%, $4.50
+100.0 3:1 a a x2 50% // the #3 Re: 100.0 a e.g. a -- ... and/or e.g. Mr. // Re: $4.50 $4.50 lunch i.e. 3:1 50% the -- OK. lunch 100.0 #3 - Re: lunch 100.0 Re: lunch OK. - 50% x2 50% U.S. ... and/or x2 // e.g. #3 U.S. v1.2 I'm U.S. 1.2.3 and/or a Re: OK.
+$4.50, x2, ?!, I'm, -, and/or, I'm, 9.5, v1.2, 100.0, --, I'm, //, $4.50, and/or, -, Note:, //, 50%, Note:, ?!, Mr., ?!, the, x2, 9.5, Re:, i.e., 10:30, 50%, U.S., 1.2.3, #3, Note:, OK., lunch, lunch, ..., 100.0, and/or, OK., x2, the, I'm, v1.2, v1.2, OK., Note:, #3, -, #3, 50%, ..., --, $4.50, 100.0, a, //, Note:, p.m.
+-, -, Re:, ..., 9.5, #3, 100.0, the, Mr., a, $4.50, 10:30, #3, p.m., --, ?!, Re:, -, #3, e.g., lunch, 9.5, 1.2.3, --, Mr., $4.50, 3:1, v1.2, the, 100.0, i.e., i.e., the, 10:30, 100.0, p.m., 50%, the, 100.0, -, x2, //, 1.2.3, --, ?!, the, 1.2.3, ?!, Note:, i.e., 1.2.3, i.e., i.e., Re:, and/or, 1.2.3, 3:1, 9.5, #3, 1.2.3
+lunch 9.5 U.S. Re: x2 #3 10:30 3:1 U.S. x2 e.g. #3 Mr. 100.0 v1.2 // 100.0 OK. ... 50% - p.m. 1.2.3 3:1 $4.50 $4.50 10:30 Mr. 50% and/or i.e. $4.50 the p.m. 10:30 i.e. i.e. 50% Re: 100.0 v1.2 #3 Re: 50% ... Mr. ?! and/or 9.5 50% Mr. // 10:30 // 50% I'm OK. the v1.2 ...
+x2 10:30 // 100.0 10:30 ... e.g. // e.g. 3:1 e.g. Mr. // 50% ?! 100.0 p.m. x2 -- 9.5 a 3:1 // and/or 9.5 -- - x2 ... 3:1 U.S. $4.50 ?! x2 i.e. U.S. 1.2.3 $4.50 50% - I'm lunch and/or I'm 9.5 3:1 100.0 #3 v1.2 9.5 I'm 10:30 v1.2 #3 p.m. // e.g. 50% Re: Note:
+e.g. 10:30 p.m. #3 a ?! ?! #3 $4.50 e.g. 10:30 lunch ... Note: ... ?! a v1.2 10:30 e.g. OK. U.S. $4.50 e.g. 3:1 $4.50 Mr. $4.50 and/or 100.0 v1.2 a the - lunch x2 and/or - OK. ?! 1.2.3 Note: U.S. U.S. I'm I'm 1.2.3 I'm e.g. ... OK. the i.e. 50% U.S. Mr. ?! U.S. - Mr.
+U.S. e.g. - and/or - 10:30 a v1.2 // lunch Mr. 1.2.3 p.m. U.S. - // - p.m. lunch 3:1 p.m. v1.2 i.e. and/or and/or OK. 50% 9.5 $4.50 Re: Note: 9.5 x2 a -- -- 100.0 #3 50% e.g. p.m. ... p.m. 9.5 i.e. v1.2 I'm e.g. #3 ... 3:1 100.0 Note: U.S. v1.2 v1.2 e.g. I'm e.g. Note:
+1.2.3 ... U.S. ... I'm Re: the - OK. x2 v1.2 50% U.S. Note: Note: 9.5 OK. ... ?! 100.0 50% -- p.m. p.m. lunch x2 e.g. 3:1 9.5 U.S. 3:1 e.g. 100.0 p.m. v1.2 1.2.3 ... 1.2.3 -- x2 U.S. v1.2 OK. 10:30 // the 10:30 p.m. p.m. 50% i.e. x2 i.e. U.S. 10:30 ... 10:30 // 3:1 ...
+10:30 100.0 I'm Mr. and/or 1.2.3 50% x2 i.e. #3 - Re: e.g. 50% - x2 -- 1.2.3 // 100.0 I'm 3:1 #3 Re: p.m. 10:30 100.0 -- OK. OK. 10:30 1.2.3 a and/or Note: -- -- I'm e.g. 9.5 ?! p.m. #3 Re: Mr. ... ?! 1.2.3 and/or -- a the and/or 10:30 a i.e. OK. Re: and/or 100.0
+-- OK. p.m. 3:1 // 3:1 lunch - #3 a e.g. 10:30 3:1 -- the Re: e.g. v1.2 1.2.3 i.e. ... p.m. a Mr. the and/or p.m. 3:1 x2 OK. and/or e.g. OK. ... v1.2 10:30 e.g. // #3 3:1 9.5 Note: - 50% p.m. p.m. 100.0 x2 v1.2 v1.2 v1.2 U.S. I'm the ... a 9.5 a v1.2 Note:
+OK. the OK. Mr. Re: // ?! ... - p.m. x2 10:30 a and/or OK. Mr. $4.50 3:1 lunch a 10:30 100.0 -- the 10:30 the $4.50 -- ?! ?! #3 ?! 1.2.3 x2 Note: 1.2.3 x2 Mr. U.S. the i.e. Mr. Mr. i.e. OK. Note: 1.2.3 ... U.S. a lunch -- -- U.S. 3:1 10:30 p.m. 10:30 a p.m.
+... I'm lunch the I'm ?! ... #3 i.e. v1.2 Re: lunch v1.2 Re: // Note: - 3:1 -- a Re: the Re: and/or 10:30 U.S. 100.0 // a $4.50 50% -- $4.50 Note: OK. Note: and/or ... 50% U.S. 50% I'm p.m. v1.2 100.0 Mr. 9.5 - 9.5 v1.2 - and/or lunch and/or 50% e.g. -- 10:30 - i.e.
+--, Re:, lunch, p.m., 50%, $4.50, Mr., lunch, p.m., Mr., 100.0, I'm, i.e., v1.2, ?!, -, 1.2.3, Re:, v1.2, #3, 3:1, 100.0, //, and/or, lunch, --, OK., p.m., ?!, #3, ..., 9.5, 3:1, v1.2, i.e., $4.50, I'm, and/or, x2, and/or, U.S., #3, e.g., x2, Re:, x2, 50%, 100.0, OK., 9.5, v1.2, lunch, 9.5, p.m., and/or, 50%, a, 50%, e.g., v1.2
+100.0 the i.e. v1.2 100.0 9.5 3:1 -- OK. v1.2 OK. Mr. v1.2 50% 100.0 i.e. I'm Mr. p.m. 100.0 OK. - 3:1 50% U.S. Note: 100.0 50% v1.2 x2 1.2.3 #3 9.5 OK. and/or OK. lunch 3:1 v1.2 -- $4.50 p.m. Re: // #3 - lunch U.S. 3:1 U.S. 10:30 3:1 #3 x2 $4.50 U.S. Mr. 50% Re: -
+-- Re: x2 1.2.3 U.S. e.g. I'm - i.e. OK. // v1.2 a OK. 50% ?! I'm U.S. Mr. p.m. ?! // - OK. ... ?! 100.0 U.S. 100.0 9.5 the a a 100.0 the a Re: 50% p.m. I'm 50% v1.2 lunch the e.g. e.g. lunch a v1.2 e.g. 9.5 Mr. the 100.0 v1.2 v1.2 9.5 OK. 50% and/or
+e.g. e.g. 9.5 e.g. Re: 9.5 x2 a ?! e.g. Mr. - x2 Note: and/or the // 100.0 I'm 1.2.3 x2 OK. Note: Re: a 3:1 OK. p.m. Mr. OK. // the 50% ... -- Note: 9.5 U.S. v1.2 x2 Mr. lunch and/or OK. ?! - v1.2 100.0 v1.2 Mr. - // -- e.g. p.m. U.S. the Note: x2 100.0
+1.2.3 9.5 - 100.0 Mr. 10:30 v1.2 -- 3:1 1.2.3 1.2.3 - #3 50% v1.2 100.0 e.g. 50% 100.0 9.5 OK. Mr. #3 x2 9.5 Re: - ... I'm 3:1 e.g. ... ?! -- 50% 100.0 e.g. 9.5 p.m. 100.0 a p.m. i.e. p.m. I'm ?! 3:1 e.g. OK. Note: Note: OK. -- i.e. v1.2 the Mr. p.m. Re: -
+?! 1.2.3 e.g. x2 -- a ... -- 10:30 Mr. x2 p.m. I'm 3:1 ... ?! #3 $4.50 Re: 50% #3 Re: OK. v1.2 and/or lunch #3 a OK. x2 #3 50% - 100.0 and/or ?! - 100.0 9.5 U.S. $4.50 $4.50 Re: Note: 50% - p.m. #3 10:30 9.5 e.g. #3 3:1 a and/or a - // - Re:
+I'm, $4.50, --, v1.2, 10:30, 50%, 100.0, --, ..., 10:30, e.g., x2, U.S., x2, x2, the, $4.50, --, Note:, //, 50%, x2, U.S., 1.2.3, U.S., 9.5, p.m., e.g., v1.2, OK., ?!, --, 1.2.3, 3:1, e.g., #3, 1.2.3, I'm, Note:, and/or, $4.50, lunch, I'm, and/or, lunch, 9.5, //, lunch, ?!, the, 50%, lunch, Mr., 100.0, U.S., and/or, ..., Re:, 9.5, a
+3:1, 50%, Re:, i.e., the, e.g., and/or, I'm, OK., #3, 1.2.3, ..., U.S., and/or, ?!, i.e., $4.50, e.g., --, OK., ..., a, i.e., i.e., Mr., I'm, i.e., 100.0, -, 1.2.3, a, v1.2, Re:, 10:30, p.m., I'm, lunch, Re:, U.S., i.e., OK., a, a, --, Re:, lunch, I'm, #3, $4.50, Re:, ..., //, 100.0, //, lunch, I'm, $4.50, --, -, the
+1.2.3, I'm, lunch, and/or, I'm, a, Re:, 9.5, 10:30, --, x2, the, a, i.e., I'm, p.m., ?!, U.S., the, 3:1, lunch, 50%, p.m., the, ..., 3:1, i.e., 1.2.3, I'm, a, Note:, I'm, a, Re:, 50%, Re:, ..., and/or, U.S., 3:1, the, 1.2.3, lunch, I'm, -, 50%, Re:, Mr., Mr., p.m., //, $4.50, ..., Note:, $4.50, a, Re:, //, Re:, 50%
+U.S. x2 a p.m. ?! e.g. #3 Re: // x2 ?! OK. x2 Mr. Re: e.g. 1.2.3 lunch -- x2 the p.m. U.S. U.S. and/or e.g. // #3 e.g. - 50% // ... 50% a // lunch 3:1 i.e. e.g. OK. I'm lunch Re: and/or 50% OK. // e.g. ... -- Mr. and/or ... 9.5 U.S. Note: // v1.2 1.2.3
+Note:, ..., 1.2.3, OK., the, i.e., p.m., 10:30, I'm, Note:, and/or, ?!, x2, lunch, x2, --, OK., 3:1, p.m., Mr., Note:, #3, ..., -, e.g., v1.2, p.m., U.S., a, 100.0, Mr., p.m., e.g., x2, 10:30, Mr., $4.50, a, $4.50, //, a, U.S., -, I'm, Mr., 9.5, //, $4.50, 3:1, v1.2, 100.0, -, --, 50%, ..., and/or, 50%, 100.0, 3:1, v1.2
+100.0, p.m., Re:, ?!, e.g., ..., 3:1, ?!, //, i.e., Note:, OK., 9.5, Re:, p.m., ?!, 9.5, --, lunch, --, 9.5, e.g., --, #3, e.g., and/or, p.m., e.g., #3, a, 10:30, $4.50, Re:, e.g., $4.50, I'm, 3:1, Mr., ?!, and/or, p.m., and/or, lunch, I'm, v1.2, 1.2.3, and/or, i.e., //, lunch, 10:30, Re:, a, I'm, 50%, U.S., OK., e.g., lunch, Note:
+i.e. 10:30 Note: the 3:1 Note: 10:30 Note: e.g. 9.5 v1.2 I'm Note: the v1.2 // 1.2.3 Note: 9.5 3:1 ?! Mr. Note: and/or - $4.50 // 3:1 v1.2 3:1 9.5 50% a #3 #3 the -- the U.S. Re: a 100.0 and/or ... U.S. e.g. #3 U.S. #3 ... // a // Mr. I'm e.g. lunch -- $4.50 the
+OK. #3 9.5 the -- the -- 100.0 - U.S. -- Note: #3 ... I'm OK. Note: $4.50 U.S. $4.50 v1.2 lunch v1.2 and/or and/or e.g. 50% Re: Mr. 50% ... a the Note: -- I'm Mr. 50% $4.50 1.2.3 // - p.m. x2 100.0 ?! x2 Re: - U.S. // // 50% x2 e.g. p.m. Re: 1.2.3 ... 50%
+$4.50, //, --, i.e., 10:30, and/or, ?!, Note:, p.m., x2, I'm, OK., OK., 100.0, lunch, and/or, Re:, 10:30, p.m., the, the, I'm, Re:, 1.2.3, //, U.S., Note:, Mr., p.m., i.e., 3:1, 9.5, #3, lunch, --, p.m., $4.50, 10:30, #3, i.e., 1.2.3, Mr., lunch, the, //, 3:1, Note:, x2, e.g., 1.2.3, Mr., U.S., p.m., $4.50, I'm, i.e., p.m., Note:, OK., 100.0
+9.5, 50%, 10:30, p.m., I'm, 10:30, $4.50, v1.2, ?!, Mr., v1.2, v1.2, Mr., Mr., the, OK., ..., 9.5, Note:, x2, x2, U.S., v1.2, Re:, 100.0, ?!, v1.2, 50%, I'm, ..., 10:30, and/or, e.g., -, U.S., ..., 1.2.3, Re:, v1.2, --, the, ..., v1.2, --, 10:30, lunch, lunch, ..., 9.5, 9.5, #3, p.m., //, i.e., ..., and/or, 3:1, lunch, 50%, x2
+100.0, p.m., 9.5, 3:1, e.g., Note:, 9.5, Note:, Mr., Note:, 50%, p.m., 100.0, OK., ..., U.S., the, 50%, Mr., and/or, i.e., 1.2.3, lunch, Mr., and/or, //, 3:1, #3, OK., 100.0, 50%, U.S., 50%, 1.2.3, ..., 1.2.3, $4.50, 10:30, I'm, Note:, ..., p.m., ..., OK., 1.2.3, 9.5, ..., --, p.m., 1.2.3, x2, #3, 9.5, $4.50, 100.0, 9.5, -, Mr., 1.2.3, e.g.
+and/or, 1.2.3, Re:, -, lunch, v1.2, OK., v1.2, --, I'm, //, Note:, 9.5, I'm, p.m., OK., Mr., Note:, U.S., 100.0, the, Note:, U.S., -, -, the, 3:1, 9.5, --, Mr., 3:1, v1.2, a, i.e., Mr., a, //, p.m., U.S., ..., a, -, --, --, ?!, Re:, lunch, -, //, -, ..., p.m., 50%, //, i.e., Note:, Note:, i.e., OK., 100.0
+?! - the 100.0 x2 Mr. 9.5 x2 the v1.2 9.5 3:1 #3 50% and/or e.g. U.S. 3:1 e.g. a Note: lunch 10:30 10:30 ?! 50% Re: 9.5 x2 i.e. ... OK. ?! 50% 1.2.3 1.2.3 3:1 $4.50 ?! Mr. #3 ... U.S. OK. -- e.g. Note: Note: i.e. v1.2 I'm 9.5 x2 - 9.5 lunch 100.0 Re: 100.0 OK.
+-, ?!, e.g., i.e., ?!, 100.0, ?!, e.g., 50%, p.m., 10:30, Mr., I'm, 3:1, Note:, Mr., v1.2, I'm, OK., 50%, e.g., e.g., --, x2, p.m., -, i.e., Mr., e.g., I'm, OK., 3:1, e.g., Mr., -, p.m., 10:30, v1.2, Mr., $4.50, the, 3:1, #3, --, $4.50, v1.2, U.S., U.S., a, U.S., ?!, I'm, 3:1, i.e., Mr., U.S., Mr., i.e., Note:, -
+the, lunch, U.S., //, 3:1, -, Re:, lunch, x2, lunch, Note:, ?!, 100.0, i.e., U.S., i.e., i.e., U.S., ?!, #3, Re:, //, $4.50, v1.2, 1.2.3, a, lunch, v1.2, e.g., OK., Mr., Mr., 3:1, 9.5, v1.2, v1.2, e.g., 50%, 10:30, v1.2, U.S., i.e., $4.50, 10:30, 50%, e.g., //, v1.2, --, 1.2.3, ?!, e.g., a, lunch, //, x2, x2, U.S., 50%, --
+I'm, ..., #3, 50%, 9.5, Note:, OK., v1.2, ..., I'm, Re:, e.g., lunch, ?!, i.e., Note:, -, 9.5, ..., -, OK., OK., OK., #3, #3, ?!, //, v1.2, Re:, -, //, 50%, Note:, //, I'm, 10:30, 9.5, 10:30, lunch, the, -, 1.2.3, I'm, #3, 100.0, ..., #3, -, the, x2, and/or, 10:30, 100.0, Mr., x2, -, lunch, Re:, e.g., a
+..., #3, ?!, 100.0, --, I'm, lunch, Mr., -, lunch, //, 10:30, -, Re:, 50%, ..., Note:, e.g., Mr., //, -, 10:30, I'm, the, Re:, the, e.g., e.g., ..., i.e., v1.2, 3:1, a, --, -, i.e., OK., $4.50, lunch, and/or, ?!, e.g., $4.50, Re:, ..., i.e., Mr., x2, v1.2, #3, 50%, Note:, the, Mr., p.m., a, -, 1.2.3, ..., ?!
+p.m., U.S., v1.2, OK., 100.0, #3, a, 10:30, U.S., I'm, 100.0, a, #3, ?!, U.S., ?!, 9.5, --, Re:, 50%, p.m., OK., 100.0, Mr., a, OK., #3, lunch, -, $4.50, 100.0, 3:1, and/or, 100.0, the, 50%, 50%, a, x2, ..., e.g., #3, OK., $4.50, i.e., v1.2, the, Re:, e.g., x2, -, Mr., //, --, a, lunch, and/or, U.S., U.S., i.e.
+3:1, #3, -, 3:1, 100.0, v1.2, U.S., #3, I'm, Mr., -, Re:, the, 50%, 100.0, Note:, 100.0, -, the, 100.0, #3, #3, Mr., 50%, p.m., 10:30, a, --, 9.5, 50%, --, ..., e.g., e.g., ..., the, 9.5, e.g., 100.0, and/or, i.e., 1.2.3, 9.5, 9.5, a, $4.50, $4.50, x2, -, U.S., 1.2.3, ?!, -, 3:1, 50%, i.e., ?!, 10:30, ?!, $4.50
+e.g. ... I'm Re: e.g. lunch and/or x2 a ?! i.e. Note: Note: Mr. I'm and/or 100.0 I'm $4.50 and/or Re: - ?! -- 10:30 U.S. 10:30 Re: 50% OK. 50% lunch $4.50 Re: ... U.S. Re: v1.2 OK. ... #3 ?! OK. #3 $4.50 i.e. I'm Re: ?! - the 10:30 // // Note: Re: 100.0 lunch I'm 1.2.3
+the a OK. lunch e.g. 3:1 Mr. 1.2.3 3:1 i.e. e.g. 9.5 1.2.3 50% // - v1.2 i.e. the $4.50 1.2.3 e.g. 9.5 1.2.3 Note: OK. Re: p.m. I'm 10:30 100.0 100.0 OK. 1.2.3 and/or ?! e.g. 50% 100.0 9.5 x2 x2 9.5 I'm U.S. 10:30 #3 #3 $4.50 e.g. v1.2 $4.50 x2 OK. 3:1 lunch -- the 1.2.3 OK.
+Re: I'm the p.m. - the I'm -- ... ?! v1.2 OK. #3 I'm Mr. $4.50 ?! a lunch p.m. a a ... Re: // #3 e.g. x2 OK. 100.0 10:30 lunch U.S. 100.0 ?! v1.2 OK. the Re: 10:30 1.2.3 a 100.0 1.2.3 50% -- i.e. 10:30 #3 ... I'm the i.e. and/or a and/or p.m. I'm $4.50 OK.
+and/or I'm 3:1 Mr. 1.2.3 -- - 10:30 OK. ... // 50% 10:30 OK. - v1.2 p.m. e.g. 50% OK. Note: lunch 50% $4.50 a #3 ?! - and/or and/or lunch -- 1.2.3 and/or v1.2 x2 9.5 Note: Mr. 3:1 lunch i.e. ... 3:1 -- a - I'm 1.2.3 I'm I'm -- 3:1 OK. 3:1 100.0 Note: 3:1 lunch 50%
+U.S., Note:, Note:, --, the, 1.2.3, -, 3:1, v1.2, x2, Re:, 3:1, the, 9.5, i.e., #3, 50%, v1.2, 3:1, Mr., OK., lunch, $4.50, Re:, --, OK., p.m., p.m., Note:, i.e., I'm, p.m., v1.2, 10:30, i.e., i.e., OK., 50%, e.g., 100.0, 3:1, x2, and/or, Note:, 100.0, p.m., OK., i.e., ?!, Mr., $4.50, a, Mr., --, -, //, #3, ..., ..., Note:
+i.e. - I'm Re: p.m. 3:1 #3 10:30 i.e. - #3 OK. the v1.2 // the lunch 9.5 U.S. x2 -- ?! Note: Mr. - I'm I'm 1.2.3 10:30 OK. // 50% // OK. 1.2.3 I'm -- 3:1 U.S. ?! -- 10:30 9.5 OK. #3 lunch Note: a 100.0 3:1 OK. - 50% Re: 9.5 -- and/or U.S. and/or the
+?! 50% - 9.5 e.g. 100.0 Mr. e.g. and/or OK. lunch 100.0 100.0 1.2.3 U.S. Re: a U.S. the 9.5 ?! v1.2 a $4.50 p.m. 9.5 100.0 3:1 Re: 9.5 3:1 - Re: 50% Note: ?! Note: i.e. Mr. a $4.50 - #3 3:1 and/or lunch 1.2.3 1.2.3 U.S. and/or Mr. - Mr. I'm 9.5 U.S. x2 Note: a -
+Note: ?! - $4.50 OK. - OK. - x2 // and/or 100.0 #3 50% v1.2 v1.2 // Mr. Mr. Mr. // and/or I'm ?! I'm 10:30 i.e. 9.5 10:30 -- lunch 9.5 3:1 Note: $4.50 Re: #3 U.S. 100.0 OK. 50% the 50% OK. - 3:1 $4.50 $4.50 -- lunch #3 -- U.S. $4.50 OK. $4.50 #3 1.2.3 #3 100.0
+-- // v1.2 x2 i.e. Re: e.g. #3 U.S. U.S. OK. the Mr. $4.50 and/or 10:30 OK. a lunch Note: $4.50 v1.2 a lunch Note: and/or and/or Mr. i.e. lunch 50% 3:1 #3 100.0 $4.50 -- U.S. // i.e. ?! -- Re: lunch OK. e.g. 3:1 ?! i.e. - -- 100.0 U.S. - ?! OK. x2 3:1 and/or v1.2 and/or
+and/or v1.2 a e.g. a - U.S. ?! 50% Note: x2 // 10:30 i.e. Note: and/or and/or x2 100.0 ?! -- 9.5 U.S. -- 3:1 ... Mr. 3:1 v1.2 ?! a ... Mr. #3 - -- U.S. the 9.5 100.0 100.0 the 100.0 - ... ?! Note: the ?! x2 3:1 p.m. $4.50 1.2.3 x2 Re: and/or Note: 9.5 ?!
+10:30, i.e., ..., --, #3, U.S., x2, ?!, lunch, Note:, OK., the, U.S., --, the, 10:30, i.e., U.S., 50%, x2, --, x2, Note:, lunch, -, 10:30, #3, lunch, Mr., x2, ..., v1.2, i.e., #3, ..., U.S., 1.2.3, the, 50%, Re:, x2, OK., Re:, 10:30, 10:30, $4.50, the, p.m., p.m., Mr., ..., Mr., I'm, a, ?!, ?!, Note:, and/or, p.m., 10:30
+json:"#3 50% p.m. the the Mr. OK. p.m. U.S. p.m. 9.5 OK. -- OK. U.S. e.g. 10:30 -- 1.2.3 OK. v1.2 x2 ... and/or 9.5 e.g. I'm 50% a - e.g. lunch x2 Note: 1.2.3 e.g. x2 ?! #3 $4.50 $4.50 OK. x2 i.e. 50% 100.0 100.0 1.2.3 Re: // ... Note: #3 100.0 1.2.3 and/or 50% lunch 50% --"
+// 1.2.3 OK. -- 1.2.3 ... v1.2 $4.50 the Re: #3 // ... U.S. OK. Note: ... - ?! a 3:1 p.m. 10:30 I'm 50% x2 x2 x2 Re: 10:30 Note: #3 I'm p.m. ... the $4.50 a // U.S. 3:1 p.m. Note: Re: p.m. // and/or a OK. p.m. #3 v1.2 e.g. ?! Re: 100.0 i.e. 1.2.3 I'm lunch
+10:30 #3 ... 3:1 x2 1.2.3 v1.2 Mr. // I'm Mr. $4.50 Note: // ... -- ... ?! lunch the e.g. v1.2 // 1.2.3 a a Re: ... ... ?! 10:30 i.e. i.e. 9.5 3:1 lunch 9.5 U.S. lunch ?! 100.0 a ?! OK. 1.2.3 100.0 Mr. v1.2 U.S. 9.5 - 3:1 - Re: 50% $4.50 U.S. x2 x2 3:1
+-, x2, I'm, U.S., 50%, i.e., 50%, ..., -, $4.50, $4.50, 1.2.3, 3:1, and/or, 9.5, 9.5, and/or, 100.0, Mr., 9.5, i.e., 3:1, and/or, 100.0, #3, Mr., 50%, -, i.e., 50%, //, x2, $4.50, ..., lunch, ..., 10:30, p.m., $4.50, 9.5, --, Mr., Mr., x2, -, 3:1, OK., the, Mr., //, 3:1, 3:1, I'm, ..., i.e., ..., 3:1, ?!, lunch, #3
+x2, ..., ?!, ?!, and/or, a, -, i.e., -, //, 100.0, Note:, Note:, the, 3:1, v1.2, Mr., i.e., ?!, lunch, #3, OK., OK., OK., I'm, and/or, Mr., U.S., ..., the, p.m., 100.0, the, the, lunch, 50%, lunch, U.S., //, i.e., Re:, --, v1.2, 1.2.3, #3, a, ..., ?!, a, x2, 9.5, and/or, 1.2.3, Mr., $4.50, U.S., p.m., 10:30, I'm, -
+a Mr. 9.5 $4.50 e.g. Mr. p.m. Mr. e.g. -- a and/or ?! 3:1 $4.50 9.5 p.m. // 50% 9.5 3:1 U.S. 1.2.3 and/or 100.0 1.2.3 $4.50 U.S. 1.2.3 lunch - $4.50 lunch v1.2 10:30 $4.50 3:1 9.5 the Re: 50% U.S. the x2 OK. // lunch e.g. 9.5 the 100.0 OK. e.g. #3 I'm -- x2 OK. 10:30 ...
+Re: $4.50 Note: v1.2 Mr. - the lunch U.S. 50% Re: p.m. #3 i.e. the x2 p.m. p.m. $4.50 -- // - // v1.2 Mr. ?! and/or x2 OK. 10:30 a Note: // ?! lunch 10:30 OK. - ... and/or U.S. a p.m. Mr. #3 Note: and/or i.e. Note: 100.0 x2 $4.50 Note: -- e.g. 3:1 3:1 p.m. #3 the
+--, 100.0, //, 100.0, #3, I'm, 9.5, 9.5, 100.0, 50%, 50%, x2, p.m., 1.2.3, the, I'm, $4.50, Note:, Re:, 50%, 1.2.3, 50%, 1.2.3, --, i.e., and/or, Note:, 9.5, Note:, 3:1, -, and/or, 100.0, ?!, e.g., //, 9.5, and/or, lunch, i.e., x2, #3, OK., Re:, ?!, --, e.g., 3:1, -, Re:, 10:30, U.S., 9.5, 3:1, and/or, #3, Re:, 9.5, and/or, #3
+a, Note:, #3, i.e., I'm, 10:30, OK., p.m., a, --, e.g., v1.2, $4.50, the, Mr., ..., --, //, i.e., x2, v1.2, $4.50, v1.2, #3, v1.2, the, --, ?!, //, ?!, U.S., U.S., Re:, ?!, a, lunch, #3, ?!, #3, Re:, Note:, 3:1, e.g., #3, $4.50, I'm, x2, Re:, 1.2.3, Re:, --, ?!, #3, a, //, #3, //, e.g., 1.2.3, $4.50
+Mr., 10:30, 50%, 100.0, lunch, a, I'm, x2, Note:, x2, U.S., ..., 3:1, ..., ?!, e.g., $4.50, 9.5, a, p.m., --, --, ..., 3:1, 50%, I'm, ?!, -, i.e., ..., 3:1, Mr., I'm, Re:, 3:1, i.e., ..., and/or, #3, a, OK., Mr., a, 50%, x2, the, e.g., Mr., i.e., ?!, OK., lunch, Re:, a, x2, I'm, x2, Re:, Re:, OK.
+a Mr. Re: U.S. 9.5 Re: lunch - 1.2.3 $4.50 Mr. and/or 10:30 p.m. e.g. 3:1 3:1 3:1 Re: e.g. the the 1.2.3 Mr. Mr. 9.5 100.0 and/or 1.2.3 ?! 9.5 100.0 i.e. I'm 1.2.3 p.m. // lunch OK. 1.2.3 100.0 - 3:1 -- 9.5 Note: v1.2 e.g. 1.2.3 Note: ?! the I'm v1.2 Re: ?! -- 50% and/or i.e.
+Re:, //, --, e.g., OK., 1.2.3, 1.2.3, v1.2, --, I'm, the, p.m., 50%, e.g., e.g., U.S., 10:30, the, $4.50, $4.50, 1.2.3, //, Mr., 50%, 9.5, #3, -, -, the, 9.5, the, ..., 50%, x2, 9.5, I'm, $4.50, OK., Mr., 9.5, $4.50, Note:, lunch, i.e., and/or, v1.2, 50%, 3:1, ..., x2, I'm, --, $4.50, Note:, 3:1, lunch, $4.50, and/or, Note:, 3:1
+I'm ... i.e. a v1.2 9.5 ?! v1.2 10:30 9.5 I'm 50% and/or 100.0 1.2.3 a 3:1 p.m. v1.2 50% ... lunch Re: x2 lunch U.S. - U.S. ... e.g. Mr. 1.2.3 OK. #3 100.0 Re: 3:1 e.g. lunch and/or U.S. 3:1 3:1 3:1 lunch 3:1 e.g. ?! ?! -- 10:30 Mr. x2 and/or 50% ... and/or Re: Note: 3:1
+OK., OK., #3, I'm, the, 1.2.3, Mr., 100.0, --, lunch, v1.2, ?!, I'm, #3, the, U.S., i.e., $4.50, the, Mr., $4.50, x2, 9.5, Mr., x2, 3:1, v1.2, I'm, ..., #3, Mr., OK., and/or, a, ..., v1.2, v1.2, a, i.e., ..., --, lunch, x2, a, U.S., and/or, --, v1.2, lunch, --, x2, 100.0, ?!, a, i.e., #3, p.m., 50%, Note:, 10:30
+p.m., 50%, //, 50%, U.S., a, x2, a, --, Mr., $4.50, lunch, 50%, lunch, ?!, 9.5, e.g., e.g., 100.0, p.m., i.e., 100.0, Note:, Re:, OK., x2, -, #3, 100.0, 50%, $4.50, Note:, I'm, --, a, U.S., i.e., i.e., Re:, e.g., Mr., 1.2.3, 100.0, x2, 50%, #3, ..., 1.2.3, #3, the, I'm, e.g., the, 10:30, 9.5, 100.0, 1.2.3, //, --, Re:
+I'm, 3:1, 1.2.3, i.e., Mr., //, -, 50%, i.e., I'm, 3:1, v1.2, Note:, e.g., Mr., lunch, the, x2, 3:1, Mr., Re:, ..., i.e., 100.0, 50%, 10:30, 3:1, Re:, 1.2.3, ?!, 50%, $4.50, U.S., ?!, #3, and/or, I'm, #3, lunch, ..., #3, 9.5, 1.2.3, 50%, 1.2.3, $4.50, 100.0, OK., ?!, 50%, 10:30, e.g., 3:1, v1.2, OK., the, x2, Note:, #3, p.m.
+v1.2, $4.50, lunch, 100.0, //, 9.5, OK., v1.2, and/or, ..., ..., OK., OK., #3, p.m., --, v1.2, I'm, 3:1, 3:1, //, and/or, 1.2.3, v1.2, a, $4.50, OK., I'm, 50%, e.g., $4.50, 100.0, ?!, p.m., Mr., 50%, --, $4.50, 10:30, Mr., --, OK., Mr., 9.5, Note:, 3:1, i.e., p.m., Note:, Re:, i.e., Mr., U.S., -, $4.50, x2, lunch, and/or, lunch, ...
+p.m., 1.2.3, and/or, 3:1, Re:, 100.0, the, ?!, 10:30, 10:30, 1.2.3, --, Note:, U.S., v1.2, v1.2, OK., v1.2, ..., I'm, --, ?!, x2, 1.2.3, and/or, ..., //, v1.2, Re:, ..., 3:1, 3:1, I'm, Mr., --, #3, $4.50, lunch, #3, --, and/or, U.S., 50%, Re:, e.g., ?!, 1.2.3, and/or, 10:30, OK., i.e., 50%, v1.2, //, ?!, i.e., Re:, 9.5, -, U.S.
+Mr. U.S. Note: $4.50 I'm I'm v1.2 lunch Mr. $4.50 -- the - lunch - and/or Note: lunch 50% Note: I'm 50% p.m. Mr. 9.5 - p.m. ... U.S. ... a - #3 ?! ?! ?! e.g. - ?! OK. I'm a e.g. // 50% -- #3 $4.50 $4.50 i.e. a the OK. $4.50 #3 9.5 Re: a 1.2.3 e.g.
+Mr., a, 100.0, Note:, a, 100.0, a, 3:1, 9.5, 3:1, //, a, 3:1, -, OK., 9.5, e.g., e.g., -, 100.0, //, the, OK., Mr., v1.2, 100.0, #3, v1.2, e.g., OK., lunch, 10:30, the, ?!, v1.2, $4.50, 100.0, 9.5, a, a, 1.2.3, 3:1, and/or, Re:, i.e., OK., e.g., i.e., 10:30, p.m., 100.0, I'm, and/or, lunch, 1.2.3, Re:, a, -, 100.0, 3:1
+v1.2 e.g. 50% #3 #3 1.2.3 3:1 9.5 Mr. OK. $4.50 a OK. v1.2 OK. 1.2.3 x2 Re: 50% v1.2 and/or i.e. Mr. 50% -- e.g. ?! $4.50 e.g. 3:1 1.2.3 $4.50 9.5 $4.50 3:1 and/or -- Re: and/or i.e. lunch 50% Mr. 10:30 10:30 9.5 10:30 ... Note: // and/or e.g. the 1.2.3 U.S. Mr. the Note: v1.2 $4.50
+I'm a Mr. p.m. OK. Re: OK. e.g. a 9.5 1.2.3 Mr. a 10:30 - the a 1.2.3 -- Re: Mr. 1.2.3 -- Mr. -- #3 lunch Re: -- Re: - ... OK. the Mr. -- -- 3:1 Re: OK. 10:30 and/or U.S. a ?! // 3:1 I'm -- $4.50 e.g. x2 -- ?! the 10:30 - p.m. a I'm
+the, ..., ..., 3:1, U.S., lunch, 9.5, -, 9.5, e.g., -, U.S., the, 3:1, OK., the, Note:, 3:1, 50%, #3, 3:1, 50%, $4.50, Mr., --, the, Mr., Note:, Mr., //, ?!, Re:, and/or, #3, $4.50, -, ..., e.g., U.S., 100.0, -, U.S., Re:, ..., #3, i.e., ?!, OK., ..., OK., 50%, 10:30, ?!, p.m., lunch, 9.5, Re:, --, p.m., -
+//, Note:, 9.5, #3, the, ..., #3, U.S., 9.5, and/or, 1.2.3, x2, 50%, ..., 100.0, -, a, 3:1, Note:, lunch, OK., Re:, --, e.g., OK., e.g., 100.0, Re:, p.m., ..., p.m., $4.50, Note:, e.g., i.e., 100.0, $4.50, 3:1, OK., the, --, ..., 50%, 1.2.3, 3:1, the, x2, Note:, and/or, and/or, v1.2, and/or, x2, 100.0, I'm, e.g., #3, I'm, $4.50, ?!
+i.e., i.e., i.e., //, Re:, v1.2, 10:30, v1.2, --, 50%, e.g., v1.2, OK., a, 9.5, v1.2, ..., i.e., ..., a, lunch, //, x2, 50%, I'm, --, 100.0, 1.2.3, a, i.e., //, ..., e.g., 50%, OK., 9.5, 3:1, and/or, U.S., 9.5, //, a, v1.2, //, the, I'm, i.e., 10:30, Re:, lunch, and/or, --, Mr., p.m., 1.2.3, e.g., 1.2.3, Mr., a, 100.0
+Mr., Re:, Mr., a, I'm, Mr., Re:, i.e., i.e., and/or, OK., 1.2.3, Mr., ..., $4.50, x2, the, U.S., the, 10:30, OK., and/or, ..., Note:, Mr., Re:, #3, p.m., //, p.m., v1.2, ..., OK., 100.0, #3, //, #3, x2, x2, -, the, 3:1, 100.0, ?!, OK., #3, -, ..., I'm, 100.0, ..., and/or, and/or, lunch, i.e., U.S., U.S., i.e., i.e., 9.5
+i.e., x2, a, 1.2.3, //, ..., a, lunch, Note:, 50%, lunch, i.e., x2, ?!, $4.50, #3, ?!, 100.0, lunch, ?!, i.e., e.g., //, p.m., OK., Mr., 3:1, $4.50, Note:, 1.2.3, Re:, e.g., Note:, ..., v1.2, 10:30, ?!, //, e.g., -, -, 1.2.3, --, 10:30, 10:30, --, v1.2, ?!, x2, --, the, the, U.S., 50%, Mr., --, //, the, the, 10:30
+x2, x2, ..., lunch, OK., Mr., I'm, the, //, 1.2.3, and/or, lunch, Note:, p.m., 10:30, $4.50, Mr., x2, a, 50%, -, 3:1, 50%, Mr., and/or, p.m., a, -, ..., 10:30, 3:1, i.e., //, I'm, 1.2.3, I'm, 50%, i.e., the, 9.5, i.e., i.e., #3, a, $4.50, and/or, $4.50, and/or, Note:, i.e., 9.5, x2, 3:1, 3:1, 3:1, //, v1.2, 50%, OK., 3:1
+1.2.3 OK. #3 U.S. v1.2 p.m. Note: Note: the -- the lunch 100.0 -- v1.2 and/or 10:30 e.g. 3:1 the a lunch the - e.g. I'm 10:30 ... p.m. ?! Note: #3 - v1.2 #3 and/or 1.2.3 #3 $4.50 v1.2 50% a // and/or $4.50 #3 10:30 -- ... 9.5 Note: 50% lunch Mr. 1.2.3 $4.50 I'm // 1.2.3 p.m.
+OK. $4.50 #3 a ... ... a 1.2.3 #3 U.S. a // the $4.50 1.2.3 p.m. 1.2.3 #3 the - x2 Re: OK. ... i.e. Re: i.e. 100.0 $4.50 the OK. Mr. e.g. x2 // U.S. 9.5 ... Mr. 3:1 -- 100.0 50% ?! Note: Mr. p.m. I'm I'm a 100.0 x2 // lunch $4.50 Re: Note: 50% 100.0 ?!
+lunch i.e. a -- and/or 10:30 I'm 50% Re: 1.2.3 9.5 OK. Note: I'm - 10:30 lunch U.S. lunch $4.50 ?! 3:1 -- #3 OK. e.g. #3 100.0 v1.2 i.e. // $4.50 and/or -- U.S. e.g. #3 - x2 - v1.2 9.5 e.g. 50% x2 10:30 U.S. lunch e.g. e.g. and/or v1.2 #3 v1.2 -- the a and/or - x2
+-- U.S. // e.g. i.e. - 3:1 Note: - Mr. Mr. I'm OK. 9.5 // 1.2.3 $4.50 Re: $4.50 i.e. ... - I'm - 3:1 x2 Note: -- 3:1 100.0 // OK. 100.0 ... -- ?! 3:1 v1.2 the Note: and/or x2 -- a 100.0 3:1 Re: - OK. and/or U.S. v1.2 #3 the Re: and/or e.g. 1.2.3 100.0 50%
+9.5 // 50% ?! - i.e. a $4.50 Re: $4.50 9.5 x2 i.e. 1.2.3 ?! e.g. 100.0 a the the 3:1 e.g. a #3 x2 and/or 50% $4.50 Note: p.m. Re: v1.2 9.5 Mr. 3:1 the i.e. i.e. 1.2.3 a $4.50 Mr. lunch // a OK. Note: U.S. Mr. v1.2 lunch p.m. - -- OK. Note: 1.2.3 100.0 OK. --
+the, #3, //, #3, //, 100.0, ?!, OK., p.m., ..., lunch, x2, I'm, //, 1.2.3, e.g., 10:30, --, lunch, 3:1, and/or, x2, the, ..., 1.2.3, Note:, -, ?!, OK., U.S., 50%, 100.0, p.m., //, ?!, 9.5, e.g., e.g., I'm, 100.0, Note:, --, 9.5, and/or, lunch, Note:, 1.2.3, and/or, a, 9.5, Mr., x2, i.e., x2, #3, and/or, i.e., --, I'm, v1.2
+a, a, the, OK., U.S., Mr., 50%, Mr., #3, $4.50, -, ..., OK., ?!, ..., Mr., i.e., Re:, I'm, e.g., U.S., -, U.S., ?!, OK., ?!, 100.0, $4.50, a, and/or, v1.2, x2, e.g., $4.50, $4.50, OK., 1.2.3, U.S., Note:, -, the, 50%, -, and/or, 10:30, ?!, lunch, and/or, 50%, lunch, ?!, -, Mr., 9.5, 1.2.3, lunch, Note:, Note:, ?!, 10:30
+$4.50 Re: Mr. v1.2 3:1 Note: Mr. lunch ... p.m. -- a $4.50 and/or ?! Re: 3:1 // ?! 10:30 $4.50 -- Re: p.m. I'm a 10:30 OK. OK. OK. 9.5 I'm Mr. 50% the a $4.50 50% lunch Re: the Mr. $4.50 3:1 i.e. Mr. ?! Re: the 3:1 v1.2 #3 3:1 Mr. e.g. 1.2.3 #3 1.2.3 v1.2 a
+x2 // 9.5 U.S. // 1.2.3 1.2.3 e.g. Re: p.m. e.g. ?! ?! #3 #3 - U.S. lunch i.e. 50% -- Re: p.m. ?! Re: -- Mr. 9.5 $4.50 OK. i.e. the $4.50 9.5 $4.50 i.e. ?! e.g. e.g. Re: 10:30 x2 10:30 // 1.2.3 and/or i.e. -- OK. p.m. 1.2.3 i.e. -- - - e.g. I'm v1.2 U.S. $4.50
+json:"#3 OK. // 100.0 e.g. 1.2.3 v1.2 100.0 Re: 50% -- U.S. Note: ?! U.S. 50% 9.5 10:30 50% ... x2 // ... x2 v1.2 U.S. U.S. e.g. -- I'm OK. $4.50 100.0 v1.2 10:30 9.5 U.S. the ... Note: the Re: x2 // 9.5 100.0 - 1.2.3 x2 v1.2 // 9.5 Mr. 3:1 9.5 Re: // U.S. the Mr."
+p.m. e.g. 10:30 #3 #3 // Mr. 9.5 50% 3:1 9.5 OK. 10:30 lunch U.S. Mr. ... #3 a and/or x2 1.2.3 i.e. $4.50 // 100.0 a e.g. e.g. 9.5 i.e. // -- v1.2 OK. OK. Re: i.e. 100.0 100.0 $4.50 lunch - v1.2 ... - and/or p.m. Re: 100.0 ... $4.50 Mr. a 9.5 ?! Re: ... v1.2 9.5
+and/or, 1.2.3, ..., lunch, I'm, -, 50%, e.g., and/or, e.g., lunch, 100.0, 100.0, 3:1, x2, 3:1, the, 50%, ?!, a, 50%, 100.0, a, lunch, 3:1, 1.2.3, I'm, v1.2, p.m., 9.5, #3, $4.50, p.m., a, U.S., e.g., 50%, x2, Re:, a, 50%, e.g., 3:1, 10:30, i.e., I'm, //, 9.5, and/or, a, //, e.g., U.S., i.e., -, lunch, U.S., Re:, and/or, v1.2
+1.2.3, --, U.S., 1.2.3, I'm, I'm, 100.0, e.g., $4.50, //, 9.5, 100.0, e.g., lunch, $4.50, Re:, OK., p.m., i.e., 1.2.3, ..., Mr., 100.0, i.e., 9.5, OK., 9.5, p.m., $4.50, //, p.m., e.g., Note:, ?!, OK., OK., 50%, $4.50, e.g., 3:1, ..., 100.0, U.S., x2, 1.2.3, 100.0, 100.0, 100.0, Re:, OK., #3, #3, 9.5, 100.0, 1.2.3, ?!, $4.50, and/or, ?!, i.e.
+- 50% 100.0 #3 $4.50 a 1.2.3 lunch v1.2 and/or x2 a -- Mr. 9.5 ... 100.0 100.0 x2 - $4.50 Re: lunch ?! I'm - e.g. Mr. // Re: p.m. // 1.2.3 Mr. Mr. Re: and/or ?! a 9.5 Note: v1.2 Re: 1.2.3 9.5 -- #3 i.e. #3 #3 3:1 i.e. v1.2 ... // ?! lunch ?! 1.2.3 1.2.3
+$4.50, Note:, I'm, e.g., x2, ?!, v1.2, I'm, #3, a, 9.5, Note:, 10:30, 3:1, lunch, p.m., Re:, and/or, //, the, U.S., I'm, Mr., ?!, v1.2, 50%, Re:, I'm, Note:, ..., 50%, ?!, 3:1, ?!, a, I'm, Note:, x2, the, 100.0, 9.5, a, e.g., i.e., i.e., lunch, #3, the, Note:, 1.2.3, OK., ?!, the, x2, Re:, OK., -, ..., 3:1, ?!
+9.5, Mr., e.g., v1.2, 100.0, and/or, e.g., $4.50, ?!, --, 10:30, OK., #3, p.m., U.S., Mr., 10:30, ?!, 50%, ?!, 10:30, ?!, a, i.e., i.e., OK., lunch, lunch, lunch, 9.5, 100.0, e.g., a, 10:30, I'm, e.g., Mr., ..., #3, #3, v1.2, I'm, ..., Mr., 10:30, ?!, 3:1, ..., I'm, //, Re:, lunch, i.e., ..., OK., OK., 1.2.3, x2, i.e., x2
+Re:, 10:30, --, 10:30, -, i.e., 100.0, i.e., #3, I'm, #3, --, 3:1, 3:1, -, and/or, p.m., Note:, //, Mr., p.m., i.e., x2, OK., and/or, the, ..., U.S., 100.0, v1.2, I'm, ?!, a, //, ?!, $4.50, Mr., 50%, --, Mr., 50%, --, lunch, Mr., 50%, x2, U.S., Note:, 3:1, Mr., 9.5, x2, and/or, the, Note:, //, U.S., the, ?!, 1.2.3
+?! i.e. #3 Mr. 10:30 x2 9.5 1.2.3 100.0 e.g. i.e. the 3:1 - 1.2.3 9.5 U.S. -- 10:30 x2 1.2.3 #3 // $4.50 e.g. a Note: // U.S. $4.50 x2 v1.2 3:1 the -- $4.50 9.5 Mr. // and/or e.g. // 50% 3:1 i.e. - lunch // OK. 10:30 100.0 Re: v1.2 x2 the U.S. 50% p.m. Mr. #3
+e.g. Note: 3:1 U.S. - 9.5 ?! i.e. x2 3:1 the Note: Re: OK. p.m. Mr. -- OK. #3 ?! v1.2 v1.2 Note: 3:1 ... ?! 9.5 OK. OK. 9.5 Mr. the $4.50 #3 a I'm Note: #3 $4.50 10:30 $4.50 1.2.3 ?! ... Re: 100.0 -- 1.2.3 and/or a ... Re: e.g. I'm Note: 3:1 Mr. Re: 3:1 i.e.
+json:"#3 i.e. Note: i.e. ?! -- Note: -- U.S. lunch #3 9.5 OK. x2 ... 50% ?! $4.50 a - and/or a // p.m. Note: ?! 10:30 Mr. e.g. Mr. I'm 50% $4.50 a 10:30 - 100.0 p.m. Mr. i.e. Re: ?! // #3 ... 3:1 // OK. p.m. 100.0 Mr. 100.0 3:1 Note: 9.5 9.5 Mr. U.S. 9.5 the"
+v1.2, a, p.m., I'm, lunch, the, a, 1.2.3, 9.5, #3, a, x2, --, lunch, Mr., 1.2.3, --, ?!, 3:1, i.e., e.g., #3, 100.0, lunch, the, ?!, 1.2.3, Note:, Mr., 1.2.3, --, i.e., Mr., 100.0, #3, and/or, 1.2.3, ?!, e.g., U.S., 9.5, OK., 9.5, e.g., Note:, lunch, 3:1, #3, #3, e.g., I'm, 1.2.3, -, I'm, 1.2.3, I'm, U.S., --, p.m., -
+1.2.3, lunch, a, -, and/or, --, //, $4.50, Note:, I'm, e.g., lunch, 9.5, ?!, and/or, Re:, ..., 10:30, p.m., #3, ?!, OK., 100.0, ?!, x2, --, p.m., and/or, U.S., OK., v1.2, lunch, a, //, #3, a, -, I'm, I'm, $4.50, U.S., Re:, Note:, $4.50, x2, 1.2.3, 3:1, the, #3, p.m., ..., i.e., //, lunch, //, --, //, v1.2, p.m., 100.0
+://https://evil.test/login
+0://https://evil.test/login
+-://https://evil.test/login
++://https://evil.test/login
+.://https://evil.test/login
+1.2://https://evil.test/login
+://://https://evil.test/login
+9-://0://https://evil.test/login
+é://https://evil.test/login
+_://https://evil.test/login
+%://https://evil.test/login
+0://0://0://https://evil.test/login
+1x://https://evil.test/x
+0://ftp://bank.test/x
+0://1://-://
+10:30://
+:// note
+\\evil.test\share
+Hello from bank.test, see https://bank.test/statements
+\\203.0.113.9\c$
+\/evil.test\s
+/\evil.test/s
+file:\\evil.test\share
+file:/\evil.test/x
+file://evil.test/share
+file:////evil.test/share
+FILE://Evil.Test/x
+href=\\evil.test\s
+search-ms:query=x&crumb=location:\\evil.test\s
+search:query=x
+ms-msdt:/id
+ms-word:ofe
+smb://evil.test/s
+smb:\\evil.test\s
+Hello from bank.test, see https://bank.test/statements evil.test https://evil.test/ 203.0.113.9 \\evil.test\share
+Hello from bank.test, see https://bank.test/statements evil.test https://evil.test/ 203.0.113.9 \\203.0.113.9\c$
+Hello from bank.test, see https://bank.test/statements evil.test https://evil.test/ 203.0.113.9 \/evil.test\s
+Hello from bank.test, see https://bank.test/statements evil.test https://evil.test/ 203.0.113.9 /\evil.test/s
+Hello from bank.test, see https://bank.test/statements evil.test https://evil.test/ 203.0.113.9 file:\\evil.test\share
+Hello from bank.test, see https://bank.test/statements evil.test https://evil.test/ 203.0.113.9 file:/\evil.test/x
+Hello from bank.test, see https://bank.test/statements evil.test https://evil.test/ 203.0.113.9 file://evil.test/share
+Hello from bank.test, see https://bank.test/statements evil.test https://evil.test/ 203.0.113.9 file:////evil.test/share
+Hello from bank.test, see https://bank.test/statements evil.test https://evil.test/ 203.0.113.9 FILE://Evil.Test/x
+Hello from bank.test, see https://bank.test/statements evil.test https://evil.test/ 203.0.113.9 href=\\evil.test\s
+Hello from bank.test, see https://bank.test/statements evil.test https://evil.test/ 203.0.113.9 search-ms:query=x&crumb=location:\\evil.test\s
+Hello from bank.test, see https://bank.test/statements evil.test https://evil.test/ 203.0.113.9 search:query=x
+Hello from bank.test, see https://bank.test/statements evil.test https://evil.test/ 203.0.113.9 ms-msdt:/id
+Hello from bank.test, see https://bank.test/statements evil.test https://evil.test/ 203.0.113.9 ms-word:ofe
+Hello from bank.test, see https://bank.test/statements evil.test https://evil.test/ 203.0.113.9 smb://evil.test/s
+Hello from bank.test, see https://bank.test/statements evil.test https://evil.test/ 203.0.113.9 smb:\\evil.test\s
+x=ms-msdt:/id
+ms-word:ofe|u|https://evil.test/x
+file://bank.test/share
+smb://bank.test/share
+“\\evil.test\share”
+Hello from bank.test, see https://bank.test/statements evil.test \\evil.test\share
+“\/evil.test\s”
+“/\evil.test/s”
+‘\\evil.test\share”
+‘\/evil.test\s”
+‘/\evil.test/s”
+«\\evil.test\share”
+«\/evil.test\s”
+«/\evil.test/s”
+「\\evil.test\share”
+「\/evil.test\s”
+「/\evil.test/s”
+:\\evil.test\share”
+:\/evil.test\s”
+:/\evil.test/s”
+.\\evil.test\share”
+.\/evil.test\s”
+./\evil.test/s”
+-\\evil.test\share”
+-\/evil.test\s”
+-/\evil.test/s”
+~\\evil.test\share”
+~\/evil.test\s”
+~/\evil.test/s”
+&\\evil.test\share”
+&\/evil.test\s”
+&/\evil.test/s”
+?\\evil.test\share”
+?\/evil.test\s”
+?/\evil.test/s”
+json:"#\\\\evil.test\\share”"
+json:"#\\/evil.test\\s”"
+json:"#/\\evil.test/s”"
+_\\evil.test\share”
+_\/evil.test\s”
+_/\evil.test/s”
+!\\evil.test\share”
+!\/evil.test\s”
+!/\evil.test/s”
+%\\evil.test\share”
+%\/evil.test\s”
+%/\evil.test/s”
+:.-\\evil.test\share”
+:.-\/evil.test\s”
+:.-/\evil.test/s”
+“‘\\evil.test\share”
+“‘\/evil.test\s”
+“‘/\evil.test/s”
+😀\\evil.test\share”
+😀\/evil.test\s”
+😀/\evil.test/s”
+at \\evil.test\share
+at “\\evil.test\share
+at \\evil.test\share
+at “\\evil.test\share
+at　\\evil.test\share
+at　“\\evil.test\share
+at \\evil.test\share
+at “\\evil.test\share
+“\\evil.test\share
+a\\b
+C:\\x
+x:\\evil.test
+1\\evil.test\s
+é\\evil.test
+例\\evil.test
+:a\\evil.test
+-\\\evil.test
+:///evil.test
+-//
+:\\
+href=//evil.test/x
+Hello from bank.test, see https://bank.test/statements evil.test
+a=//203.0.113.9/x
+Hello from bank.test, see https://bank.test/statements 203.0.113.9
+a=//
+a=///evil.test
+a=//localhost/x
+a==
+x=y
+evil.рф/login
+例。テスト
+https://bank.test/x?next=http://localhost:3000
+https://bank.test/r?u=myapp://open
+https://bank.test/a://b
+https://bank.test#x=http:/
+https://bank.test/?u=file://x/s
+https://bank.test/?next=https://evil.test
+myapp://open?u=https://bank.test/
+https://bank.test/?u=ms-x:y
+https://bank.test/?u=\\evil.test\s
+https://bank.test/?next=https://evil.test&v=1
+Hello from bank.test, see https://bank.test/statements evil.test 203.0.113.9
+https://bank.test/?next=http:evil.test&v=1
+https://bank.test/?u=ftp:evil.test&v=1
+https://bank.test/?u=//evil.test&v=1
+https://bank.test/?next=https://203.0.113.9&v=1
+https://bank.test/?next=https://evil.test!x
+https://bank.test/?next=https://evil.test=1
+https://bank.test/?next=https://evil.test+x
+https://bank.test/?next=https://evil.test%26v=1
+https://bank.test/?u=x://evil.test&v=1
+https://bank.test/?next=https://bank.test@evil.test&v=1
+https://bank.test/?next=https://user@evil.test&v=1
+https://bank.test/?next=https://user:pw@evil.test&v=1
+https://bank.test/?next=http:bank.test@evil.test&v=1
+https://bank.test/?u=x://bank.test@evil.test&v=1
+https://bank.test/?u=//bank.test@evil.test&v=1
+https://bank.test/?next=https://user@evil.test:8080&v=1
+https://bank.test/?next=https://user@evil.test&v=1:8080
+https://bank.test/?next=https://bank.test\@evil.test&v=1
+https://bank.test/?next=https:\\evil.test&v=1
+https://bank.test/?next=https://evil.test&email=a@bank.test
+https://bank.test/?next=https://evil.test&e=a@b@bank.test
+https://bank.test/?next=https://user@203.0.113.9&v=1
+https://bank.test/?next=https://BANK.TEST@EVIL.TEST&v=1
+https://bank.test/?next=https://bank.test@evil.test.&v=1
+https://bank.test/?next=https://a@b@evil.test&v=1
+//bank.test@evil.test&v=1
+_://bank.test@evil.test&v=1
+https://bank.test/?next=https://bank.test%40evil.test&v=1
+https://bank.test/?next=https://bank.test%40evil.test
+https://bank.test%40evil.test/
+https://bank.test/?next=https://user@bank.test&v=1
+https://bank.test/?next=https://a@b@bank.test&v=1
+https://john.doe@bank.test/
+ftp://user:pw@bank.test/x
+https://bank.test/?email=a@bank.test
+https://bank.test/?u=https://bank.test&v=1
+https://bank.test/x?next=http://localhost:3000&v=1
+http://localhost:3000
+file:evil.test
+\\
+\\\\
+x\/y
+=\\
+a=\\\x
+research:notes
+forms-x:y
+file:///etc/passwd
+https：//evil.test
+_://3405803785/
+bankco.test
+Hello from 
+ftp://files.example.net/invoice.pdf
+Your statement from bank.example is ready.
+javascript://evil.example/%0aalert(1)
+smb://share.evil.example/x
+HTTPS://EVIL.EXAMPLE
+Link:https://evil.example/x
+ftp://bank.example@evil.example/
+ftp://bank.example.evil.example/
+ftp://bаnk.example/
+//evil.example/login
+//evil.example:8080/x
+203.0.113.9/login
+203.0.113.9:8443/x
+user@203.0.113.9
+http://203.0.113.9/
+203.0.113.4
+See ftp://files.example.net/x.
+1://x
+://
+x:/y
+Thanks for lunch on Tuesday at 12:30! The ratio was 3:1, see p. 4/5 and/or ch. 2.1.3. Re: next steps, e.g. Q3; i.e. soon.
+Hello from example.org
+Open http://203.0.113.9/ to check
+Server 203.0.113.9
+203.0.113.10
+https://files.example.net/x
+ftp://files.example.net/y
+//files.example.net/y
+://https://evil.example/login
+0://https://evil.example/login
+-://https://evil.example/login
++://https://evil.example/login
+1.2://https://evil.example/login
+://://https://evil.example/login
+9-://0://https://evil.example/login
+ftp://a.example/x://b.example
+https:evil.test/login
+Your statement from bank.test is ready: https://bank.test/statements
+https:/evil.test
+https:\\evil.test
+http:\evil.test
+ws:evil.test
+wss:evil.test
+ftp:evil.test
+https:///evil.test
+smb://bank.test\@evil.test/
+://evil.test/login
+_://evil.test/login
+é://evil.test/login
+httpѕ://evil.test/login
+evil.test:8080/login
+evil.test?x=1
+evil.test#frag
+Link:evil.test
+Server:203.0.113.9
+httpѕ:evil.test
+evil.test/?r=https://bank.test
+https://bank.test/?next=https://www.bank.test
+https://a.test/?u=ftp:b.test/&v=x
+https://a.test/?u=ftp:b.test&v=1
+a.test
+https://bank.test\@evil.test/
+sftp://bank.test\x
+smb://bank.test\x
+0://0
+_://203.0.113.9/x
+10:30am
+3:2
+16:9
+1:1
+a.m.
+Fwd:
+Subject:Re:Hi
+javascript:alert(1)
+data:text/plain,hi
+:)
+:-)
+:/
+:\
+D:
+https:
+see http: it
+https:,
+std::vector
+a::b
+localhost:3000
+mailto:bob@x.test
+http:/
+... 10:30 // p.m. :-) // 12:30pm $4.50 lunch p.m. e.g. Fwd: p.m. lunch 16:9 the lunch :-) U.S. x:y a::b lunch :) and/or e.g. $4.50 lunch x:y Re: the D: a::b 12:30pm x:y x:y a::b the 3:1 Re: :-) 16:9 10:30 std::move 10:30 12:30pm // e.g. 1.2.3 ... v1.2
+12:30pm :) 3:1 D: ... 16:9 ... e.g. Note: ... // 1.2.3 10:30 1.2.3 lunch std::move e.g. Re: 12:30pm :) :) U.S. i.e. and/or 16:9 :) D: e.g. Fwd: :) the 10:30 std::move std::move v1.2 16:9 and/or i.e. 10:30 12:30pm 10:30 ... lunch 12:30pm D: 1.2.3 Fwd: x:y 10:30 e.g.
+std::move 16:9 the v1.2 Note: p.m. i.e. ... ... $4.50 a::b p.m. i.e. e.g. and/or 16:9 std::move and/or U.S. std::move and/or $4.50 16:9 ... $4.50 1.2.3 3:1 a::b $4.50 12:30pm Fwd: i.e. 3:1 lunch Re: :-) x:y e.g. // 10:30 Fwd: :) :-) $4.50 $4.50 i.e. D: Note: x:y 3:1
+D: Note: 12:30pm 3:1 i.e. :) 1.2.3 // U.S. 1.2.3 p.m. lunch ... :-) Fwd: :) std::move ... lunch $4.50 1.2.3 v1.2 x:y a::b Re: $4.50 3:1 Note: e.g. lunch std::move std::move ... the v1.2 x:y 1.2.3 Fwd: e.g. Fwd: ... ... 10:30 :-) Re: 12:30pm Note: p.m. Re: i.e.
+std::move
+12:30pm
+x:y
+the Fwd: a::b std::move a::b std::move v1.2 lunch e.g. :-) D: 1.2.3 :) e.g. 10:30 the 12:30pm U.S. Note: 16:9 3:1 std::move $4.50 Note: e.g. Note: :-) 10:30 and/or p.m. i.e. D: p.m. p.m. :-) D: ... x:y :-) // std::move and/or Note: 10:30 p.m. 12:30pm p.m. :-) Re: :-)
+v1.2 10:30 Re: 10:30 a::b $4.50 ... :-) std::move i.e. $4.50 // v1.2 the i.e. and/or 16:9 :-) U.S. 10:30 the 16:9 the 10:30 lunch Re: a::b Fwd: Re: ... Fwd: :) p.m. $4.50 a::b 16:9 :) D: :-) D: a::b the lunch the 16:9 i.e. U.S. 10:30 $4.50 $4.50
+:-) Fwd: 3:1 $4.50 a::b // :) and/or 16:9 10:30 3:1 p.m. lunch v1.2 std::move the U.S. a::b a::b v1.2 lunch :) 1.2.3 Re: and/or Re: i.e. x:y U.S. 10:30 Fwd: e.g. lunch D: ... :-) 3:1 // the and/or // 3:1 the a::b v1.2 Re: 16:9 and/or 3:1 Fwd:
+16:9 a::b 12:30pm :-) 1.2.3 10:30 U.S. Note: Fwd: std::move // D: the e.g. :-) 10:30 std::move :) x:y i.e. and/or 3:1 U.S. x:y :-) U.S. 16:9 :) v1.2 lunch Fwd: the v1.2 a::b :-) 10:30 U.S. std::move x:y i.e. 16:9 :) :) the a::b v1.2 i.e. // 10:30 Re:
+10:30 v1.2 16:9 Fwd: Note: and/or Re: 3:1 16:9 16:9 v1.2 D: v1.2 i.e. a::b U.S. std::move e.g. // v1.2 12:30pm :) x:y the Fwd: lunch Note: 1.2.3 :) std::move std::move 16:9 and/or and/or :) lunch Fwd: lunch Re: a::b and/or x:y :-) and/or i.e. lunch std::move i.e. 3:1 e.g.
+16:9 :-) 16:9 v1.2 the the 1.2.3 Fwd: // // v1.2 D: :-) 16:9 x:y and/or Re: ... i.e. ... $4.50 // 16:9 :) :) v1.2 and/or :) Re: 12:30pm lunch 12:30pm 12:30pm 16:9 D: $4.50 and/or 16:9 the lunch v1.2 x:y :) $4.50 U.S. U.S. ... U.S. e.g. U.S.
+and/or lunch and/or // e.g. 1.2.3 // Re: Note: :-) $4.50 U.S. Note: 3:1 the 1.2.3 U.S. // 3:1 lunch v1.2 p.m. U.S. $4.50 the :) // e.g. 3:1 Re: D: lunch // ... v1.2 std::move a::b 16:9 U.S. a::b // v1.2 and/or Fwd: p.m. i.e. $4.50 Note: i.e. 1.2.3
+e.g. Note: lunch Note: // 10:30 Re: 3:1 the Fwd: std::move a::b i.e. e.g. Note: // and/or and/or v1.2 10:30 D: // 10:30 x:y i.e. v1.2 D: v1.2 a::b a::b the a::b 12:30pm 10:30 16:9 U.S. Re: U.S. a::b std::move Fwd: p.m. 1.2.3 // e.g. a::b 12:30pm Note: std::move x:y
+3:1 the // a::b x:y e.g. 1.2.3 v1.2 1.2.3 p.m. the and/or a::b p.m. i.e. a::b v1.2 a::b 16:9 std::move the :-) lunch a::b :-) e.g. 12:30pm p.m. p.m. x:y x:y Fwd: e.g. a::b a::b 1.2.3 i.e. a::b :) :) ... lunch D: :) e.g. the a::b x:y v1.2 //
+10:30 10:30 12:30pm :) lunch Note: and/or :-) 10:30 and/or :-) :-) Fwd: v1.2 D: // ... // 10:30 v1.2 and/or 1.2.3 Fwd: U.S. Re: p.m. :-) $4.50 e.g. 3:1 and/or $4.50 x:y $4.50 the D: :-) :-) D: $4.50 :-) :) :) and/or v1.2 lunch e.g. U.S. x:y i.e.
+3:1 D: D: Re: Fwd: U.S. x:y i.e. :-) U.S. :) 3:1 12:30pm lunch i.e. // lunch 16:9 e.g. $4.50 1.2.3 D: p.m. x:y p.m. D: // the the ... the x:y and/or 12:30pm D: 16:9 Note: 10:30 D: a::b a::b :-) and/or // Note: p.m. p.m. and/or Re: 16:9
+v1.2 x:y 12:30pm $4.50 // v1.2 v1.2 D: 3:1 1.2.3 :) 12:30pm i.e. the v1.2 e.g. 16:9 Note: Note: $4.50 :-) v1.2 x:y the $4.50 U.S. Note: a::b the p.m. Re: i.e. Note: :-) $4.50 1.2.3 the Note: Re: e.g. // Re: Fwd: Note: 16:9 10:30 Note: and/or a::b v1.2
+a::b :-) v1.2 v1.2 a::b and/or e.g. the ... e.g. 1.2.3 $4.50 a::b 1.2.3 e.g. :) 10:30 D: a::b 12:30pm Fwd: 12:30pm x:y Note: // 10:30 Note: i.e. x:y 3:1 D: 16:9 // 1.2.3 16:9 :) v1.2 Re: // 10:30 1.2.3 std::move 12:30pm 1.2.3 x:y the p.m. Fwd: p.m. 12:30pm
+D: i.e. the and/or Re: 1.2.3 12:30pm x:y // and/or e.g. p.m. and/or the v1.2 16:9 12:30pm i.e. the Note: 16:9 a::b D: the v1.2 the Fwd: ... 16:9 // i.e. :-) 12:30pm Note: 16:9 a::b 1.2.3 // Re: the Note: 3:1 D: 3:1 12:30pm $4.50 a::b U.S. D: 12:30pm
+the a::b U.S. 1.2.3 i.e. 12:30pm Re: x:y Re: v1.2 i.e. ... and/or 10:30 x:y a::b a::b ... i.e. 3:1 Note: U.S. 3:1 and/or :-) 16:9 U.S. a::b p.m. $4.50 1.2.3 D: and/or a::b a::b ... 1.2.3 U.S. std::move v1.2 D: and/or 3:1 a::b a::b :-) Fwd: :) // std::move
+Fwd: lunch e.g. the a::b :-) $4.50 x:y :-) and/or x:y a::b v1.2 ... :) a::b Re: v1.2 lunch 10:30 D: std::move std::move $4.50 Fwd: v1.2 Note: a::b e.g. :) i.e. :-) U.S. 12:30pm the ... e.g. :) :) Fwd: Note: a::b :) $4.50 16:9 lunch e.g. x:y D: Note:
+:) p.m. 1.2.3 :) lunch x:y Re: the 12:30pm e.g. 16:9 x:y // 12:30pm // 16:9 1.2.3 lunch 3:1 :) // the ... Note: Fwd: 12:30pm the U.S. $4.50 10:30 10:30 Note: v1.2 p.m. p.m. e.g. i.e. e.g. x:y // Fwd: std::move Note: Note: :) e.g. p.m. and/or 16:9 12:30pm
+Re: // p.m. 10:30 std::move Re: p.m. Note: :-) p.m. U.S. $4.50 e.g. U.S. :) std::move 12:30pm // :) v1.2 $4.50 p.m. and/or :) and/or D: Re: Note: :-) ... p.m. 1.2.3 v1.2 lunch $4.50 the lunch :-) 1.2.3 $4.50 10:30 1.2.3 U.S. v1.2 a::b :-) :) Re: x:y a::b
+D: 3:1 e.g. Re: U.S. // i.e. Fwd: D: e.g. 3:1 e.g. 3:1 $4.50 // $4.50 lunch Fwd: the 12:30pm $4.50 $4.50 a::b Fwd: lunch D: 3:1 3:1 // 3:1 i.e. Re: i.e. 10:30 1.2.3 ... 10:30 lunch 10:30 :) lunch i.e. v1.2 e.g. :) 10:30 3:1 1.2.3 1.2.3 U.S.
+// U.S. :) a::b e.g. 10:30 12:30pm 3:1 16:9 ... 12:30pm 3:1 3:1 $4.50 Re: 3:1 a::b 1.2.3 1.2.3 v1.2 v1.2 U.S. std::move v1.2 and/or Fwd: std::move D: 10:30 i.e. 10:30 :-) 16:9 Fwd: Note: lunch v1.2 e.g. :) e.g. D: the // $4.50 std::move Fwd: e.g. lunch p.m. p.m.
+10:30 and/or std::move Re: a::b 16:9 10:30 p.m. ... $4.50 :-) the D: // the ... 12:30pm :) and/or Re: :-) Fwd: :-) U.S. a::b 12:30pm and/or // 3:1 p.m. $4.50 ... 3:1 v1.2 std::move std::move 16:9 the v1.2 and/or Note: Note: 12:30pm 3:1 U.S. :-) i.e. U.S. 10:30 Note:
+Note: Re: 16:9 Re: x:y 10:30 16:9 v1.2 :-) 1.2.3 12:30pm // 3:1 v1.2 10:30 $4.50 e.g. lunch e.g. x:y // Fwd: std::move 16:9 :) Note: ... 1.2.3 v1.2 e.g. p.m. ... 3:1 std::move 16:9 $4.50 16:9 10:30 i.e. 10:30 p.m. and/or 3:1 a::b :-) x:y Re: and/or and/or $4.50
+1.2.3 x:y Note: a::b // and/or 10:30 Fwd: lunch ... 12:30pm std::move and/or a::b i.e. i.e. std::move ... the D: i.e. $4.50 10:30 :) $4.50 a::b and/or :-) p.m. the 12:30pm Re: 10:30 e.g. a::b a::b 12:30pm D: D: i.e. Fwd: :) 10:30 v1.2 lunch lunch lunch e.g. v1.2 e.g.
+:-) 3:1 3:1 // x:y ... 3:1 lunch 16:9 lunch p.m. :-) Note: the :) std::move U.S. 16:9 v1.2 16:9 10:30 std::move 16:9 10:30 std::move std::move std::move p.m. x:y Re: 12:30pm $4.50 Note: x:y $4.50 12:30pm 16:9 1.2.3 v1.2 3:1 U.S. Re: 3:1 a::b 16:9 x:y p.m. Note: D: 3:1
+3:1 Fwd: 1.2.3 10:30 i.e. and/or ... 10:30 Fwd: :) // lunch Note: x:y Re: i.e. 16:9 x:y 10:30 std::move Fwd: e.g. x:y Note: 3:1 :) std::move p.m. 1.2.3 a::b Fwd: U.S. e.g. U.S. Note: e.g. a::b v1.2 lunch :-) the Re: ... 1.2.3 3:1 // p.m. 1.2.3 D: e.g.
+std::move the :-) std::move 1.2.3 x:y and/or p.m. and/or 3:1 $4.50 12:30pm $4.50 U.S. 10:30 D: p.m. :-) x:y std::move i.e. 3:1 p.m. lunch :-) :-) Re: 1.2.3 i.e. a::b i.e. v1.2 $4.50 i.e. v1.2 i.e. p.m. the 3:1 ... the lunch p.m. std::move 3:1 $4.50 U.S. U.S. e.g. i.e.
+:-) U.S. p.m. lunch D: Note: // :) D: // Note: x:y :) i.e. U.S. 1.2.3 U.S. i.e. i.e. 3:1 U.S. the D: 10:30 v1.2 i.e. i.e. $4.50 16:9 a::b x:y $4.50 the U.S. v1.2 3:1 16:9 and/or e.g. std::move 10:30 10:30 3:1 $4.50 v1.2 $4.50 D: D: 16:9 1.2.3
+Note: D: $4.50 12:30pm Re: and/or std::move the 12:30pm Note: ... e.g. :) 12:30pm 16:9 1.2.3 Re: Re: 1.2.3 Note: 10:30 the 16:9 16:9 16:9 Note: :-) std::move p.m. 16:9 16:9 Note: Note: x:y x:y i.e. Note: lunch :-) ... $4.50 std::move U.S. and/or :) i.e. 3:1 e.g. p.m. 1.2.3
+3:1 12:30pm i.e. a::b p.m. $4.50 U.S. Re: and/or 16:9 p.m. 1.2.3 $4.50 $4.50 the Re: $4.50 :) x:y Re: and/or 3:1 v1.2 U.S. 16:9 :-) and/or ... D: lunch Fwd: :-) 1.2.3 :-) Note: std::move U.S. v1.2 // 3:1 the e.g. 12:30pm D: Fwd: :-) 1.2.3 a::b Note: :)
+// v1.2 x:y 1.2.3 Note: D: :) p.m. 10:30 i.e. x:y U.S. i.e. Re: a::b x:y U.S. Note: 16:9 ... Note: the U.S. p.m. ... a::b 3:1 // // a::b lunch std::move std::move i.e. $4.50 Fwd: lunch Note: 10:30 Re: D: x:y the the // ... v1.2 i.e. e.g. 3:1
+$4.50 16:9 the p.m. // 12:30pm 1.2.3 // lunch i.e. i.e. i.e. 3:1 1.2.3 v1.2 3:1 Re: 16:9 the 10:30 D: p.m. 16:9 16:9 Fwd: // 1.2.3 Note: 10:30 1.2.3 D: lunch U.S. U.S. :) U.S. the 16:9 Fwd: the // $4.50 e.g. Fwd: // lunch U.S. 10:30 12:30pm 16:9
+1.2.3 i.e. the 3:1 U.S. and/or Fwd: the Note: a::b 3:1 3:1 lunch 10:30 p.m. lunch D: U.S. Note: lunch i.e. $4.50 3:1 1.2.3 i.e. and/or p.m. i.e. p.m. Fwd: :-) lunch 3:1 U.S. U.S. x:y :-) 3:1 Note: e.g. i.e. v1.2 v1.2 :-) lunch i.e. p.m. x:y x:y :-)
+3:1 U.S. Note: :-) // a::b 16:9 v1.2 :) lunch :-) Re: lunch // :-) e.g. the D: D: i.e. lunch a::b x:y e.g. std::move U.S. 1.2.3 ... 10:30 ... and/or D: $4.50 1.2.3 10:30 a::b 10:30 std::move i.e. Note: 1.2.3 p.m. and/or Re: a::b and/or lunch lunch :-) //
+:) 3:1 and/or std::move and/or ... 3:1 the i.e. :-) e.g. $4.50 $4.50 v1.2 i.e. i.e. $4.50 lunch :) and/or the 12:30pm ... 10:30 // U.S. p.m. a::b $4.50 a::b $4.50 p.m. U.S. 12:30pm Fwd: Fwd: Note: Fwd: std::move 16:9 D: D: D: i.e. 1.2.3 v1.2 a::b ... a::b std::move
+16:9 10:30 e.g. 16:9 16:9 12:30pm lunch lunch Fwd: x:y e.g. 12:30pm v1.2 v1.2 x:y :-) and/or 3:1 :-) and/or Note: 10:30 a::b Note: :) std::move v1.2 12:30pm v1.2 Re: i.e. :) 1.2.3 i.e. ... D: v1.2 i.e. x:y the ... // and/or 10:30 the lunch and/or the // ...
+x:y and/or :-) p.m. and/or and/or std::move i.e. 12:30pm :) $4.50 p.m. lunch std::move lunch lunch 12:30pm D: lunch :-) D: Fwd: U.S. Fwd: D: Note: 16:9 10:30 v1.2 ... i.e. D: :) and/or Fwd: 10:30 16:9 a::b 10:30 v1.2 a::b $4.50 D: lunch 16:9 :-) lunch D: x:y 1.2.3
+Note: D: std::move and/or Note: $4.50 :) lunch 10:30 a::b 1.2.3 Re: 16:9 Note: and/or x:y 16:9 U.S. D: 1.2.3 Note: Fwd: $4.50 ... p.m. 3:1 and/or :-) Re: std::move std::move x:y 1.2.3 lunch e.g. 10:30 // the D: Fwd: // 16:9 Fwd: a::b :-) 10:30 3:1 16:9 :) e.g.
+10:30 and/or x:y Re: ... and/or std::move Re: the Re: 10:30 1.2.3 :) 1.2.3 x:y x:y // std::move :) Re: D: 12:30pm // Fwd: e.g. and/or 3:1 $4.50 3:1 16:9 std::move p.m. 1.2.3 U.S. $4.50 x:y D: 12:30pm 10:30 e.g. 3:1 12:30pm Re: ... // v1.2 e.g. :) i.e. ...
+U.S. ... // p.m. a::b lunch D: U.S. p.m. 1.2.3 :) e.g. Fwd: and/or the Note: Fwd: p.m. 3:1 U.S. 1.2.3 Fwd: Fwd: :-) D: 3:1 and/or 3:1 and/or :) Re: ... v1.2 // p.m. $4.50 16:9 $4.50 $4.50 3:1 10:30 a::b and/or std::move and/or std::move U.S. 12:30pm 10:30 10:30
+10:30 1.2.3 ... U.S. and/or $4.50 a::b Note: Note: Re: 3:1 lunch Note: U.S. v1.2 10:30 1.2.3 12:30pm std::move 12:30pm std::move e.g. :) and/or 1.2.3 // ... 12:30pm 16:9 lunch $4.50 lunch // Re: :-) $4.50 i.e. // v1.2 e.g. e.g. and/or D: i.e. 10:30 Note: 1.2.3 v1.2 Note: p.m.
+std::move Re: 16:9 D: :) 12:30pm Re: :) i.e. :) std::move v1.2 :) Note: 3:1 16:9 12:30pm 16:9 D: a::b :-) i.e. ... lunch the 12:30pm 1.2.3 10:30 the and/or // and/or Fwd: 12:30pm 10:30 16:9 U.S. the p.m. Note: and/or Fwd: x:y i.e. p.m. v1.2 Note: v1.2 ... $4.50
+:) $4.50 D: :-) i.e. $4.50 :) D: Fwd: 10:30 10:30 v1.2 D: Fwd: x:y v1.2 i.e. U.S. and/or // :-) i.e. std::move 1.2.3 :-) p.m. U.S. i.e. :) 12:30pm $4.50 v1.2 and/or 10:30 $4.50 $4.50 3:1 10:30 a::b ... v1.2 std::move 10:30 3:1 // U.S. 1.2.3 16:9 3:1 v1.2
+i.e. 1.2.3 lunch Re: // U.S. Note: // 10:30 lunch :) the p.m. x:y p.m. Fwd: the Re: and/or v1.2 Fwd: e.g. lunch Re: D: Re: v1.2 a::b the $4.50 Fwd: // e.g. 16:9 D: Note: 3:1 12:30pm 12:30pm 12:30pm and/or the lunch $4.50 x:y std::move // and/or U.S. x:y
+10:30 p.m. x:y v1.2 1.2.3 3:1 ... 3:1 and/or 3:1 // lunch 1.2.3 the p.m. e.g. 1.2.3 Fwd: std::move Re: p.m. 3:1 U.S. i.e. the a::b U.S. the Re: 16:9 ... 16:9 p.m. v1.2 Fwd: 16:9 16:9 1.2.3 // and/or ... 10:30 D: U.S. x:y std::move 12:30pm std::move :) p.m.
+Re: U.S. and/or the p.m. $4.50 p.m. 3:1 Re: lunch // ... $4.50 16:9 :) i.e. 16:9 :) 12:30pm ... p.m. U.S. the Note: lunch lunch v1.2 U.S. std::move :-) 10:30 :-) lunch v1.2 i.e. 10:30 lunch a::b v1.2 D: Note: v1.2 // :-) p.m. p.m. D: and/or :) the
+12:30pm :-) 16:9 lunch 10:30 Note: and/or e.g. 1.2.3 10:30 :-) 16:9 a::b lunch the std::move :-) 12:30pm e.g. a::b p.m. lunch Fwd: 3:1 i.e. $4.50 i.e. 16:9 10:30 U.S. lunch :) D: v1.2 Note: p.m. 12:30pm D: $4.50 D: a::b x:y std::move 1.2.3 1.2.3 i.e. // Re: p.m. Fwd:
+i.e. ... 1.2.3 Re: // $4.50 3:1 1.2.3 i.e. :-) 16:9 std::move e.g. the 10:30 Fwd: 1.2.3 e.g. Note: D: 3:1 p.m. D: // 16:9 i.e. 10:30 3:1 :-) e.g. Fwd: i.e. Fwd: $4.50 D: lunch 16:9 // 3:1 x:y x:y :-) 3:1 ... ... 1.2.3 Fwd: i.e. 3:1 i.e.
+... v1.2 e.g. lunch // 12:30pm Re: a::b :-) :-) lunch 1.2.3 10:30 the v1.2 the 16:9 ... a::b ... Re: p.m. // e.g. e.g. U.S. Re: $4.50 the x:y U.S. // 16:9 16:9 D: the 12:30pm x:y 16:9 x:y 1.2.3 $4.50 lunch 12:30pm std::move a::b 3:1 and/or ... D:
+the lunch :-) lunch x:y and/or :-) 3:1 3:1 the the $4.50 :) :) e.g. the x:y U.S. 12:30pm the lunch 12:30pm 10:30 $4.50 $4.50 :-) // 10:30 12:30pm 1.2.3 ... ... D: :-) Fwd: std::move D: a::b v1.2 3:1 // a::b 12:30pm i.e. 10:30 16:9 1.2.3 :-) 10:30 1.2.3
+... // ... $4.50 12:30pm D: the and/or lunch $4.50 x:y and/or 3:1 10:30 Note: 1.2.3 :-) $4.50 12:30pm D: e.g. lunch ... D: the Fwd: ... the e.g. p.m. $4.50 and/or :) :) Note: the 12:30pm 10:30 12:30pm a::b and/or 10:30 e.g. lunch Re: 1.2.3 10:30 lunch 12:30pm lunch
+3:1 v1.2 :-) the 12:30pm a::b $4.50 :) // and/or a::b the std::move ... std::move x:y 1.2.3 12:30pm 10:30 $4.50 Re: a::b i.e. :-) Fwd: 16:9 :) 12:30pm 16:9 e.g. // a::b :-) 1.2.3 :-) :-) :-) v1.2 a::b and/or 3:1 e.g. p.m. U.S. the :) the the x:y a::b
+$4.50 p.m. the 16:9 U.S. 3:1 a::b Note: 16:9 // 16:9 :-) $4.50 1.2.3 U.S. D: and/or p.m. 1.2.3 and/or the v1.2 U.S. 10:30 e.g. e.g. i.e. $4.50 and/or 3:1 :) U.S. 10:30 Re: Fwd: a::b Fwd: x:y and/or 10:30 // Fwd: v1.2 3:1 the ... the lunch the $4.50
+1.2.3 :) D: a::b 12:30pm :-) 1.2.3 and/or // x:y 16:9 D: lunch 1.2.3 the :) :-) 12:30pm x:y p.m. 1.2.3 ... and/or i.e. i.e. 1.2.3 16:9 1.2.3 i.e. lunch // the and/or v1.2 3:1 U.S. lunch // std::move 12:30pm 1.2.3 16:9 // U.S. the e.g. 3:1 ... i.e. lunch
+v1.2 :-) lunch :) 1.2.3 10:30 std::move x:y Re: U.S. p.m. D: 1.2.3 $4.50 e.g. std::move 1.2.3 lunch the lunch // i.e. p.m. a::b Fwd: Fwd: and/or // x:y U.S. 10:30 Note: Re: D: :) 16:9 :-) a::b p.m. a::b ... ... // D: 3:1 12:30pm a::b x:y 12:30pm 12:30pm
+D: e.g. Note: 1.2.3 12:30pm D: Fwd: // 1.2.3 U.S. U.S. Re: e.g. D: Note: D: // // x:y ... :) x:y x:y :-) a::b 1.2.3 12:30pm x:y Re: Note: std::move Note: 10:30 Fwd: and/or x:y ... p.m. 10:30 3:1 a::b the i.e. 16:9 i.e. e.g. 12:30pm ... D: the
+i.e. :-) 1.2.3 p.m. 3:1 i.e. std::move 1.2.3 10:30 Re: 3:1 Note: :) i.e. 3:1 a::b v1.2 the the i.e. U.S. ... x:y U.S. std::move D: x:y Re: Re: std::move lunch x:y D: $4.50 // Re: :) x:y D: $4.50 the std::move // p.m. Fwd: a::b 3:1 a::b ... ...
+16:9 Note: lunch $4.50 D: 3:1 ... x:y :) the 1.2.3 // D: :) x:y $4.50 e.g. // 12:30pm ... Re: :-) Note: and/or i.e. // x:y Re: p.m. Re: x:y e.g. $4.50 v1.2 U.S. x:y 1.2.3 10:30 i.e. i.e. a::b the U.S. U.S. :) U.S. 10:30 3:1 v1.2 //
+U.S. Note: the :) i.e. 12:30pm p.m. a::b 16:9 1.2.3 $4.50 16:9 3:1 and/or and/or 3:1 std::move Note: a::b p.m. e.g. and/or a::b // and/or and/or Fwd: :-) e.g. $4.50 std::move 16:9 e.g. Fwd: U.S. 1.2.3 $4.50 D: Re: i.e. i.e. a::b i.e. lunch v1.2 Note: Note: v1.2 v1.2 a::b
+e.g. Re: p.m. :) $4.50 Note: Fwd: :) a::b $4.50 Fwd: std::move 12:30pm :) Fwd: 16:9 i.e. std::move 16:9 p.m. $4.50 the a::b // i.e. ... :-) e.g. Re: // // i.e. D: e.g. :) std::move Note: lunch ... Fwd: :-) the lunch a::b 10:30 p.m. $4.50 the p.m. 1.2.3
+10:30 3:1 D: a::b a::b and/or lunch 16:9 the i.e. :) Note: :-) // the 16:9 a::b :-) lunch e.g. 10:30 12:30pm $4.50 std::move the std::move 1.2.3 Note: Note: p.m. v1.2 D: 10:30 x:y ... 1.2.3 1.2.3 D: D: 3:1 p.m. Re: $4.50 x:y v1.2 x:y v1.2 lunch x:y D:
+i.e. p.m. U.S. Fwd: the $4.50 p.m. Note: 16:9 1.2.3 Fwd: :) x:y the ... 16:9 the std::move :-) // the ... :) // 1.2.3 std::move $4.50 Re: e.g. e.g. lunch Fwd: 3:1 ... and/or Note: lunch ... lunch x:y ... std::move 10:30 e.g. Re: 1.2.3 and/or e.g. D: 3:1
+1.2.3 16:9 and/or 1.2.3 i.e. 10:30 e.g. 16:9 U.S. D: $4.50 16:9 :-) ... 16:9 a::b e.g. 12:30pm std::move :) x:y ... std::move 12:30pm x:y x:y 1.2.3 Re: i.e. :) e.g. e.g. x:y e.g. 16:9 D: lunch 16:9 3:1 // Fwd: Note: x:y p.m. U.S. 12:30pm ... 12:30pm Note: 3:1
+... and/or i.e. a::b // 10:30 e.g. U.S. i.e. Fwd: x:y $4.50 std::move 10:30 // Re: Fwd: i.e. Note: $4.50 12:30pm and/or $4.50 std::move 3:1 12:30pm lunch 1.2.3 16:9 the 3:1 the a::b D: x:y std::move Re: std::move 3:1 $4.50 the ... lunch p.m. and/or // 12:30pm std::move $4.50 p.m.
+i.e. :-) U.S. $4.50 the D: 1.2.3 U.S. e.g. the :) Re: p.m. x:y 10:30 :-) 10:30 p.m. the Re: x:y p.m. x:y U.S. Fwd: p.m. x:y a::b 10:30 12:30pm and/or Fwd: 12:30pm D: lunch :-) std::move 1.2.3 x:y e.g. the 3:1 Fwd: 1.2.3 lunch D: D: and/or e.g. x:y
+std::move $4.50 D: 10:30 v1.2 U.S. x:y Note: v1.2 v1.2 p.m. Note: 16:9 // 12:30pm Re: p.m. a::b v1.2 Re: 12:30pm std::move a::b x:y i.e. v1.2 U.S. the x:y 1.2.3 Note: and/or Re: D: ... e.g. $4.50 std::move ... 3:1 Fwd: e.g. :) $4.50 and/or and/or 16:9 D: v1.2 Fwd:
+lunch and/or // e.g. the a::b $4.50 3:1 1.2.3 v1.2 and/or 16:9 3:1 D: lunch p.m. and/or i.e. i.e. // Note: :-) v1.2 p.m. 10:30 Note: :) U.S. 1.2.3 lunch a::b $4.50 Note: // x:y 12:30pm Note: 10:30 1.2.3 10:30 1.2.3 U.S. 16:9 v1.2 U.S. 1.2.3 std::move std::move v1.2 Fwd:
+e.g. 10:30 16:9 Fwd: D: 12:30pm 1.2.3 1.2.3 Note: 10:30 e.g. i.e. e.g. lunch the ... :) $4.50 ... 1.2.3 and/or v1.2 :) :) x:y std::move ... 3:1 e.g. p.m. p.m. i.e. a::b the p.m. // Fwd: Fwd: 3:1 Note: v1.2 1.2.3 :) the 16:9 and/or v1.2 lunch Re: 10:30
+Fwd: U.S. // a::b 12:30pm :-) p.m. i.e. x:y and/or // std::move 16:9 12:30pm D: Fwd: 3:1 $4.50 Note: v1.2 :-) Note: Fwd: Fwd: 10:30 i.e. // ... lunch Note: Note: p.m. 1.2.3 lunch 12:30pm :-) e.g. :) 16:9 Fwd: e.g. e.g. Note: ... e.g. 12:30pm Note: 1.2.3 16:9 the
+1.2.3 p.m. D: D: i.e. $4.50 12:30pm x:y p.m. x:y i.e. :) x:y ... :) U.S. Note: the :-) a::b U.S. :-) p.m. Fwd: // v1.2 i.e. D: e.g. // a::b U.S. 1.2.3 1.2.3 Fwd: lunch 1.2.3 x:y Note: p.m. std::move e.g. 1.2.3 Re: e.g. U.S. i.e. 10:30 a::b 12:30pm
+v1.2 lunch a::b lunch 1.2.3 12:30pm x:y :) the a::b and/or :) $4.50 10:30 :) 10:30 D: ... e.g. and/or ... i.e. 1.2.3 ... $4.50 ... a::b :-) 10:30 v1.2 the v1.2 and/or 16:9 v1.2 10:30 3:1 a::b e.g. U.S. x:y // ... 1.2.3 :-) // U.S. v1.2 Note: and/or
+a::b p.m. D: e.g. e.g. and/or Note: 12:30pm Note: 1.2.3 and/or // a::b x:y lunch 12:30pm v1.2 U.S. 1.2.3 Note: Note: U.S. $4.50 1.2.3 10:30 x:y 12:30pm :) Fwd: Note: Re: 3:1 :) 12:30pm 10:30 Re: 16:9 10:30 p.m. :) and/or i.e. e.g. 12:30pm v1.2 v1.2 $4.50 v1.2 1.2.3 Re:
+a::b Re: the p.m. std::move v1.2 D: x:y 10:30 ... v1.2 e.g. p.m. 1.2.3 i.e. Fwd: 3:1 16:9 D: :-) // :-) :-) i.e. e.g. std::move 16:9 :-) lunch 1.2.3 Note: // i.e. // lunch 3:1 :) lunch lunch Note: :) 3:1 lunch x:y 3:1 p.m. the std::move v1.2 3:1
+1.2.3 ... std::move // 16:9 :-) the and/or :-) :) // // a::b Note: 1.2.3 i.e. i.e. Re: and/or i.e. e.g. and/or :) :-) Fwd: the U.S. ... Re: v1.2 // U.S. 3:1 ... 12:30pm a::b p.m. ... 16:9 v1.2 v1.2 a::b p.m. U.S. $4.50 // 10:30 lunch $4.50 e.g.
+v1.2 16:9 Fwd: v1.2 e.g. and/or the x:y a::b and/or ... :-) Note: v1.2 std::move 1.2.3 1.2.3 $4.50 Fwd: x:y the x:y U.S. a::b Fwd: ... 12:30pm 3:1 v1.2 // 10:30 Fwd: i.e. :-) D: x:y i.e. the 12:30pm lunch lunch ... x:y :-) $4.50 12:30pm :) ... ... :-)
+a::b 3:1 Re: std::move p.m. 10:30 Re: :-) 16:9 v1.2 3:1 ... 10:30 D: Fwd: ... 16:9 U.S. 3:1 U.S. U.S. Re: D: // x:y :-) a::b 10:30 i.e. $4.50 10:30 12:30pm 1.2.3 x:y 12:30pm lunch 3:1 3:1 :-) 16:9 D: a::b v1.2 ... std::move 12:30pm 16:9 std::move Note: 3:1
+Re: 1.2.3 and/or p.m. x:y :-) // $4.50 :) :) v1.2 :-) :-) D: Fwd: p.m. Re: Re: 12:30pm D: $4.50 Note: and/or // Re: and/or $4.50 i.e. e.g. x:y U.S. v1.2 lunch p.m. x:y D: and/or e.g. ... v1.2 v1.2 x:y 1.2.3 16:9 3:1 and/or p.m. // :-) std::move
+Fwd: Note: // v1.2 std::move Note: $4.50 e.g. e.g. ... Fwd: v1.2 v1.2 i.e. v1.2 3:1 Fwd: lunch Fwd: p.m. D: i.e. $4.50 3:1 10:30 D: 12:30pm U.S. 3:1 16:9 // Fwd: $4.50 the 10:30 Fwd: lunch 16:9 std::move 3:1 U.S. 16:9 v1.2 lunch D: std::move Re: v1.2 :) :)
+p.m. // std::move Re: a::b 16:9 1.2.3 // a::b 10:30 1.2.3 :) Re: // D: 3:1 a::b v1.2 // D: Re: Re: D: e.g. ... 10:30 x:y 1.2.3 Re: lunch D: 10:30 10:30 lunch lunch D: std::move 10:30 std::move the the ... v1.2 12:30pm 16:9 the 16:9 $4.50 e.g. 3:1
+1.2.3 i.e. v1.2 e.g. x:y i.e. Note: U.S. D: 1.2.3 D: Note: v1.2 and/or std::move 12:30pm // x:y x:y 3:1 std::move 16:9 12:30pm 16:9 $4.50 x:y Re: D: ... e.g. $4.50 :-) a::b std::move lunch $4.50 $4.50 3:1 the e.g. the 16:9 16:9 std::move and/or ... a::b :-) Re: :)
+// lunch Re: 16:9 i.e. x:y 16:9 a::b v1.2 U.S. U.S. ... :) std::move the a::b a::b a::b Note: 3:1 1.2.3 e.g. the :) $4.50 Fwd: 3:1 16:9 12:30pm lunch Note: i.e. 1.2.3 :) Fwd: ... D: :-) e.g. 16:9 // 3:1 i.e. 12:30pm x:y :) std::move p.m. $4.50 //
+Fwd: 3:1 3:1 i.e. v1.2 Re: $4.50 16:9 10:30 Fwd: 16:9 16:9 Fwd: Re: U.S. D: e.g. U.S. x:y :-) lunch 10:30 D: e.g. Re: 3:1 3:1 Note: :-) e.g. // std::move Re: // i.e. Note: e.g. i.e. 3:1 10:30 a::b $4.50 Re: // :) i.e. 3:1 v1.2 16:9 lunch
+x:y 10:30 1.2.3 Re: the U.S. 16:9 x:y D: x:y Re: :) :-) a::b U.S. e.g. Re: lunch ... Fwd: // Re: Fwd: Re: 16:9 12:30pm 10:30 16:9 D: p.m. 10:30 std::move x:y a::b :-) p.m. 3:1 e.g. 1.2.3 a::b a::b Re: p.m. v1.2 the and/or Re: 12:30pm 1.2.3 x:y
+p.m. std::move :-) ... and/or i.e. p.m. $4.50 v1.2 $4.50 $4.50 Re: x:y a::b 10:30 p.m. 12:30pm :) // 3:1 U.S. a::b $4.50 std::move 3:1 v1.2 Fwd: std::move 10:30 and/or // 1.2.3 10:30 Re: :-) i.e. ... $4.50 i.e. e.g. 3:1 // 1.2.3 p.m. Note: the 12:30pm i.e. 1.2.3 Note:
+i.e. U.S. lunch 3:1 :) p.m. 16:9 Re: e.g. 12:30pm Re: e.g. Note: 12:30pm :) the Fwd: v1.2 v1.2 v1.2 Note: Note: Re: 10:30 the and/or // Re: $4.50 :) $4.50 the Note: lunch 3:1 3:1 16:9 and/or and/or :-) 3:1 x:y D: p.m. std::move and/or 10:30 1.2.3 Fwd: e.g.
+lunch :) Re: :) the 12:30pm std::move 16:9 a::b e.g. // i.e. :-) 10:30 Fwd: 12:30pm the p.m. v1.2 p.m. Note: v1.2 Note: $4.50 e.g. U.S. i.e. // 10:30 :-) lunch the Note: ... D: 3:1 U.S. std::move 12:30pm lunch and/or v1.2 :) $4.50 i.e. 10:30 // $4.50 10:30 Fwd:
+i.e. :-) D: x:y i.e. e.g. 16:9 e.g. $4.50 the ... ... :-) 1.2.3 // // // p.m. std::move 10:30 :) Note: D: v1.2 i.e. v1.2 e.g. 3:1 ... Note: i.e. x:y U.S. $4.50 the :-) i.e. :) lunch :) :) // 1.2.3 3:1 :-) 16:9 Re: a::b ... Fwd:
+Note: v1.2 v1.2 Re: i.e. a::b $4.50 Re: Note: 12:30pm $4.50 $4.50 1.2.3 10:30 and/or $4.50 Re: ... 1.2.3 U.S. ... std::move Fwd: Note: std::move lunch Re: p.m. Fwd: std::move :) :-) 3:1 ... x:y lunch 16:9 p.m. x:y :) 12:30pm lunch :) and/or i.e. Note: U.S. the v1.2 :-)
+Note: ... 16:9 D: Note: i.e. // 1.2.3 $4.50 the :) lunch 10:30 std::move Note: and/or D: // D: a::b lunch 10:30 D: std::move $4.50 D: lunch p.m. Note: p.m. Note: the :) p.m. // p.m. a::b i.e. 1.2.3 x:y lunch 10:30 Note: 1.2.3 v1.2 $4.50 3:1 the Re: p.m.
+p.m. D: :) :-) Note: and/or and/or 1.2.3 Note: $4.50 U.S. Fwd: the Re: std::move v1.2 Re: 10:30 ... U.S. 12:30pm lunch 12:30pm $4.50 Re: Note: :-) 12:30pm e.g. :) std::move :) Fwd: Re: v1.2 x:y std::move v1.2 and/or Fwd: 1.2.3 U.S. 1.2.3 3:1 p.m. a::b e.g. 16:9 U.S. the
+1.2.3 $4.50 the D: std::move 3:1 ... the the e.g. 16:9 1.2.3 10:30 std::move e.g. i.e. e.g. v1.2 v1.2 1.2.3 and/or 1.2.3 Fwd: Re: 12:30pm 16:9 Note: p.m. i.e. 3:1 std::move 16:9 :-) the e.g. Note: x:y D: Fwd: // x:y v1.2 1.2.3 p.m. 10:30 Re: a::b 3:1 Fwd: Note:
+std::move ... a::b ... :) :) Note: 1.2.3 std::move 3:1 and/or 12:30pm // i.e. 16:9 Re: U.S. x:y :-) 16:9 U.S. e.g. Fwd: 10:30 // v1.2 e.g. a::b $4.50 16:9 Fwd: 1.2.3 ... Note: x:y D: i.e. :) p.m. a::b std::move Fwd: p.m. Fwd: :-) 16:9 D: 1.2.3 e.g. e.g.
+:) 16:9 lunch Note: Fwd: :-) 12:30pm 12:30pm Re: p.m. :) v1.2 x:y lunch the 10:30 $4.50 U.S. Fwd: ... :-) 16:9 3:1 10:30 Re: and/or U.S. ... Note: 3:1 $4.50 the :-) 1.2.3 lunch the 10:30 the D: i.e. :) i.e. i.e. and/or p.m. U.S. i.e. $4.50 a::b e.g.
+and/or D: :-) Re: :-) 3:1 U.S. e.g. $4.50 Re: and/or std::move e.g. Note: x:y ... 10:30 1.2.3 and/or 12:30pm the Note: 10:30 :) :-) Re: 3:1 U.S. :-) // :) :-) Fwd: // ... :-) and/or $4.50 Re: 12:30pm :) Re: 3:1 v1.2 p.m. U.S. 16:9 x:y a::b 10:30
+10:30 Re: x:y $4.50 the 12:30pm and/or the e.g. 10:30 12:30pm :) i.e. the 3:1 the U.S. Fwd: a::b Fwd: p.m. :-) e.g. a::b U.S. U.S. std::move U.S. the p.m. Re: p.m. and/or U.S. i.e. 3:1 16:9 1.2.3 e.g. std::move Fwd: :) e.g. 3:1 3:1 Fwd: 10:30 12:30pm p.m. 1.2.3
+Re: x:y D: // lunch x:y v1.2 the // 10:30 :) std::move a::b Re: e.g. i.e. ... lunch $4.50 and/or ... 12:30pm Note: the a::b D: Re: e.g. and/or std::move D: 16:9 the U.S. i.e. 3:1 e.g. and/or a::b i.e. :-) Fwd: U.S. the i.e. ... Fwd: // D: 16:9
+16:9 lunch v1.2 D: 12:30pm p.m. 16:9 1.2.3 :-) :-) U.S. D: $4.50 :-) std::move the $4.50 the x:y D: 1.2.3 Re: // U.S. :-) lunch ... 10:30 D: x:y Re: 1.2.3 ... 1.2.3 the p.m. 12:30pm :) std::move i.e. 10:30 lunch v1.2 Note: std::move D: 3:1 p.m. :) Fwd:
+D: and/or :) 3:1 x:y ... v1.2 Re: U.S. 16:9 x:y ... U.S. 1.2.3 p.m. std::move and/or Fwd: 3:1 and/or // $4.50 and/or lunch 1.2.3 ... 10:30 Note: U.S. Re: p.m. // 10:30 e.g. D: Re: 1.2.3 a::b 16:9 :-) e.g. lunch $4.50 and/or the :-) U.S. p.m. e.g. //
+Re: U.S. D: 10:30 3:1 p.m. Note: Re: Fwd: // std::move Re: and/or 10:30 and/or std::move 10:30 12:30pm x:y 3:1 U.S. Re: e.g. 16:9 i.e. D: $4.50 lunch 10:30 Fwd: Re: Note: Re: 3:1 v1.2 i.e. D: 3:1 x:y Re: $4.50 3:1 ... the the ... i.e. U.S. 16:9 Note:
+16:9 i.e. i.e. a::b // and/or $4.50 16:9 std::move x:y Note: Fwd: :) and/or 1.2.3 3:1 :-) // and/or 16:9 i.e. $4.50 1.2.3 v1.2 :) x:y p.m. std::move v1.2 v1.2 e.g. 3:1 U.S. i.e. U.S. i.e. v1.2 1.2.3 a::b p.m. 16:9 $4.50 lunch U.S. e.g. the $4.50 // i.e. std::move
+e.g. Fwd: 10:30 i.e. lunch 10:30 lunch Re: // 3:1 1.2.3 3:1 // Fwd: 12:30pm :-) D: 16:9 $4.50 :-) a::b 3:1 Fwd: $4.50 1.2.3 1.2.3 a::b e.g. and/or 16:9 the 10:30 10:30 10:30 ... :-) D: the :) Re: 16:9 10:30 U.S. 1.2.3 i.e. :) the lunch Note: lunch
+std::move i.e. :-) 1.2.3 Note: v1.2 10:30 :) Note: :-) // 3:1 1.2.3 Fwd: 10:30 the 10:30 and/or lunch v1.2 Fwd: 12:30pm :) x:y :-) lunch and/or 16:9 12:30pm the 16:9 12:30pm :) U.S. a::b :-) ... ... Fwd: 10:30 e.g. the e.g. $4.50 // a::b x:y 3:1 Re: and/or
+$4.50 Fwd: U.S. 12:30pm :-) D: Fwd: lunch D: lunch :-) :-) the and/or a::b 3:1 U.S. $4.50 Note: :) and/or the x:y 16:9 e.g. and/or std::move D: p.m. D: and/or std::move a::b e.g. 3:1 D: Fwd: the and/or x:y lunch i.e. 10:30 lunch and/or e.g. and/or i.e. Fwd: lunch
+lunch 10:30 x:y ... $4.50 a::b e.g. i.e. i.e. and/or x:y 16:9 std::move 3:1 Note: the Fwd: // v1.2 std::move Re: 16:9 3:1 12:30pm the the std::move :-) std::move 12:30pm // lunch Fwd: p.m. and/or i.e. :-) Re: i.e. :) 12:30pm :) 16:9 x:y U.S. 16:9 i.e. // the lunch
+1.2.3 Re: v1.2 3:1 D: 12:30pm :-) Re: Re: D: 10:30 3:1 D: i.e. 10:30 std::move 12:30pm Re: i.e. a::b ... 16:9 e.g. Re: 16:9 x:y e.g. e.g. ... :-) std::move std::move 16:9 the the :) 16:9 10:30 e.g. 16:9 i.e. i.e. D: 16:9 $4.50 Note: 10:30 10:30 v1.2 ...
+and/or 16:9 Re: 1.2.3 10:30 x:y p.m. v1.2 :-) $4.50 :) D: 10:30 x:y ... a::b :) 12:30pm a::b // lunch // :) $4.50 v1.2 std::move lunch x:y p.m. p.m. Re: :-) std::move 1.2.3 Re: // and/or v1.2 10:30 and/or 12:30pm Note: $4.50 U.S. Re: :) the U.S. :) Note:
+... Note: 12:30pm // e.g. U.S. U.S. e.g. std::move 12:30pm a::b a::b :-) v1.2 1.2.3 v1.2 i.e. 16:9 v1.2 e.g. 1.2.3 i.e. 10:30 :) lunch :-) v1.2 lunch 1.2.3 std::move Note: // Fwd: e.g. D: i.e. the x:y 3:1 10:30 $4.50 p.m. 16:9 lunch :) v1.2 lunch std::move U.S. the
+v1.2 $4.50 :-) and/or the 1.2.3 // std::move x:y the // and/or v1.2 std::move i.e. D: 3:1 $4.50 12:30pm e.g. // lunch 1.2.3 // :-) $4.50 D: Re: // Re: the Re: // x:y 3:1 3:1 p.m. p.m. the p.m. 1.2.3 3:1 Re: U.S. :) i.e. Note: x:y p.m. std::move
+D: 1.2.3 :) 1.2.3 U.S. v1.2 // v1.2 the :) v1.2 :-) v1.2 std::move // Re: Fwd: and/or std::move e.g. i.e. a::b :-) and/or e.g. x:y v1.2 1.2.3 // 10:30 // 16:9 x:y :-) std::move lunch e.g. std::move D: :-) // :) e.g. U.S. ... Fwd: the U.S. D: and/or
+i.e. :-) 3:1 16:9 // 1.2.3 v1.2 and/or 1.2.3 a::b 12:30pm p.m. p.m. U.S. and/or 16:9 p.m. :) :-) lunch p.m. // lunch 3:1 ... Fwd: a::b Note: x:y :) D: 10:30 U.S. U.S. :-) 16:9 v1.2 ... a::b x:y :) std::move ... p.m. ... Fwd: 10:30 D: D: p.m.
+:) 1.2.3 e.g. Re: a::b x:y p.m. // the $4.50 U.S. 12:30pm D: 3:1 lunch the lunch 12:30pm Fwd: ... 1.2.3 a::b U.S. e.g. // 3:1 p.m. 1.2.3 Fwd: Re: :-) x:y U.S. // ... 10:30 v1.2 std::move :) D: lunch v1.2 ... Fwd: U.S. e.g. i.e. ... Re: a::b
+i.e. i.e. lunch 16:9 1.2.3 lunch lunch ... 1.2.3 U.S. std::move i.e. p.m. the 10:30 :-) p.m. and/or 12:30pm lunch 3:1 12:30pm 12:30pm 3:1 U.S. $4.50 U.S. 3:1 and/or :-) x:y and/or e.g. e.g. D: 12:30pm U.S. 10:30 v1.2 :) the :-) 10:30 :) x:y e.g. x:y e.g. Note: 16:9
+e.g. 10:30 10:30 std::move // D: p.m. i.e. std::move ... :) lunch :) 10:30 1.2.3 10:30 a::b Re: a::b :-) x:y U.S. i.e. lunch 12:30pm p.m. :) std::move 1.2.3 a::b i.e. ... $4.50 and/or U.S. lunch $4.50 12:30pm ... 16:9 10:30 Fwd: 12:30pm x:y p.m. 16:9 p.m. std::move 16:9 lunch
+Fwd: // 16:9 lunch :-) $4.50 D: std::move a::b 1.2.3 12:30pm U.S. e.g. $4.50 3:1 ... Fwd: D: 10:30 :-) a::b std::move D: e.g. $4.50 i.e. e.g. e.g. // U.S. ... 10:30 1.2.3 and/or Fwd: Note: i.e. Note: lunch p.m. x:y x:y 3:1 3:1 :-) :-) v1.2 v1.2 v1.2 10:30
+Note: i.e. std::move ... ... i.e. 1.2.3 :-) the // v1.2 and/or $4.50 12:30pm p.m. $4.50 p.m. :) Note: Note: :) // Fwd: 1.2.3 Re: Fwd: Note: :) lunch $4.50 p.m. ... Re: :-) the v1.2 :) lunch and/or a::b a::b a::b :) U.S. ... x:y Note: ... a::b x:y
+:) and/or Fwd: 3:1 U.S. $4.50 16:9 // 1.2.3 ... std::move and/or U.S. 10:30 and/or and/or 16:9 e.g. 10:30 i.e. p.m. the p.m. i.e. a::b 1.2.3 v1.2 and/or v1.2 // U.S. D: Fwd: 16:9 U.S. 12:30pm 12:30pm i.e. a::b the a::b 1.2.3 the 10:30 std::move // 3:1 ... and/or $4.50
+$4.50 1.2.3 a::b e.g. ... i.e. a::b lunch Note: ... Re: :-) Fwd: the $4.50 12:30pm ... p.m. 3:1 :) 12:30pm D: 3:1 and/or std::move 3:1 16:9 Fwd: p.m. Note: i.e. a::b Re: Re: a::b 10:30 1.2.3 p.m. i.e. // 16:9 3:1 and/or Note: :-) p.m. :-) Fwd: ... x:y
+D: e.g. Re: 1.2.3 1.2.3 1.2.3 U.S. p.m. D: 16:9 :) the Re: 3:1 D: e.g. a::b p.m. lunch p.m. p.m. 1.2.3 :) $4.50 i.e. :-) // $4.50 the Fwd: 1.2.3 a::b U.S. x:y // D: lunch p.m. e.g. Re: ... :) the ... $4.50 v1.2 the Re: the the
+a::b i.e. x:y the lunch D: p.m. Re: 10:30 a::b x:y a::b the p.m. i.e. 10:30 e.g. e.g. 12:30pm Fwd: x:y and/or 10:30 the D: D: 3:1 16:9 Fwd: ... Note: Re: Note: U.S. std::move Fwd: lunch 12:30pm Re: 16:9 and/or 3:1 v1.2 3:1 v1.2 16:9 and/or and/or 10:30 x:y
+12:30pm $4.50 1.2.3 e.g. the ... U.S. i.e. p.m. std::move v1.2 i.e. the Re: U.S. U.S. ... ... v1.2 and/or 1.2.3 3:1 16:9 :-) v1.2 12:30pm x:y :) and/or // :) U.S. x:y p.m. lunch v1.2 Note: e.g. i.e. std::move 3:1 Note: 12:30pm p.m. :-) 1.2.3 e.g. lunch // the
+12:30pm v1.2 Note: the p.m. e.g. 16:9 e.g. x:y U.S. 10:30 1.2.3 D: Fwd: ... the // lunch 3:1 $4.50 std::move and/or U.S. std::move U.S. and/or Note: the Note: D: 3:1 3:1 e.g. Note: e.g. Fwd: v1.2 i.e. p.m. and/or v1.2 U.S. 3:1 U.S. // ... :) Re: lunch v1.2
+Re: 3:1 i.e. 16:9 p.m. ... p.m. std::move p.m. i.e. D: U.S. and/or D: 10:30 Re: Re: Fwd: // a::b i.e. 3:1 p.m. e.g. D: v1.2 e.g. std::move a::b e.g. $4.50 Note: 1.2.3 a::b $4.50 12:30pm 16:9 Fwd: lunch 16:9 v1.2 p.m. 3:1 :-) 1.2.3 Note: e.g. Fwd: 1.2.3 Fwd:
+12:30pm :) e.g. 10:30 $4.50 and/or i.e. :) std::move 3:1 :) 12:30pm Fwd: U.S. U.S. Note: 1.2.3 a::b e.g. $4.50 and/or Re: 16:9 :-) e.g. D: $4.50 // :-) $4.50 12:30pm e.g. the // x:y Re: 10:30 3:1 a::b x:y 12:30pm 10:30 16:9 16:9 Re: v1.2 v1.2 v1.2 10:30 1.2.3
+the ... i.e. the a::b std::move Re: the i.e. D: and/or D: $4.50 1.2.3 $4.50 $4.50 Fwd: :) i.e. i.e. // 12:30pm v1.2 Fwd: // U.S. 10:30 lunch ... ... a::b i.e. and/or p.m. 10:30 x:y lunch e.g. // 10:30 p.m. x:y v1.2 $4.50 10:30 3:1 std::move $4.50 p.m. Fwd:
+$4.50 Fwd: Fwd: std::move Fwd: :-) the x:y p.m. Fwd: 3:1 Note: ... and/or 16:9 e.g. lunch 10:30 D: D: ... Fwd: Fwd: x:y Note: e.g. :-) v1.2 16:9 Fwd: 3:1 :) D: i.e. U.S. p.m. std::move U.S. ... Re: 3:1 ... 12:30pm std::move Note: a::b and/or p.m. the i.e.
+the 16:9 16:9 10:30 16:9 x:y std::move 3:1 D: Re: 1.2.3 ... :-) Fwd: the the a::b std::move x:y x:y the a::b D: a::b D: 12:30pm v1.2 and/or 10:30 16:9 i.e. 3:1 :) 12:30pm Note: ... ... the Note: :-) the Re: and/or x:y p.m. x:y :-) Note: e.g. U.S.
+std::move x:y a::b $4.50 lunch e.g. Fwd: and/or 1.2.3 U.S. the D: 1.2.3 the Fwd: the D: Re: 10:30 and/or :) :) lunch and/or std::move Fwd: 12:30pm 1.2.3 ... // a::b :-) Note: lunch Re: e.g. 1.2.3 Re: v1.2 a::b $4.50 // 3:1 // // v1.2 v1.2 e.g. p.m. :-)
+std::move :) :) ... std::move ... 1.2.3 x:y D: :) Re: i.e. and/or 12:30pm std::move :) 10:30 :) Fwd: 3:1 1.2.3 12:30pm std::move :-) v1.2 1.2.3 e.g. $4.50 $4.50 D: ... lunch p.m. 16:9 3:1 e.g. and/or 12:30pm e.g. :) lunch and/or 16:9 ... a::b 3:1 D: 3:1 3:1 16:9
+// x:y :) :-) ... 3:1 the 3:1 Note: lunch 3:1 and/or x:y Re: 1.2.3 Re: the :-) Re: $4.50 :-) :) ... // and/or ... :-) the $4.50 :-) e.g. v1.2 e.g. Re: the 3:1 v1.2 Note: p.m. $4.50 ... and/or p.m. 12:30pm 10:30 the e.g. a::b 1.2.3 :-)
+U.S. Re: e.g. std::move 12:30pm 3:1 10:30 the :-) e.g. x:y std::move 1.2.3 3:1 :) e.g. 1.2.3 e.g. D: and/or // Re: x:y Re: x:y lunch U.S. e.g. D: Re: and/or 1.2.3 std::move v1.2 ... // $4.50 1.2.3 10:30 and/or std::move 1.2.3 ... ... ... a::b x:y a::b D: x:y
+v1.2 Note: p.m. Fwd: e.g. ... Fwd: Note: Note: D: x:y 10:30 Fwd: Fwd: i.e. Fwd: lunch x:y U.S. D: :) 3:1 :-) Re: :) and/or std::move a::b 10:30 p.m. and/or x:y 1.2.3 x:y U.S. v1.2 // D: p.m. 10:30 // lunch lunch 12:30pm :) Re: p.m. 12:30pm e.g. D:
+e.g. ... 16:9 U.S. a::b 10:30 // lunch :) 1.2.3 1.2.3 U.S. lunch 1.2.3 std::move the 1.2.3 Fwd: e.g. p.m. a::b 1.2.3 and/or 1.2.3 10:30 12:30pm D: 1.2.3 // std::move :) 3:1 1.2.3 1.2.3 and/or Re: :-) i.e. p.m. v1.2 D: a::b ... std::move 12:30pm 10:30 Re: 12:30pm v1.2 std::move
+:) 3:1 p.m. 10:30 12:30pm and/or Note: p.m. Re: D: a::b 10:30 U.S. Re: 10:30 Re: and/or v1.2 lunch x:y v1.2 D: 16:9 and/or and/or 12:30pm $4.50 :-) a::b 16:9 :) 1.2.3 10:30 and/or Re: ... Fwd: 10:30 Re: 1.2.3 Re: 3:1 Fwd: ... lunch Fwd: p.m. 16:9 $4.50 :-)
+p.m. x:y lunch 16:9 x:y i.e. e.g. i.e. D: and/or $4.50 1.2.3 :-) the e.g. Re: :-) a::b the Re: 3:1 $4.50 the and/or e.g. and/or 16:9 e.g. :-) x:y 16:9 Fwd: lunch a::b Re: v1.2 and/or // a::b a::b std::move Note: 1.2.3 e.g. $4.50 // and/or Note: a::b 1.2.3
+a::b a::b 12:30pm 3:1 e.g. p.m. Fwd: Fwd: 16:9 16:9 lunch D: 10:30 Re: :-) :-) U.S. 16:9 lunch 16:9 ... 1.2.3 3:1 lunch Re: :-) and/or Re: 3:1 U.S. Note: :-) std::move :-) // e.g. 10:30 std::move 16:9 e.g. p.m. :) 3:1 :) x:y a::b p.m. // :-) x:y
+i.e. p.m. :-) ... and/or and/or lunch :-) e.g. v1.2 3:1 e.g. lunch lunch p.m. 10:30 :) 16:9 Re: 1.2.3 :-) e.g. $4.50 std::move and/or std::move :-) :) Fwd: a::b a::b U.S. 16:9 :) :-) i.e. and/or 1.2.3 U.S. i.e. :) $4.50 3:1 the e.g. lunch e.g. $4.50 16:9 p.m.
+and/or 1.2.3 3:1 lunch 1.2.3 10:30 Re: Re: 10:30 v1.2 Note: x:y ... $4.50 :-) :) // 10:30 16:9 $4.50 12:30pm U.S. Note: x:y a::b 1.2.3 12:30pm a::b x:y ... e.g. 16:9 the 16:9 the std::move ... 12:30pm 3:1 and/or 16:9 1.2.3 p.m. i.e. ... ... 1.2.3 10:30 a::b 3:1
+:) 16:9 12:30pm D: std::move U.S. 3:1 v1.2 and/or p.m. std::move 3:1 e.g. D: 12:30pm x:y e.g. p.m. U.S. 10:30 v1.2 // and/or the lunch // $4.50 10:30 $4.50 p.m. Fwd: 3:1 Fwd: v1.2 U.S. U.S. 16:9 Fwd: :) ... U.S. ... 3:1 Fwd: $4.50 the 3:1 v1.2 $4.50 e.g.
+x:y 16:9 a::b Note: // 3:1 12:30pm v1.2 3:1 Fwd: the x:y Fwd: e.g. :-) and/or ... Fwd: v1.2 3:1 and/or i.e. e.g. $4.50 10:30 a::b // U.S. 10:30 :-) 12:30pm the std::move e.g. p.m. and/or x:y 12:30pm std::move D: x:y i.e. std::move e.g. ... p.m. Fwd: a::b 10:30 $4.50
+1.2.3 p.m. Note: e.g. :-) a::b x:y Fwd: 1.2.3 10:30 Fwd: U.S. :) std::move Re: D: the U.S. std::move ... i.e. v1.2 10:30 U.S. $4.50 12:30pm // :) U.S. D: 1.2.3 :-) Fwd: and/or :) v1.2 i.e. 1.2.3 Note: i.e. the lunch e.g. a::b ... // lunch D: Note: a::b
+i.e. x:y x:y std::move D: Re: 16:9 ... :-) 1.2.3 3:1 // lunch 3:1 i.e. v1.2 :-) x:y e.g. i.e. U.S. 10:30 p.m. and/or e.g. Fwd: Note: Re: :) 3:1 Fwd: 10:30 1.2.3 Re: Fwd: 10:30 U.S. the :) U.S. p.m. the 3:1 e.g. Note: 10:30 Fwd: x:y Note: x:y
+e.g. a::b Re: 10:30 ... i.e. Fwd: 12:30pm // and/or x:y :) Re: e.g. i.e. p.m. v1.2 ... $4.50 Re: p.m. 3:1 v1.2 3:1 U.S. Fwd: U.S. ... a::b and/or Note: 1.2.3 12:30pm std::move Note: Re: p.m. e.g. the :-) x:y Re: :-) ... 10:30 12:30pm and/or 16:9 p.m. 12:30pm
+v1.2 :) Fwd: std::move and/or D: lunch :) e.g. i.e. :-) // e.g. ... D: and/or 1.2.3 p.m. 1.2.3 Re: D: U.S. 10:30 // a::b Note: e.g. i.e. $4.50 Fwd: x:y v1.2 p.m. 10:30 12:30pm U.S. the :-) x:y // x:y :-) e.g. e.g. ... D: $4.50 e.g. $4.50 p.m.
+the v1.2 and/or 16:9 10:30 U.S. D: 1.2.3 3:1 v1.2 // U.S. Re: 10:30 // lunch x:y and/or // // lunch the D: std::move 12:30pm the x:y the lunch D: :-) x:y :-) Fwd: x:y // 10:30 a::b v1.2 12:30pm 16:9 :) Fwd: 10:30 Note: ... 3:1 D: e.g. lunch
+std::move // p.m. 12:30pm std::move x:y the Re: $4.50 12:30pm Fwd: and/or // and/or lunch p.m. x:y v1.2 :) Re: lunch p.m. U.S. i.e. a::b U.S. Note: x:y Re: D: 12:30pm 10:30 3:1 // // x:y ... i.e. std::move x:y ... e.g. 1.2.3 $4.50 Re: :) x:y 3:1 lunch //
+:) x:y 12:30pm 1.2.3 :-) x:y :-) v1.2 lunch $4.50 e.g. v1.2 3:1 3:1 i.e. and/or x:y e.g. D: :-) Fwd: Re: Re: 3:1 1.2.3 the v1.2 i.e. 10:30 // v1.2 lunch a::b 3:1 std::move U.S. a::b std::move e.g. Re: std::move the // 12:30pm U.S. :-) 3:1 3:1 $4.50 :)
+v1.2 16:9 e.g. 12:30pm :) lunch D: U.S. ... :) the 1.2.3 v1.2 // lunch 3:1 D: Re: 12:30pm :-) Note: ... // // 10:30 10:30 lunch x:y Note: ... a::b D: :) e.g. v1.2 Fwd: lunch :-) Fwd: :) e.g. // 16:9 // 3:1 e.g. v1.2 and/or // Re:
+$4.50 3:1 ... v1.2 e.g. the 10:30 p.m. Note: 3:1 10:30 12:30pm ... 16:9 16:9 ... 3:1 e.g. p.m. 12:30pm Note: Note: i.e. std::move v1.2 lunch the U.S. 16:9 v1.2 x:y Fwd: 10:30 D: Fwd: 10:30 // D: $4.50 i.e. U.S. ... :-) the a::b 16:9 Fwd: e.g. std::move 16:9
+i.e. 16:9 :) Fwd: Fwd: :) 12:30pm a::b Re: ... Note: v1.2 i.e. v1.2 10:30 the U.S. U.S. D: and/or Re: 10:30 10:30 :-) 16:9 U.S. std::move lunch i.e. and/or 16:9 12:30pm x:y D: ... i.e. 3:1 and/or $4.50 $4.50 the 10:30 D: Note: 10:30 lunch Re: :-) 3:1 :-)
+Re: a::b :-) $4.50 v1.2 12:30pm v1.2 Fwd: x:y a::b :) D: Fwd: e.g. x:y 3:1 the D: 12:30pm // 3:1 D: a::b Fwd: x:y and/or a::b Re: x:y x:y 16:9 std::move :) 12:30pm i.e. i.e. std::move v1.2 12:30pm v1.2 Re: i.e. :) 1.2.3 i.e. ... D: v1.2 i.e. x:y
+... // and/or 10:30 the lunch and/or the // ... lunch x:y and/or :-) p.m. and/or and/or std::move i.e. 12:30pm :) $4.50 p.m. lunch std::move lunch lunch 12:30pm D: lunch :-) D: Fwd: U.S. Fwd: D: Note: 16:9 10:30 v1.2 ... i.e. D: :) and/or Fwd: 10:30 16:9 a::b 10:30
+a::b $4.50 D: lunch 16:9 :-) lunch D: x:y 1.2.3 lunch Fwd: Fwd: 3:1 :) the Fwd: :) :-) i.e. :-) e.g. 3:1 16:9 12:30pm 1.2.3 Re: p.m. Re: the D: i.e. D: the p.m. 16:9 a::b // Note: ... x:y $4.50 :) 10:30 Re: Re: and/or 3:1 x:y :)
+x:y $4.50 :-) U.S. D: the 12:30pm 12:30pm std::move 3:1 // lunch 12:30pm and/or i.e. Note: v1.2 // Re: the std::move $4.50 3:1 x:y Note: a::b a::b std::move 12:30pm and/or p.m. lunch 3:1 Re: D: $4.50 ... a::b p.m. D: // p.m. D: 3:1 :-) $4.50 Re: 16:9 and/or $4.50
+Fwd: :-) :) U.S. lunch Re: 12:30pm :) Re: a::b :-) Note: D: std::move and/or Note: $4.50 :) lunch 10:30 a::b 1.2.3 Re: 16:9 Note: and/or x:y 16:9 U.S. D: 1.2.3 Note: Fwd: $4.50 ... p.m. 3:1 and/or :-) Re: std::move std::move x:y 1.2.3 lunch e.g. 10:30 // the D:
+:) :) 16:9 and/or U.S. 10:30 D: std::move lunch 16:9 :-) 10:30 and/or x:y Re: ... and/or std::move Re: the Re: 10:30 1.2.3 :) 1.2.3 x:y x:y // std::move :) Re: D: 12:30pm // Fwd: e.g. and/or 3:1 $4.50 3:1 16:9 std::move p.m. 1.2.3 U.S. $4.50 x:y D: 12:30pm 10:30
+3:1 12:30pm Re: ... // v1.2 e.g. :) i.e. ... and/or U.S. ... // p.m. a::b lunch D: U.S. p.m. 1.2.3 :) e.g. Fwd: and/or the Note: Fwd: p.m. 3:1 U.S. 1.2.3 Fwd: Fwd: :-) D: 3:1 and/or 3:1 and/or :) Re: ... v1.2 // p.m. $4.50 16:9 $4.50 $4.50
+10:30 a::b and/or std::move and/or std::move U.S. 12:30pm 10:30 10:30 3:1 10:30 1.2.3 ... U.S. and/or $4.50 a::b Note: Note: Re: 3:1 lunch Note: U.S. v1.2 10:30 1.2.3 12:30pm std::move 12:30pm std::move e.g. :) and/or 1.2.3 // ... 12:30pm 16:9 lunch $4.50 lunch // Re: :-) $4.50 i.e. // v1.2
+e.g. and/or D: i.e. 10:30 Note: 1.2.3 v1.2 Note: p.m. v1.2 e.g. std::move and/or and/or p.m. 1.2.3 i.e. Re: 12:30pm i.e. the :) e.g. :-) i.e. 10:30 i.e. 16:9 lunch e.g. p.m. i.e. 16:9 p.m. lunch the :-) 12:30pm // :-) lunch ... :) and/or U.S. i.e. e.g. 1.2.3 Fwd:
+1.2.3 U.S. and/or D: :-) a::b std::move Note: i.e. and/or :-) std::move Re: 16:9 D: :) 12:30pm Re: :) i.e. :) std::move v1.2 :) Note: 3:1 16:9 12:30pm 16:9 D: a::b :-) i.e. ... lunch the 12:30pm 1.2.3 10:30 the and/or // and/or Fwd: 12:30pm 10:30 16:9 U.S. the p.m.
+v1.2 std::move 10:30 3:1 // U.S. 1.2.3 16:9 3:1 v1.2 and/or ... 16:9 and/or 16:9 ... // and/or U.S. Note: Re: a::b 3:1 and/or 10:30 12:30pm Re: // D: std::move p.m. the :) Fwd: :) 10:30 and/or :-) std::move $4.50 16:9 // a::b p.m. the :-) :-) a::b Note: 1.2.3
+https:bank.test/x
+Hello from bank.test
+ws:sub.bank.test
+bank.test:8080
+https:///bank.test
+203.0.113.9:80
+https://evil.test/login
+see https:evil.test/x
+_://evil.test/
+evil.test:8080
+https:/evil.test/login
+https:\\evil.test/login
+ftp://user:pw@evil.test:21/x
+https://EVIL.test
+x:evil.test
+see https://bank.test/
+https://bank.test:pw@evil.test/
+https://evil.test\@bank.test/
+HtTp:evil.test
+ftp:\/evil.test
+ws:/evil.test
+Visit:evil.test!
+go:to:evil.test:now
+bank.test:evil.test
+evil.test:bank.test
+bank.test@evil.test
+web+app://evil.test
+http:3405803785
+https:evil.test／login
+0://ftp://evil.test/x
+data:text/html,https://evil.test
+Meeting at 10:30 tomorrow, ratio 16:9, score 3:2.
+We met at 12:00:00 and it was 23:59:59.
+Time zones UTC+1:00 and GMT-5:30
+John 3:16 and Gen.1:1 and Matt.5:9
+MAC 00:1a:2b:3c:4d:5e and IPv6 2001:db8::1
+Emoji :smile: and :thumbsup: and Q3:revenue
+U.S.:the plan, a.m.:b.m., noon:ok?
+http: is a protocol, https: too, and ftp: and wss: are schemes.
+Call at 9:00/10:00 or 11:00?
+Phone: +1 555 0100 ext:12
+https://other.test/ and third.test:443 and http:203.0.113.9
+contact via https:other.test or Link:third.test or Server:203.0.113.9
+see https://bank.test/ and https://www.google.test/
+https://bank.test/?next=http://evil.test&v=1
+https://www.google.test/url?q=https://evil.test&sa=D
+https://bank.test/?next=https://user:bank.test@evil.test&v=1
+see https://bank.test/ and https://www.google.test/ evil.test 203.0.113.9
+https://bank.test/?next=https://bank.test:443@evil.test&v=1
+https://bank.test/?next=https://@evil.test&v=1
+https://bank.test/?next=https://bank.test@@evil.test&v=1
+https://bank.test/?next=https://a@b@c@evil.test&v=1
+https://bank.test/?next=https://evil.test&e=x@bank.test
+https://bank.test/?next=https://evil.test=x@bank.test
+https://bank.test/?next=https:\\user@evil.test&v=1
+https://bank.test/?next=https://user@EVIL.TEST&v=1
+x=//bank.test@evil.test&v=1
+https://bank.test/?next=https://BANK.TEST%40EVIL.TEST
+https://evil.test&v=1
+https://user@bank.test&v=1
+https://bank.test@bank.test&v=1
+x://bank.test&v=1
+https:\\evil.test&v=1
+https://bank.test/?a=b&email=a@bank.test
+mailto:a=b@bank.test
+mailto:list&x@bank.test
+x&y=z@bank.test
+https://bank.test/login?user=a@bank.test&next=/home
+https://a=b@bank.test/
+https://a&b@bank.test/
+https://bank.test/%40user
+ftp://user%40mail.test@bank.test/x
+evil.test \\evil.test\share
+‘\\evil.test\share’
+«\\evil.test\share»
+👉\\evil.test\s
+👉\/evil.test/s
+👉/\evil.test\s
+​\\evil.test\s
+​\/evil.test/s
+​/\evil.test\s
+json:"﻿\\\\evil.test\\s"
+json:"﻿\\/evil.test/s"
+json:"﻿/\\evil.test\\s"
+⁠\\evil.test\s
+⁠\/evil.test/s
+⁠/\evil.test\s
+­\\evil.test\s
+­\/evil.test/s
+­/\evil.test\s
+́\\evil.test\s
+́\/evil.test/s
+́/\evil.test\s
+““\\evil.test\s
+““\/evil.test/s
+““/\evil.test\s
+at “\\evil.test\s
+at “\/evil.test/s
+at “/\evil.test\s
+ \\evil.test\s
+ \/evil.test/s
+ /\evil.test\s
+a b \\evil.test\s
+a b \/evil.test/s
+a b /\evil.test\s
+x -\\evil.test\s
+x -\/evil.test/s
+x -/\evil.test\s
+bank.test
+1\\x
+é\\x
+例\\x
+x:\\evil.test\s
+-\\
+:\\\x
+price: 10\20
+a b\\c
+x \\
+¯\_(ツ)_/¯
+10 km/h
+and / or
+\\EVIL.TEST\share
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x \\EVIL.TEST\share https://bank.test/
+(\\evil.test\share)
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x (\\evil.test\share) https://bank.test/
+<\\evil.test\share>
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x <\\evil.test\share> https://bank.test/
+"\\evil.test\share"
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x "\\evil.test\share" https://bank.test/
+'\\evil.test\share'
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x '\\evil.test\share' https://bank.test/
+**\\evil.test\share**
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x **\\evil.test\share** https://bank.test/
+\/evil.test/s
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x \/evil.test/s https://bank.test/
+/\evil.test\s
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x /\evil.test\s https://bank.test/
+\\?\unc\evil.test\s
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x \\?\unc\evil.test\s https://bank.test/
+\\.\unc\evil.test\s
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x \\.\unc\evil.test\s https://bank.test/
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x \\203.0.113.9\c$ https://bank.test/
+path=\\server\share
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x path=\\server\share https://bank.test/
+HREF=\\evil.test\s
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x HREF=\\evil.test\s https://bank.test/
+href==\\evil.test\s
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x href==\\evil.test\s https://bank.test/
+href="\\evil.test\s"
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x href="\\evil.test\s" https://bank.test/
+FILE:\\Evil.Test\share
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x FILE:\\Evil.Test\share https://bank.test/
+File:/\evil.test/x
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x File:/\evil.test/x https://bank.test/
+"file://evil.test/x"
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x "file://evil.test/x" https://bank.test/
+(file:\\evil.test\x)
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x (file:\\evil.test\x) https://bank.test/
+file:/x
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x file:/x https://bank.test/
+SMB://evil.test/s
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x SMB://evil.test/s https://bank.test/
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x smb:\\evil.test\s https://bank.test/
+smb:/x
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x smb:/x https://bank.test/
+SEARCH-MS:query=x
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x SEARCH-MS:query=x https://bank.test/
+Search:query=x
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x Search:query=x https://bank.test/
+see:search-ms:x
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x see:search-ms:x https://bank.test/
+(search-ms:query=x)
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x (search-ms:query=x) https://bank.test/
+MS-MSDT:/id
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x MS-MSDT:/id https://bank.test/
+ms-officecmd:x
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x ms-officecmd:x https://bank.test/
+ms-settings:display
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x ms-settings:display https://bank.test/
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x ms-word:ofe|u|https://evil.test/x https://bank.test/
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x https://bank.test/?u=\\evil.test\s https://bank.test/
+https://bank.test/?u=/\evil.test
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x https://bank.test/?u=/\evil.test https://bank.test/
+https://bank.test/?u=file:///etc/x
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x https://bank.test/?u=file:///etc/x https://bank.test/
+https://bank.test/#ms-x:y
+evil.test 203.0.113.9 \\evil.test\share file://evil.test/x smb://evil.test/s search-ms:x ms-msdt:x https://bank.test/#ms-x:y https://bank.test/
+evil.test bank.test
+C:\\Program Files
+"C:\\Users\\x"
+a=\\
+a=b==c
+x==y
+msdn:foo
+ms:foo
+ms-:foo
+terms-ms:foo
+Item:ms-x
+researchers:
+research:x
+search: x
+profile:/x
+afile:/x
+x-file://evil.test/x
+smb:evil.test
+a=//evil.test
+x=//203.0.113.9/
+https://bank.test/?u=//evil.test/x
+x=//bank.test/x=//evil.test/
+evil.test
+href=///evil.test/x
+evil.рф
+例え。テスト 例え.テスト
+evil.xn--/x
+json:"=//bank.test\thttps://bankco.test\\\\bank.test\\sevil.testevil.test>"
+json:"=//bank.test\t"
+https://bankco.test/
+https://mail.bankco.test/
+x.bank.test
+https://evil.test/
+https://bank.test/x
+203.0.113.41.2.3.4<[|bankco.test{)203.0.113.45
+json:"http://evil.test&v=11.2.3.45alice@bank.test>中文]x://yevil.test{中文中文evil.test;|'http://evil.test&v=1\\\\bank.test\\s中文\t\\\\bank.test\\s}\"{;\\\\bank.test\\s"
+*
+json:"<<中文<\t\\\\bank.test\\sa.bevil.testa.bx://y<]x://y<`bankco.test>>203.0.113.4,http://evil.test&v=1http://evil.test&v=1|\\\\bank.test\\s=//bank.test{😀[)中文[[;"
+json:"<<中文<\t\\\\bank.test\\sa.bevil.testa.bx://y<]x://y<`bankco.test>>203.0.113.4,http://evil.test&v=1http://evil.test&v=1|\\\\bank.test\\s=//bank.test{😀[)中文["
+>alice@bank.test,
+bankco.test\\bank.test\s>,203.0.113.4[中文 
+w
+json:"a.bbank.testbankco.test[)`]=//bank.test>\"bank.test\"😀 ;}`bankco.test \\\\bank.test\\sx://yw}\"`),alice@bank.test}\t "
+json:"bankco.test\t\\\\bank.test\\sbankco.test中文'\\\\bank.test\\s203.0.113.4mail.bank.test\\\\bank.test\\smail.bank.test\t`éhttp://evil.test&v=1<"
+[
+json:"'>\"alice@bank.test[ w'\t203.0.113.4émail.bank.test{}[,`"
+json:"'>\"alice@bank.test[ w'\t203.0.113.4émail.bank.test{"
+é203.0.113.4alice@bank.testmail.bank.test)https://bank.test/x*`😀中文}
+é203.0.113.4alice@bank.testmail.bank.test)
+中文[)bankco.testalice@bank.testéa.b中文)w中文`\\bank.test\salice@bank.test;}alice@bank.test
+中文[)bankco.testalice@bank.testéa.b中文)
+<
+json:"\t=//bank.test<*`(>("
+w]203.0.113.4;
+😀{203.0.113.41.2.3.4bankco.test<*203.0.113.45
+😀{203.0.113.41.2.3.4bankco.test<*
+*<
+`)a.b<bankco.test"*ébank.test'>{
+alice@bank.test
+json:"bankco.test\thttps://bankco.test]("
+éw
+json:"https://bank.test/xhttps://bankco.test}>=//bank.test\t]\"\\\\bank.test\\shttp://evil.test&v=1a.b*{https://bank.test/x=//bank.test=//bank.test"
+json:"https://bank.test/xhttps://bankco.test}>=//bank.test\t]\"\\\\bank.test\\shttp://evil.test&v=1a.b*{"
+\\bank.test\s
+w中文a.b
+http://evil.test&v=1>x://y203.0.113.4'
+203.0.113.45
+"
+evil.test)x://y
+{ )a.b)
+json:"中文 bankco.test\\\\bank.test\\sé alice@bank.test\"<|203.0.113.45|` }\t[,,https://bank.test/xevil.test}alice@bank.test😀'"
+;
+bank.xn--p1aievil.test"{])"x://y*203.0.113.4|😀w,|https://bankco.test*
+203.0.113.45}https://bank.test/xevil.test]x://y203.0.113.45*}
+a.b
+json:"(=//bank.test))[bank.test)*\t"
+(
+中文https://bankco.testa.b{<x://ymail.bank.test`=//bank.test *]"
+alice@bank.test=//bank.test\\bank.test\shttp://evil.test&v=1)[ w)😀}
+mail.bank.test"alice@bank.test\\bank.test\s"=//bank.test`
+alice@bank.testbank.testmail.bank.test,http://evil.test&v=1evil.test w*😀>bank.test[
+'(`
+alice@bank.testbank.testmail.bank.test,
+},*é|203.0.113.45a.b]x://y[""'
+http://evil.test&v=1}203.0.113.45)(evil.testevil.test203.0.113.4bank.testail.bank.test;[{[*a.b中文
+http://evil.test&v=1}203.0.113.45)(
+bank.test203.0.113.45|,中文{)>http://evil.test&v=1
+bank.test203.0.113.45|,
+}\\bank.test\sbankco.test>,(中文é]
+}
+{http://evil.test&v=1😀[203.0.113.45
+json:"\"\t"
+json:"\ta.b{'a.b>https://bank.test/x`x://y>|203.0.113.45=//bank.test\\\\bank.test\\smail.bank.testbankco.testbankco.testa.b \"=//bank.test[><(>http://evil.test&v=1bank.xn--p1aihttp://evil.test&v=1;,*http://evil.test&v=1"
+json:"\ta.b{'a.b>https://bank.test/x`x://y>|"
+)
+\\bank.test\sa.b]
+é*https://bank.test/xbank.test203.0.113.4bank.xn--p1aihttps://bankco.test;}203.0.113.4x://y
+é*
+https://bankco.test
+]é["}203.0.113.451.2.3.45>a.balice@bank.test\\bank.test\s]203.0.113.45é203.0.113.45 |😀(=//bank.test=//bank.test203.0.113.45;x://yw203.0.113.45 evil.test'émail.bank.test
+]é["}203.0.113.451.2.3.45>a.balice@bank.test\\bank.test\s]
+<中文>;\\bank.test\s203.0.113.45é203.0.113.451.2.3.4😀>\\bank.test\s<
+<(|;}{"x://y;
+<(|
+,203.0.113.4<bank.test{,bankco.test>https://bank.test/xhttp://evil.test&v=1(evil.testa.bbankco.test]https://bankco.testevil.test \\bank.test\sé|[bankco.test[}
+,203.0.113.4<bank.test{,bankco.test>
+`
+)x://y}中文);'}http://evil.test&v=1,
+json:"\"<]😀;http://evil.test&v=11.2.3.45))`http://evil.test&v=1\\\\bank.test\\s(([中文\t\\\\bank.test\\sbank.xn--p1aihttps://bank.test/x😀"
+json:"\"<]😀;http://evil.test&v=11.2.3.45))`http://evil.test&v=1\\\\bank.test\\s(([中文\t"
+json:"\t'>203.0.113.4{w203.0.113.4x://y)"
+json:"\tbankco.test<中文(|}中文{x://y中文|]http://evil.test&v=1"
+*]
+json:"\tbankco.test<中文(|}"
+|]😀;203.0.113.4wmail.bank.test203.0.113.451.2.3.45x://yhttp://evil.test&v=1bank.test😀evil.testbankco.test"mail.bank.test
+|]😀;
+json:"<*\\\\bank.test\\s],\talice@bank.test\"https://bank.test/x>203.0.113.4"
+json:"<*\\\\bank.test\\s],\talice@bank.test\""
+json:"中文203.0.113.4*x://yhttps://bank.test/xalice@bank.testevil.test*]evil.test\ta.b]evil.test中文é|"
+x://y
+**a.b
+ ,
+é
+('>w`bankco.testalice@bank.test203.0.113.4\\bank.test\s=//bank.test]https://bank.test/x<203.0.113.45😀
+('>w`bankco.testalice@bank.test203.0.113.4\\bank.test\s=//bank.test]https://bank.test/x<
+json:";\t=//bank.test*>\t \t203.0.113.4>[]`"
+\\bank.test\s}203.0.113.45<*(
+https://bankco.test http://evil.test&v=1https://bank.test/xx://ymail.bank.test]>a.b*
+\\bank.test\s}203.0.113.45<*
+[éx://y*
+>`'https://bankco.test
+'
+json:"\\\\bank.test\\s203.0.113.45https://bank.test/x;\tmail.bank.test;x://y{"
+json:"\\\\bank.test\\s203.0.113.45https://bank.test/x;\tmail.bank.test;"
+é(https://bankco.test,203.0.113.45\\bank.test\s😀>203.0.113.4x://y'éx://y\\bank.test\s w中文<}}({{alice@bank.test[
+é(https://bankco.test,203.0.113.45\\bank.test\s😀>203.0.113.4x://y'
+,
+|
+mail.bank.test 😀"mail.bank.testalice@bank.test}203.0.113.4
+]|bankco.testbank.xn--p1aia.b203.0.113.45http://evil.test&v=1=//bank.test中文a.balice@bank.test`{"<w]
+]|
+203.0.113.4evil.test]}
+json:"|){')bank.test😀\\\\bank.test\\s[(https://bank.test/x\t  ,<(=//bank.test{https://bank.test/xbankco.testevil.test<é中文,mail.bank.test("
+json:"|){')bank.test😀\\\\bank.test\\s[(https://bank.test/x\t  ,<(=//bank.test{"
+json:"evil.testbankco.test\\\\bank.test\\s}http://evil.test&v=1>https://bankco.test😀a.b*'>,https://bankco.testa.b}bank.testbank.xn--p1aibank.test,203.0.113.45bank.test\\\\bank.test\\s\t>"
+evil.testbankco.test\\bank.test\s}http://evil.test&v=1>https://bankco.test😀a.b*'>,https://bankco.testa.b}
+203.0.113.45a.b)
+w>[( ",`
+'203.0.113.45]evil.test=//bank.test`
+;<'mail.bank.testbankco.test203.0.113.45<http://evil.test&v=1w);a.b203.0.113.451.2.3.45x://y"éalice@bank.test>)http://evil.test&v=1中文https://bank.test/x[\\bank.test\s
+;<'mail.bank.testbankco.test203.0.113.45<http://evil.test&v=1w);
+),{
+'http://evil.test&v=1éhttps://bank.test/x'中文, 
+json:"|;)\t|{;]http://evil.test&v=1{)"
+x://y<)
+'mail.bank.test<😀 é)x://yw]a.b中文a.b203.0.113.45`
+json:"*a.b\\\\bank.test\\sbankco.test]bankco.test\"bank.test(203.0.113.45]bank.test||  evil.test203.0.113.4\thttps://bankco.test"
+*)\\bank.test\salice@bank.test
+*a.b\\bank.test\sbankco.test]bankco.test"
+json:"bank.testalice@bank.test,http://evil.test&v=1`[,,'[\"\t{[|alice@bank.test'w']}bankco.testbankco.testbank.xn--p1aié"
+bank.testalice@bank.test,http://evil.test&v=1`[,
+a.bbank.xn--p1ai😀*中文😀
+json:"\\\\bank.test\\s{bankco.test203.0.113.4[<\tbank.xn--p1ai=//bank.testbank.test"
+<http://evil.test&v=1;
+[;][
+203.0.113.45中文[x://y]x://yevil.test]
+203.0.113.45中文[
+<[é😀}`
+\\bank.test\s*
+é"
+https://bank.test/x😀203.0.113.4bank.test[a.b}
+json:"[evil.testmail.bank.test|<[\\\\bank.test\\s(;;\t"
+(<bankco.test">`mail.bank.test
+a.b =//bank.test""
+json:"[😀=//bank.test,mail.bank.testwbankco.test\t\\\\bank.test\\s中文)}* \""
+https://bankco.test")
+é,
+{(
+[😀=//bank.test,
+中文
+json:"['*w\\\\bank.test\\smail.bank.test{https://bank.test/x\t;*\"x://y{]evil.test|alice@bank.test203.0.113.4}http://evil.test&v=1'\t)mail.bank.test中文\t}=//bank.test;\"]*"
+['*
+ébankco.test,http://evil.test&v=1(;http://evil.test&v=1[,
+ébankco.test,http://evil.test&v=1(;
+json:"x://y,{=//bank.test;\thttp://evil.test&v=1"
+mail.bank.test>éhttps://bankco.test;mail.bank.test<*]https://bankco.testalice@bank.testalice@bank.test}https://bank.test/x)"|>w{(evil.test bank.test]203.0.113.4alice@bank.testevil.test[)bankco.testbank.test
+mail.bank.test>
+=//bank.testalice@bank.test http://evil.test&v=1a.b中文203.0.113.4 203.0.113.4a.b{
+bankco.test<
+\\bank.test\s>"éhttps://bankco.testbank.xn--p1aibank.test}{*
+=//bank.test
+json:"https://bank.test/xhttps://bank.test/x\t\thttp://evil.test&v=1evil.test[*é>[`"
+http://evil.test&v=1x://y'"bankco.test(\\bank.test\s|
+http://evil.test&v=1x://y'"bankco.test(
+;a.b"x://ybankco.test
+(alice@bank.test][203.0.113.45a.b203.0.113.45a.b\\bank.test\s>
+json:"``)\t)[203.0.113.4;"
+(alice@bank.test][
+x://yébankco.test
+json:",evil.test\"[https://bank.test/x'w\té\\\\bank.test\\sw203.0.113.45'"
+  alice@bank.test{203.0.113.45}
+json:"bank.xn--p1aievil.test(]x://yé\t203.0.113.45\""
+w中文alice@bank.test<(
+json:"alice@bank.testa.b\t`evil.test;;"
+json:"http://evil.test&v=1\\\\bank.test\\s=//bank.test}=//bank.testwa.b\t<<中文中文203.0.113.45evil.test>[|"
+json:"http://evil.test&v=1\\\\bank.test\\s=//bank.test}=//bank.testwa.b\t<<"
+bank.test{
+)[alice@bank.test`; })mail.bank.testevil.test>\\bank.test\shttps://bankco.test
+)[alice@bank.test`; })
+json:"|,203.0.113.4bank.test=//bank.test(=//bank.testmail.bank.test<mail.bank.test\thttps://bankco.test,203.0.113.45\"{😀"
+|,203.0.113.4bank.test=//bank.test(
+203.0.113.45evil.test
+json:"*😀[ \t';"
+}]https://bank.test/x>http://evil.test&v=1;\\bank.test\s bank.test}{alice@bank.testbank.xn--p1aievil.test]`>"mail.bank.test203.0.113.45`a.b
+}]https://bank.test/x>
+[;evil.testalice@bank.test=//bank.testalice@bank.test\\bank.test\s,})mail.bank.test["203.0.113.4* evil.test
+[;
+ [http://evil.test&v=1<bank.xn--p1aia.b*]x://y ;mail.bank.test)
+json:"=//bank.test<\talice@bank.test"
+json:"{\t "
+<alice@bank.test203.0.113.4;w'>alice@bank.test,
+{*`}
+`😀\\bank.test\s203.0.113.4}a.b}]`]bank.xn--p1aia.b),bank.test\\bank.test\s;
+203.0.113.4<203.0.113.4x://y\\bank.test\s{ https://bank.test/x{é(bankco.test{,{`>
+203.0.113.4<
+,https://bankco.test203.0.113.45mail.bank.testmail.bank.testa.b>😀mail.bank.test
+,`;||'
+<alice@bank.test{中文|
+json:"https://bank.test/x\t,"
+>{>\\bank.test\s*
+]
+203.0.113.45whttps://bankco.test;*>(😀https://bank.test/x
+203.0.113.45whttps://bankco.test;*>(
+{,bank.xn--p1aia.bevil.test*evil.test
+{,
+中文'中文<'[https://bank.test/x>>203.0.113.45evil.test bankco.test<evil.testbank.xn--p1ai😀
+http://evil.test&v=1
+json:"203.0.113.45a.bémail.bank.testmail.bank.testevil.test😀)a.bevil.test,]x://y203.0.113.4`)\t(,a.balice@bank.test`()😀é\thttp://evil.test&v=1bankco.testbank.test\t203.0.113.45;"
+json:"203.0.113.45a.bémail.bank.testmail.bank.testevil.test😀)a.bevil.test,]x://y203.0.113.4`)\t(,a.balice@bank.test`()😀é\thttp://evil.test&v=1bankco.testbank.test\t"
+json:"😀https://bank.test/x{\"(\t[bank.test|中文|,\\\\bank.test\\s{(}>)bank.test`\\\\bank.test\\s=//bank.test"
+😀https://bank.test/x{
+w>é]https://bankco.test)a.b |
+w>é]
+|bank.xn--p1aia.bbank.xn--p1ai203.0.113.4( evil.test{203.0.113.45;)*<\\bank.test\s}evil.test203.0.113.4[bankco.test"[\\bank.test\s<a.b
+|bank.xn--p1aia.bbank.xn--p1ai203.0.113.4( evil.test{203.0.113.45;)*<\\bank.test\s}
+[|x://yé 
+中文203.0.113.45{>
+203.0.113.45https://bank.test/xw<'https://bank.test/xébank.testhttps://bankco.test]bankco.test
+203.0.113.45mail.bank.testwalice@bank.test`[]]
+bankco.test203.0.113.4{whttp://evil.test&v=1**bank.testail.bank.test[{;
+bankco.test203.0.113.4{whttp://evil.test&v=1**
+éalice@bank.test<|}\\bank.test\s)
+https://bank.test/xhttps://bank.test/x<
+json:"203.0.113.4😀>https://bank.test/x203.0.113.4(203.0.113.45;w;é\\\\bank.test\\s*\t\\\\bank.test\\shttps://bank.test/x😀]][😀}bank.test'"
+'alice@bank.test'bankco.test=//bank.test|中文`'
+'alice@bank.test'
+json:"{|alice@bank.test|<\tx://y203.0.113.4<[a.b{;a.b203.0.113.45=//bank.test]*https://bank.test/x https://bank.test/x<https://bankco.test203.0.113.41.2.3.45"
+json:"{|alice@bank.test|<\tx://y203.0.113.4<[a.b{;a.b203.0.113.45=//bank.test]*https://bank.test/x https://bank.test/x<"
+json:"(x://y(`wwbank.xn--p1aibank.test )alice@bank.test)mail.bank.test\tw<https://bankco.testbankco.test=//bank.test][http://evil.test&v=1{http://evil.test&v=11.2.3.4https://bankco.testa.b(w203.0.113.4|https://bank.test/x|"
+json:"(x://y(`wwbank.xn--p1aibank.test )alice@bank.test)mail.bank.test\tw<"
+http://evil.test&v=1alice@bank.test😀a.b>ééhttps://bank.test/x203.0.113.45
+http://evil.test&v=1alice@bank.test😀a.b>
+[ `[,;> https://bankco.test
+[ `[
+json:"x://y😀bankco.test203.0.113.45}`(>😀中文😀mail.bank.test ,中文x://yalice@bank.test<alice@bank.test203.0.113.4[\t\"bankco.testa.b"
+json:"x://y😀bankco.test203.0.113.45}`(>😀中文😀mail.bank.test ,中文x://yalice@bank.test<alice@bank.test203.0.113.4[\t\""
+éalice@bank.test203.0.113.45a.ba.b*a.béevil.test,w>bank.test`http://evil.test&v=1mail.bank.test😀x://y('\\bank.test\shttps://bankco.test[
+a.b"http://evil.test&v=1bank.xn--p1ai203.0.113.4|中文|<
+203.0.113.451.2.3.4|https://bankco.test;'😀(`
+,wwalice@bank.testa.b<
+json:"x://y;;\t203.0.113.4bank.test`w)\\\\bank.test\\s"
+😀
+|mail.bank.test;bank.testbank.test'https://bank.test/xbank.test中文"
+"中文\\bank.test\sbank.test😀evil.test)bankco.test中文mail.bank.test>=//bank.testbankco.test=//bank.test=//bank.test]https://bank.test/xevil.testmail.bank.test,`'éx://y]
+"中文\\bank.test\sbank.test😀evil.test)bankco.test中文mail.bank.test>=//bank.testbankco.test=//bank.test=//bank.test]
+json:"alice@bank.test}<x://ya.b;\tbank.xn--p1ai203.0.113.4<>{[https://bankco.test{bankco.testa.b"
+alice@bank.test}<
+bank.xn--p1aibankco.test<http://evil.test&v=1bankco.test=//bank.test😀中文203.0.113.45
+bank.xn--p1aibankco.test<
+json:"]\t<;\tmail.bank.test|bank.testa.b"
+😀é(x://yé \\bank.test\sw中文*203.0.113.4(alice@bank.test;alice@bank.test(
+😀é(x://yé \\bank.test\sw中文*
+<]{
+`203.0.113.4w;203.0.113.4*evil.test<https://bankco.test>"=//bank.test"203.0.113.4alice@bank.testbank.test
+`203.0.113.4w;203.0.113.4*evil.test<
+json:"[alice@bank.testbank.test=//bank.test',<alice@bank.test{ a.bbankco.test mail.bank.test\t=//bank.test;[}["
+{
+😀>]203.0.113.45[,bankco.test];
+中文bankco.test]https://bankco.test\\bank.test\s"203.0.113.4]x://ymail.bank.testbankco.test203.0.113.4`{x://y\\bank.test\shttp://evil.test&v=1<é]<(>\\bank.test\shttps://bank.test/x
+中文bankco.test]https://bankco.test\\bank.test\s"203.0.113.4]x://ymail.bank.testbankco.test203.0.113.4`{
+[😀}
+}https://bankco.test
+bank.xn--p1aibank.testé😀|http://evil.test&v=1bank.test'bankco.test(http://evil.test&v=1
+json:"]203.0.113.45\\\\bank.test\\s\t203.0.113.45]` `"
+json:"]203.0.113.45\\\\bank.test\\s\t203.0.113.45]`"
+json:"\t😀bank.testmail.bank.testbank.testevil.test)alice@bank.test"
+http://evil.test&v=1'http://evil.test&v=1
+,*http://evil.test&v=1http://evil.test&v=1bank.xn--p1ai" \\bank.test\sé203.0.113.45'203.0.113.4><[alice@bank.test
+,*
+bank.testalice@bank.test203.0.113.4
+w<"https://bank.test/x203.0.113.45
+w<"
+;<bank.test]bank.xn--p1ai😀evil.test]😀`
+203.0.113.4中文< 
+bank.testé;|<{]
+](mail.bank.testalice@bank.test
+]é>中文203.0.113.4bankco.test}{http://evil.test&v=1\\bank.test\s(
+{[<evil.testbank.xn--p1aibankco.testé[https://bank.test/x203.0.113.45[
+*203.0.113.4\\bank.test\s
+a.b\\bank.test\salice@bank.test中文\\bank.test\s
+json:"bankco.testbank.xn--p1aibankco.test203.0.113.45x://y\t203.0.113.4"
+w'éhttps://bankco.testbankco.testbankco.test]😀<)")
+;bank.xn--p1aimail.bank.testbankco.test中文é203.0.113.45w<}
+bank.test中文,émail.bank.test|
+json:"\t|203.0.113.41.2.3.4=//bank.test>){ébank.xn--p1ai😀203.0.113.45"
+>=//bank.testa.b>
+a.béevil.test<bank.test
+json:"x://yx://y\t"
+a.béevil.test<
+\\bank.test\shttps://bank.test/xw>é``mail.bank.testevil.test>
+\\bank.test\shttps://bank.test/xw>é``
+,ébank.testevil.test'https://bankco.test' }bank.test,}"\\bank.test\s}
+json:"\t<\t =//bank.test203.0.113.45;>*\t]}a.b\\\\bank.test\\shttp://evil.test&v=1'\\\\bank.test\\sevil.test\tevil.test;http://evil.test&v=1}>alice@bank.test"
+json:"\t<\t =//bank.test203.0.113.45;>*\t]}a.b\\\\bank.test\\shttp://evil.test&v=1'\\\\bank.test\\sevil.test\tevil.test;"
+json:"\twx://y"
+http://evil.test&v=1https://bankco.test"alice@bank.test=//bank.test}"`
+http://evil.test&v=1https://bankco.test"
+\\bank.test\shttp://evil.test&v=1éalice@bank.test203.0.113.45=//bank.test"203.0.113.4é<😀
+json:"'],|https://bank.test/xhttps://bank.test/xevil.test\tbank.xn--p1aievil.testé😀\\\\bank.test\\sw},a.b*203.0.113.45x://ymail.bank.test=//bank.test;alice@bank.test{"
+json:"'],|https://bank.test/xhttps://bank.test/xevil.test\t"
+'😀](
+>evil.test[>>bank.test(
+json:"][203.0.113.4evil.test203.0.113.41.2.3.4w<\\\\bank.test\\s\t"
+\\bank.test\s>203.0.113.45{(https://bank.test/x*😀|>);x://y|=//bank.test<*
+\\bank.test\s>203.0.113.45{(https://bank.test/x*😀|>);x://y|
+>
+;alice@bank.test)
+ (}
+`http://evil.test&v=1bankco.test">=//bank.test<alice@bank.test"https://bankco.test);`
+)a.b
+json:"(\t \\\\bank.test\\s=//bank.testmail.bank.test"
+json:"(\t "
+json:"|]中文\t😀mail.bank.test{w]"
+mail.bank.test\\bank.test\s*=//bank.test203.0.113.41.2.3.45]
+(]evil.test|https://bank.test/x'中文\\bank.test\s<中文,https://bankco.test=//bank.test(mail.bank.test😀\\bank.test\s>x://y* 
+bank.xn--p1ai203.0.113.45
+>bank.test|中文é,\\bank.test\s"203.0.113.4alice@bank.test203.0.113.4;bankco.test
+w(bank.xn--p1aialice@bank.test
+>bank.test|中文é,\\bank.test\s"
+'w[203.0.113.4`<>中文x://y*😀{
+json:"中文mail.bank.test*} *evil.testbankco.test\t`) ,\"<éhttps://bankco.test =//bank.test*\\\\bank.test\\shttps://bankco.test>https://bank.test/xhttps://bankco.testa.b=//bank.test`a.b203.0.113.45{;a.b"
+json:"中文mail.bank.test*} *evil.testbankco.test\t`) ,\"<"
+*}`https://bankco.test=//bank.test203.0.113.4
+json:"a.b203.0.113.45😀),[[}http://evil.test&v=1http://evil.test&v=1x://y(\t)bankco.test203.0.113.45(alice@bank.test\"=//bank.testevil.testevil.testbank.xn--p1ai😀'("
+*}`
+中文),https://bankco.test  )]alice@bank.test
+中文),
+json:"\t\\\\bank.test\\swbank.test中文whttps://bankco.test'*=//bank.test\", ;w<<"
+json:"{=//bank.test,\t|{https://bank.test/xé<é>203.0.113.4]"
+json:"<,,*< \\\\bank.test\\s`\tbankco.test"
+alice@bank.test`')bank.test}
+;(mail.bank.test\\bank.test\sbankco.test]|,http://evil.test&v=1,"bank.test[>evil.test mail.bank.test😀é
+{}wevil.test;http://evil.test&v=1a.b}https://bank.test/x
+{}
+json:"=//bank.test(<中文|https://bank.test/xé*https://bankco.testéevil.test],😀)é\t"
+=//bank.test(<中文|https://bank.test/xé*
+é<=//bank.test
+bank.test203.0.113.45>} ]alice@bank.test;
+json:"203.0.113.4[bank.test中文中文203.0.113.4bankco.test'evil.test\t}"
+")x://y{} `;{) 😀😀
+\\bank.test\s)bank.testwalice@bank.test>whttps://bankco.testwbank.test\\bank.test\s[>\\bank.test\s*mail.bank.test<
+é203.0.113.4*bankco.test中文alice@bank.test<mail.bank.test'
+ x://y\\bank.test\s*"203.0.113.45>
+whttp://evil.test&v=1|é{bankco.test)bankco.test]`[x://y)alice@bank.test😀,bank.testalice@bank.test*https://bankco.test=//bank.test;}"203.0.113.45
+whttp://evil.test&v=1|é{bankco.test)bankco.test]`[x://y)alice@bank.test😀,
+json:"http://evil.test&v=1]alice@bank.test203.0.113.45<a.b,{}bankco.test<w`alice@bank.testa.b<\t 'evil.test"
+json:",http://evil.test&v=1\"😀;}>w\t]{`"
+http://evil.test&v=1]
+json:"=//bank.test`é{`|>\tevil.testbankco.test[https://bank.test/x>})(http://evil.test&v=1(a.b*`>;bankco.test203.0.113.45||bank.testbankco.test203.0.113.4中文alice@bank.test😀"
+json:"=//bank.test`é{`|>\tevil.testbankco.test[https://bank.test/x>})("
+bankco.test);
+<><[*',[
+mail.bank.test203.0.113.45{'😀=//bank.testa.bmail.bank.test"<a.b ,\\bank.test\sevil.test203.0.113.4{
+mail.bank.test203.0.113.45{'😀=//bank.testa.bmail.bank.test"<a.b ,
+ '<>203.0.113.45x://y]203.0.113.4bank.test>😀mail.bank.test'evil.test{é203.0.113.45evil.test(
+"[<"><evil.test'<
+"[<"><
+a.bevil.test"ébankco.test\\bank.test\s]
+json:"`;;`=//bank.test=//bank.test>*]203.0.113.4\ta.b)=//bank.test\"\\\\bank.test\\s中文😀>"
+json:"\t>=//bank.test"
+}x://y[bank.xn--p1aievil.test]
+[\\bank.test\s(
+\\bank.test\s`{ébank.xn--p1aiébank.xn--p1ai
+<|{]中文 ]);
+=//bank.test\\bank.test\sw
+bankco.test)",bank.test中文 é)a.ba.b\\bank.test\sbankco.test
+json:">,\tevil.testa.b alice@bank.testa.b(\\\\bank.test\\s`"
+bankco.test)",
+'|中文(evil.test203.0.113.4mail.bank.test(http://evil.test&v=1)203.0.113.45😀w203.0.113.4]203.0.113.45,
+https://bank.test/xbank.test(203.0.113.45(bankco.test;😀\\bank.test\s203.0.113.45<https://bank.test/xbank.xn--p1ai;
+,"😀
+http://evil.test&v=1evil.test
+<😀
+]<]é;\\bank.test\s
+,([]中文é中文中文>
+,([]
+,https://bank.test/xbank.xn--p1ai;';alice@bank.testbank.test|
+,https://bank.test/xbank.xn--p1ai;';
+bankco.test\\bank.test\s|bank.test203.0.113.45;)
+'>\\bank.test\shttp://evil.test&v=1
+;http://evil.test&v=1bank.xn--p1ai]
+]https://bank.test/x
+>*<`a.b203.0.113.4<`]*http://evil.test&v=1]=//bank.test203.0.113.4
+>*<`a.b203.0.113.4<`]*http://evil.test&v=1]
+alice@bank.test>203.0.113.4;("*
+203.0.113.45,(203.0.113.4|bankco.test(,é>=//bank.testbankco.test[`*[ 
+]é {😀;203.0.113.45é{a.b
+json:"x://yé,\t203.0.113.4bankco.test中文(evil.test<bank.xn--p1aia.ba.b中文"
+<https://bank.test/x*)* 
+mail.bank.test
+json:"(alice@bank.test,>; \t"
+{[mail.bank.test{https://bank.test/x
+'https://bank.test/x
+json:";中文{('\tmail.bank.test=//bank.test)'https://bankco.test[mail.bank.test}|*"
+{[mail.bank.test{
+json:"*a.b中文bank.test😀w\\\\bank.test\\s=//bank.testbank.test203.0.113.45 }mail.bank.test\tw=//bank.test}"
+203.0.113.45mail.bank.test,é`a.b]alice@bank.testé
+203.0.113.45mail.bank.test,é`a.b]
+bankco.test(
+json:"`>https://bank.test/x😀,alice@bank.test\thttps://bank.test/x|`203.0.113.4'https://bankco.test"
+json:"`>https://bank.test/x😀,alice@bank.test\thttps://bank.test/x|`203.0.113.4'"
+x://y;alice@bank.test'
+https://bankco.testalice@bank.test"<{=//bank.test203.0.113.4 \\bank.test\s
+evil.test😀};]|<"a.b,=//bank.test<*203.0.113.4`alice@bank.test中文
+evil.test😀};]|<"a.b,
+https://bank.test/x中文bank.test203.0.113.4)éalice@bank.test😀"bank.test=//bank.test 203.0.113.45}https://bank.test/x
+bank.testé[,https://bank.test/x(")evil.test*;x://y(bank.test'https://bank.test/x😀
+)\\bank.test\sa.b}alice@bank.test>,
+, 203.0.113.45中文203.0.113.4'中文`中文中文whttps://bankco.testalice@bank.test{evil.test"[
+, 
+ alice@bank.test203.0.113.4http://evil.test&v=1*{203.0.113.4https://bankco.test;203.0.113.4;
+]\\bank.test\s;203.0.113.4]{}};"http://evil.test&v=1| )https://bankco.test=//bank.testa.b[=//bank.test[😀
+😀}\\bank.test\shttp://evil.test&v=1>203.0.113.4evil.test{wbank.test|"https://bankco.test'中文{ébank.test> https://bank.test/x)203.0.113.4http://evil.test&v=1
+😀}\\bank.test\shttp://evil.test&v=1>203.0.113.4evil.test{wbank.test|"
+ |>{{'*"""bankco.testbank.xn--p1aibank.testééevil.test\\bank.test\s中文)bank.testevil.test;https://bankco.test}=//bank.test
+ |>{{'*"""
+json:"\t>a.b}x://y=//bank.test*bankco.test\"http://evil.test&v=1>{,203.0.113.4evil.testmail.bank.test)203.0.113.45[é=//bank.test;\thttp://evil.test&v=1https://bankco.test"
+json:"\t>a.b}x://y=//bank.test*bankco.test\""
+{https://bankco.test=//bank.test😀a.balice@bank.test[bank.test203.0.113.4
+']]<mail.bank.test}`bank.testbankco.test[bank.test😀bankco.testevil.test`[] >)x://y
+']]<mail.bank.test}
+https://bankco.test\\bank.test\s']ébank.testwalice@bank.test
+(203.0.113.45
+json:"\ta.b]"
+ "x://y))https://bankco.test
+=//bank.test 203.0.113.45*evil.testalice@bank.test;'http://evil.test&v=1
+=//bank.test 203.0.113.45*
+203.0.113.4],)|)|中文é)
+,alice@bank.test(|中文alice@bank.test203.0.113.4{=//bank.test
+json:"|203.0.113.45alice@bank.test203.0.113.45x://y{😀{*203.0.113.45http://evil.test&v=1;}\tx://ywalice@bank.test`bank.xn--p1aibankco.test\\\\bank.test\\sbank.test|\t("
+json:"|203.0.113.45alice@bank.test203.0.113.45x://y{😀{*203.0.113.45http://evil.test&v=1;}\t"
+bank.test中文>;\\bank.test\s\\bank.test\s>
+bank.test中文>;
+https://bank.test/xevil.test**
+mail.bank.testmail.bank.testbank.test)w;,\\bank.test\sa.ba.b中文``=//bank.testbankco.test a.b
+mail.bank.testmail.bank.testbank.test)w;,\\bank.test\sa.ba.b中文``
+\\bank.test\s[é
+json:"x://y){<\t\t"
+walice@bank.testevil.testbank.test
+]\\bank.test\s[http://evil.test&v=1a.bbankco.testx://y]"
+]\\bank.test\s[
+}\\bank.test\s"\\bank.test\s<203.0.113.4;
+*}https://bank.test/xevil.test`)https://bankco.test(evil.test>203.0.113.45
+https://bank.test/x"|
+json:"x://y,203.0.113.41.2.3.4http://evil.test&v=1\t"
+}203.0.113.45{http://evil.test&v=1")bankco.test=//bank.test|evil.test|'\\bank.test\sx://y} *]"bankco.test>mail.bank.test]alice@bank.test)
+}203.0.113.45{http://evil.test&v=1")bankco.test=//bank.test|
+}http://evil.test&v=1}x://y',`mail.bank.test203.0.113.4(
+json:"'\t]éhttps://bank.test/x\"<\"alice@bank.test>alice@bank.testbankco.test 203.0.113.4<"
+中文)
+json:"|203.0.113.45\t\"x://yhttp://evil.test&v=1 {x://y203.0.113.45中文中文alice@bank.testbank.testail.bank.test,("
+json:"|203.0.113.45\t\"x://yhttp://evil.test&v=1 {"
+""alice@bank.test]\\bank.test\s
+json:"w\t`"
+json:"https://bankco.test\t203.0.113.45evil.test203.0.113.451.2.3.4'https://bankco.test]evil.test=//bank.test|bank.test203.0.113.4<'"
+json:",=//bank.test([|(\t\"evil.test203.0.113.4} \\\\bank.test\\s,x://ybankco.test"
+json:"https://bankco.test\t"
+json:"\\\\bank.test\\s)\\\\bank.test\\sbank.xn--p1ai[\t\\\\bank.test\\s{>"
+=//bank.test(
+json:"https://bank.test/x\"bankco.testevil.test{;'< 中文<}{a.b=//bank.test*>\tbank.test[\t*>中文"
+https://bank.test/x"bankco.testevil.test{;'< 中文<}{
+a.b"`<https://bankco.test}https://bank.test/x*>203.0.113.4>>w😀>wbankco.test
+a.b"`<
+json:"\tx://yw203.0.113.4}éx://y;https://bankco.test>\t\"https://bank.test/x',} "
+"中文{mail.bank.test203.0.113.4`[203.0.113.4wwx://y(x://y]203.0.113.45(evil.test
+a.b}
+bank.testail.bank.testmail.bank.test"\\bank.test\s203.0.113.45w'w
+bank.testail.bank.testmail.bank.test"
+json:"[😀*😀\t(=//bank.test"
+😀中文bank.test'}(;éé
+json:"[😀*😀\t("
+\\bank.test\sa.balice@bank.test),http://evil.test&v=1mail.bank.test)<203.0.113.4alice@bank.test>https://bank.test/x];http://evil.test&v=1]
+\\bank.test\sa.balice@bank.test),http://evil.test&v=1mail.bank.test)<
+[[\\bank.test\s203.0.113.4<😀{';bank.test|a.b|,evil.testbankco.testalice@bank.testevil.test中文<é'http://evil.test&v=1ébank.xn--p1ai
+[[\\bank.test\s203.0.113.4<😀{';bank.test|a.b|,
+(中文*
+mail.bank.test=//bank.test;whttps://bank.test/x
+json:"]\té`\\\\bank.test\\s\""
+{{=//bank.test\\bank.test\shttps://bank.test/x'203.0.113.45'=//bank.test;w(https://bank.test/xhttps://bankco.testbank.test`http://evil.test&v=1,[bank.test,http://evil.test&v=1`bank.xn--p1aialice@bank.test😀
+{{
+ http://evil.test&v=1; 
+https://bankco.test]a.b😀 bank.testail.bank.testbank.test203.0.113.4evil.test|中文|\\bank.test\s;x://ymail.bank.test
+https://bankco.test]a.b😀 bank.testail.bank.testbank.test203.0.113.4evil.test|中文|
+bankco.test203.0.113.4*|bank.test,é''
+bankco.test203.0.113.4*|
+json:"\t] ',x://y|é😀\t)bank.test 203.0.113.45http://evil.test&v=1bank.xn--p1ai}bank.xn--p1aievil.testalice@bank.test}http://evil.test&v=1mail.bank.test`中文"
+json:"\t] ',x://y|é😀\t)bank.test 203.0.113.45http://evil.test&v=1bank.xn--p1ai}bank.xn--p1aievil.testalice@bank.test}"
+json:"\\\\bank.test\\s>){}evil.test\\\\bank.test\\s=//bank.test[203.0.113.45\t,;}203.0.113.4(http://evil.test&v=1😀w,bank.test|>[]bankco.test203.0.113.4]"
+json:"<>\t😀}"
+ 😀>
+evil.test]
+https://bankco.test bank.test["[`mail.bank.test*
+json:"}|\\\\bank.test\\smail.bank.testhttp://evil.test&v=1http://evil.test&v=1\t|evil.test"
+*a.b<
+ébankco.test;mail.bank.testwa.b\\bank.test\s,{>w\\bank.test\sé'
+, 203.0.113.45|bankco.test}[
+203.0.113.45]alice@bank.test
+203.0.113.45]
+"https://bankco.test\\bank.test\salice@bank.test=//bank.testevil.test
+;'
+>) w)http://evil.test&v=1*`203.0.113.4
+>) w)
+<>*mail.bank.test<中文203.0.113.4;https://bankco.testbankco.test|[,,
+json:"\t}"
+a.b;alice@bank.test*}x://ya.b203.0.113.45evil.test}alice@bank.test=//bank.test;;http://evil.test&v=1,*
+a.b;alice@bank.test*}x://ya.b203.0.113.45evil.test}alice@bank.test=//bank.test;;
+json:";w)203.0.113.4(x://y>bank.xn--p1ai中文\t\"*;203.0.113.45https://bank.test/x=//bank.test\"=//bank.test\\\\bank.test\\sw\tébank.testevil.test`mail.bank.test,=//bank.test} [a.ba.b"
+json:";w)203.0.113.4(x://y>bank.xn--p1ai中文\t\"*;203.0.113.45https://bank.test/x=//bank.test\"=//bank.test\\\\bank.test\\sw\tébank.testevil.test`"
+json:"w=//bank.test>'中文<*中文\t"
+https://bankco.test x://y=//bank.testbank.test|a.bevil.test203.0.113.45
+https://bankco.test x://y=//bank.testbank.test|
+中文https://bankco.testbankco.test;https://bank.testail.bank.test`wé"}a.b,=//bank.test\\bank.test\sé'éalice@bank.test=//bank.test;"x://y
+中文https://bankco.testbankco.test;https://bank.testail.bank.test`wé"}
+json:"*a.b]a.b|)203.0.113.45=//bank.test*\tevil.test<=//bank.test;mail.bank.test\"😀"
+json:"*a.b]a.b|)203.0.113.45=//bank.test*\tevil.test<=//bank.test;"
+;"<>`mail.bank.test
+evil.test 
+json:"203.0.113.4]中文}*\t"
+alice@bank.test"
+`}
+'}bank.test)bank.testéx://y]\\bank.test\sbank.test
+json:"\t,https://bank.test/x<' "
+http://evil.test&v=1`bank.test|}x://y,http://evil.test&v=1 *203.0.113.4http://evil.test&v=1中文\\bank.test\sa.b'\\bank.test\s
+http://evil.test&v=1`bank.test|}
+json:"bankco.testbank.test<é{)\"中文\",]bank.xn--p1aievil.test中文\t"
+alice@bank.test=//bank.test{http://evil.test&v=11.2.3.4>
+bank.xn--p1ai=//bank.test]'x://y]=//bank.test ;203.0.113.41.2.3.45 \\bank.test\shttp://evil.test&v=1;`=//bank.testbank.test( |=//bank.test,=//bank.testbankco.test
+bank.xn--p1ai=//bank.test]'x://y]=//bank.test ;
+json:"]`mail.bank.testbankco.test]>a.b,\"\t203.0.113.4"
+https://bank.test/x*]{
+wx://y;https://bank.test/xwbank.xn--p1ai,[}
+a.b{
+json:"*(] \talice@bank.test>203.0.113.4https://bank.test/x;203.0.113.45, *})\ta.bevil.test*>x://y>中文\tx://yé `https://bank.test/x()]"
+json:"*(] \talice@bank.test>203.0.113.4https://bank.test/x;203.0.113.45, *})\t"
+{x://y{
+😀alice@bank.test
+**  alice@bank.testbank.test
+=//bank.test;bank.test]203.0.113.45https://bank.test/x>)(
+json:"{é\t'"
+json:"{é\t"
+mail.bank.test\\bank.test\sx://ybankco.test*http://evil.test&v=1=//bank.testa.b"
+203.0.113.4`wx://y,;中文,é
+203.0.113.4`wx://y,;
+json:" wbank.test\\\\bank.test\\shttps://bank.test/xhttp://evil.test&v=1bank.xn--p1ai)a.b\t;https://bankco.test[\\\\bank.test\\sa.bmail.bank.test]"
+json:"}\tmail.bank.testbank.test`)é😀\t*bank.test'[\t}"
+json:"=//bank.test>203.0.113.4|}bankco.testé\\\\bank.test\\s😀😀<x://y'|😀203.0.113.4https://bankco.test(\tx://y)w[ ][[中文https://bankco.test "
+]evil.test中文é203.0.113.4>{
+>`
+whttp://evil.test&v=1alice@bank.test
+\\bank.test\s>https://bank.test/x`😀'`";\\bank.test\sx://y">[https://bankco.test;
+}203.0.113.45alice@bank.test{https://bankco.test<}'),{bankco.test{
+json:"alice@bank.testbankco.testalice@bank.test;bank.test]*<]\tmail.bank.test"
+|}>http://evil.test&v=1https://bank.test/x[mail.bank.testbank.test `;bankco.test
+mail.bank.test]w w{<(
+>é<alice@bank.test203.0.113.4mail.bank.test<203.0.113.4=//bank.test
+>é<alice@bank.test203.0.113.4mail.bank.test<
+203.0.113.45中文x://y}'evil.test中文*中文http://evil.test&v=11.2.3.4w"a.bbank.test<\\bank.test\s)]}a.b'|wbankco.test
+203.0.113.45中文x://y}'
+alice@bank.test,
+json:"https://bank.test/x\t\"😀evil.test=//bank.test|bankco.test`\\\\bank.test\\s中文;https://bank.test/xbank.test"
+,<,bank.test203.0.113.45é<x://yhttps://bank.test/x"
+json:"https://bank.test/x\t\""
+203.0.113.4|;=//bank.testalice@bank.testevil.test[}*bank.test<)"bank.xn--p1ai203.0.113.45*中文203.0.113.451.2.3.4bank.xn--p1aimail.bank.test中文=//bank.test{*"😀 mail.bank.test|`}(
+203.0.113.4|;=//bank.testalice@bank.testevil.test[}*bank.test<)"bank.xn--p1ai203.0.113.45*
+}203.0.113.4(😀,
+{)
+mail.bank.test>}alice@bank.testa.b}bankco.test'x://yw=//bank.test`
+,https://bankco.test'|><
+json:"x://yhttps://bankco.test\t中文\t203.0.113.4}};w|"
+bankco.test"😀
+)é203.0.113.45http://evil.test&v=1';alice@bank.test>中文w`x://y=//bank.test}203.0.113.45http://evil.test&v=1😀bank.xn--p1ai=//bank.test203.0.113.41.2.3.4{alice@bank.testbankco.test
+alice@bank.test{x://yhttp://evil.test&v=1
+)é203.0.113.45http://evil.test&v=1';alice@bank.test>中文w`
+)<evil.test;中文(http://evil.test&v=1|[
+)<
+(mail.bank.test'(<\\bank.test\s*中文 203.0.113.4x://y*😀bankco.test{*a.b
+(mail.bank.test'(<\\bank.test\s*中文 
+a.b[ é
+json:"{\t\"bank.testmail.bank.testwbankco.test>mail.bank.test\"alice@bank.testalice@bank.test,,evil.test,)203.0.113.45\">bank.test) >{{(]"
+json:"{\t\"bank.testmail.bank.testwbankco.test>mail.bank.test\"alice@bank.testalice@bank.test,,evil.test,)203.0.113.45\">"
+'(203.0.113.4'a.b[
+'evil.test*`https://bank.test/x}"{😀}中文(||https://bankco.test{[ ,*a.b'`(https://bankco.test|
+[bank.test*`
+];,]whttps://bank.test/x}}}});
+json:"\t,203.0.113.45`\\\\bank.test\\s"
+json:"\t)"
+=//bank.test"
+a.balice@bank.test*
+203.0.113.4😀),[]203.0.113.4'a.b[w\\bank.test\swbank.xn--p1aibank.test{[
+=//bank.testmail.bank.test203.0.113.451.2.3.4[}mail.bank.test{https://bankco.test 
+]bank.xn--p1aievil.testalice@bank.testevil.test;)bank.test] 中文http://evil.test&v=1中文=//bank.test
+=//bank.testmail.bank.test203.0.113.451.2.3.4[}mail.bank.test{
+json:"😀https://bankco.test\téx://y,https://bankco.test203.0.113.45)\\\\bank.test\\s中文a.b` *\"`|203.0.113.45a.b\"`203.0.113.4=//bank.testalice@bank.test(<\">https://bank.test/x\"x://ybank.test"
+json:"😀https://bankco.test\t"
+*[(é  x://ybankco.test>
+json:"a.b}😀\\\\bank.test\\s]http://evil.test&v=1=//bank.test)mail.bank.test中文é\tevil.test;evil.test[<]中文*x://yevil.test]|mail.bank.test)中文|]http://evil.test&v=11.2.3.45{bank.test"
+a.b}😀\\bank.test\s]
+|😀\\bank.test\s203.0.113.4*">😀=//bank.test
+{ evil.test中文[203.0.113.45)203.0.113.4é*w";;alice@bank.test{,https://bank.test/x];walice@bank.test;x://y>
+{ evil.test中文[203.0.113.45)203.0.113.4é*
+'>203.0.113.45[evil.test203.0.113.45*203.0.113.4bank.test
+'>203.0.113.45[evil.test203.0.113.45*
+*)mail.bank.test<http://evil.test&v=1
+`|}
+中文x://y]bank.test
+bankco.testa.b(
+<203.0.113.4[)evil.test][😀mail.bank.test
+;mail.bank.test\\bank.test\shttps://bank.test/x=//bank.test,";'
+;mail.bank.test\\bank.test\shttps://bank.test/x=//bank.test,
+}{*é>\\bank.test\s (https://bankco.test )`;203.0.113.4{*(
+}{*é>\\bank.test\s (https://bankco.test )`;
+json:"'{|; <(https://bankco.test]😀http://evil.test&v=1evil.testé\t"
+json:"`\t<x://yalice@bank.test)bankco.test;;mail.bank.test"
+'{|; <(https://bankco.test]
+json:"\t|https://bank.test/x<中文*mail.bank.test"
+https://bankco.test)evil.testbank.xn--p1ai😀evil.test{`mail.bank.test bank.testbankco.testalice@bank.test"https://bankco.test({
+https://bankco.test)
+x://y'{>https://bank.test/x
+json:"[😀<https://bank.test/x[\"http://evil.test&v=1(😀=//bank.test\tbankco.test\t\\\\bank.test\\s\t,||\"203.0.113.45')ébankco.test(}\\\\bank.test\\s"
+json:"[😀<https://bank.test/x[\"http://evil.test&v=1(😀=//bank.test\t"
+}}
+alice@bank.test=//bank.test}{\\bank.test\s203.0.113.45https://bankco.test`]evil.test{w=//bank.testw203.0.113.4x://y|>}mail.bank.test>mail.bank.test
+alice@bank.test=//bank.test}{\\bank.test\s203.0.113.45https://bankco.test`]evil.test{w=//bank.testw203.0.113.4x://y|>}
+json:"203.0.113.4'evil.test203.0.113.4>mail.bank.test[203.0.113.45]]\twmail.bank.test{[w}';=//bank.test}203.0.113.45')("
+json:"203.0.113.4'evil.test203.0.113.4>mail.bank.test[203.0.113.45]]\twmail.bank.test{[w}';=//bank.test}"
+x://y>{
+|x://yalice@bank.test,>,"';{https://bankco.test<({(<`
+https://bank.test/xmail.bank.test*
+=//bank.test',
+=//bank.testbankco.test|"}}< 
+'\\bank.test\s*`\\bank.test\s{;
+|]x://y]`203.0.113.45'>
+mail.bank.test[,http://evil.test&v=1
+)>{http://evil.test&v=1
+`}(;[|中文x://yhttps://bankco.testbank.test||whttps://bank.test/xmail.bank.test]|
+`}(;[|
+{,mail.bank.test}`http://evil.test&v=1wbankco.test*
+{,mail.bank.test}`
+json:"'203.0.113.4mail.bank.test{({\t*;>evil.test`中文*=//bank.test"
+')alice@bank.test;*
+json:"evil.test';<\"203.0.113.4]\"wa.b\\\\bank.test\\smail.bank.test中文mail.bank.testbankco.test\t"
+,({alice@bank.test<é"
+)https://bankco.testa.b>',["https://bank.test/xhttps://bank.test/x,http://evil.test&v=1*>
+(<mail.bank.test203.0.113.45'
+😀"evil.test203.0.113.4 ,*(203.0.113.4
+json:"evil.test\t(éhttps://bank.test/x<mail.bank.test203.0.113.4>"
+json:"evil.test\t(éhttps://bank.test/x<"
+|https://bank.test/x>
+json:"alice@bank.test'é中文\t"
+(>a.b203.0.113.4é<[{alice@bank.testbank.test\\bank.test\s}
+\\bank.test\sevil.test|}|中文alice@bank.test()
+\\bank.test\sevil.test|}|
+json:"a.b\tx://y203.0.113.45=//bank.testevil.test\\\\bank.test\\s])"
+203.0.113.4>,mail.bank.test{http://evil.test&v=1[ https://bankco.test
+203.0.113.4>,mail.bank.test{http://evil.test&v=1[
+;;éwé)
+http://evil.test&v=1,
+json:"`<{}|\t"
+][https://bank.test/x\\bank.test\s}"*a.b}
+][
+203.0.113.45bank.test|*|https://bank.test/x]203.0.113.45`*bank.xn--p1ai203.0.113.45;<\\bank.test\s|evil.test} 203.0.113.45\\bank.test\sé
+evil.test中文`)"[https://bankco.test"bank.test
+evil.test中文`)"[https://bankco.test"
+}|(*{
+203.0.113.45"éx://y\\bank.test\sé;,>
+203.0.113.45"
+http://evil.test&v=1https://bank.test/x203.0.113.45mail.bank.test
+203.0.113.4mail.bank.test)alice@bank.test
+json:"https://bankco.test{bank.xn--p1aibankco.test\\\\bank.test\\s)\t;"
+x://yé
+\\bank.test\sé{alice@bank.test<bankco.testa.bevil.test(
+\\bank.test\sé{alice@bank.test<
+[x://y }]203.0.113.4x://y;<wa.b'bankco.test;
+203.0.113.41.2.3.4
+'*[bank.test{;
+alice@bank.test`|evil.test"|]evil.test{
+x://yhttps://bank.test/x|a.b)evil.test}whttps://bankco.test 
+a.bbank.test203.0.113.45x://y中文{|
+|bank.test` *<bank.xn--p1ai中文>[=//bank.test<*
+bankco.testalice@bank.test203.0.113.4 ][;
+json:"x://ymail.bank.test}mail.bank.test' `>\\\\bank.test\\s\\\\bank.test\\s203.0.113.45(mail.bank.testmail.bank.test]]http://evil.test&v=1,中文,\t中文"
+a.b(";"bank.testa.b
+x://ymail.bank.test}
+=//bank.test) x://ybank.test\\bank.test\s(||
+=//bank.test) 
+[é`=//bank.test*
+中文'x://yevil.test<alice@bank.test]evil.test*'{
+bankco.test|https://bankco.test;[http://evil.test&v=1bank.test`
+}*
+中文'x://yevil.test<
+)a.b(a.b;<bank.xn--p1ai203.0.113.4`😀é<\\bank.test\s*}bankco.test\\bank.test\s
+)a.b(a.b;<
+*)(203.0.113.4
+alice@bank.test=//bank.test'ébank.test'`>http://evil.test&v=1
+json:"*http://evil.test&v=1mail.bank.testémail.bank.testhttps://bank.test/x}}>203.0.113.4bankco.test)http://evil.test&v=1bank.xn--p1ai><w\t[中文bank.test;`[https://bankco.test"
+json:"',<[😀\t}\t'é)[http://evil.test&v=1\\\\bank.test\\s"
+json:"',<[😀\t}\t'é)["
+ =//bank.test]中文
+json:"x://yw<{evil.test}(;bank.test]{203.0.113.45\\\\bank.test\\s[203.0.113.4'*|*http://evil.test&v=1{\t203.0.113.45<,é]|"
+x://yw<{evil.test}(;bank.test]{203.0.113.45\\bank.test\s[203.0.113.4'*|*
+json:"\t}mail.bank.test\"https://bank.test/x'\ta.bevil.test"
+*bank.test 
+\\bank.test\s;
+alice@bank.test,,a.b}'中文|203.0.113.45a.b=//bank.testa.b\\bank.test\sbank.xn--p1ai]{203.0.113.45
+alice@bank.test,,a.b}'中文|
+x://ya.b;bank.testevil.test}http://evil.test&v=1wevil.test);https://bank.test/xevil.test;]<w []("中文203.0.113.45bank.test
+x://ya.b;
+中文{`wé\\bank.test\sa.b中文alice@bank.test
+中文{`
+]x://y}中文[;|'`)alice@bank.testevil.test|203.0.113.451.2.3.45<https://bankco.test)[
+json:"\thttp://evil.test&v=1"
+evil.test{
+]x://y}中文[;|'`)alice@bank.testevil.test|203.0.113.451.2.3.45<https://bankco.test)
+中文<\\bank.test\s' 中文[}203.0.113.4{https://bank.test/x;"]a.b}😀
+https://bank.test/xéé *
+bankco.test中文éhttps://bankco.test'"http://evil.test&v=1;https://bank.test/x
+https://bankco.test)|)https://bankco.test| x://yevil.test<éalice@bank.test}x://yalice@bank.test203.0.113.45{
+https://bankco.test)|)
+203.0.113.4}{] |,{alice@bank.test203.0.113.4}}}https://bankco.testalice@bank.testa.b)
+😀mail.bank.test]{][203.0.113.4http://evil.test&v=1] evil.test>https://bank.test/xé
+😀mail.bank.test]{][
+json:"mail.bank.test[|]203.0.113.4]\t;http://evil.test&v=1)>\t|bankco.test|]https://bankco.test[`bank.test203.0.113.4`'中文😀"
+mail.bank.test[|]
+203.0.113.45}中文,
+>x://y=//bank.test]alice@bank.test'203.0.113.45
+json:"https://bankco.test\t\"\\\\bank.test\\s'203.0.113.4=//bank.testevil.test>"
+json:"https://bankco.test\t\"\\\\bank.test\\s'"
+`)'x://y*http://evil.test&v=1bankco.test)203.0.113.4<>é*w`}https://bank.test/x
+`)'x://y*http://evil.test&v=1bankco.test)
+a.bbankco.test;
+https://bank.test/x[x://y;|""alice@bank.test203.0.113.45https://bank.test/x|*bankco.test<\\bank.test\s203.0.113.4|203.0.113.4\\bank.test\sbank.xn--p1ai😀>{)中文{x://yevil.test\\bank.test\shttps://bank.test/xevil.test{a.b
+https://bank.test/x[x://y;|""alice@bank.test203.0.113.45https://bank.test/x|*bankco.test<\\bank.test\s203.0.113.4|203.0.113.4\\bank.test\sbank.xn--p1ai😀>{)中文{
+json:"203.0.113.45<*\té;"
+{<evil.test203.0.113.45evil.test)evil.test中文;
+bank.xn--p1ai203.0.113.4>"
+mail.bank.test[["bankco.test中文中文😀<bank.test[é{,😀mail.bank.test203.0.113.45\\bank.test\s>
+mail.bank.test[["bankco.test中文中文😀<bank.test[é{,
+}bankco.test}> >https://bank.test/xevil.test)
+json:"`)bank.test>**w\t\\\\bank.test\\sbank.testbankco.testevil.test};`>,"
+json:"`)bank.test>**w\t"
+bankco.testa.b=//bank.testevil.test(
+]}{https://bank.test/x
+]}{
+|\\bank.test\sa.bevil.test\\bank.test\s
+<wx://y😀}
+é );
+bank.testevil.test` 
+`http://evil.test&v=1"'(><
+bank.xn--p1ai中文bankco.test(a.b203.0.113.45>;"'bank.test=//bank.test|[<""=//bank.test'
+😀}}<https://bank.test/xhttps://bankco.test"{alice@bank.test
+=//bank.test\\bank.test\s
+中文[\\bank.test\s,mail.bank.testalice@bank.test<bank.test]=//bank.test203.0.113.45**https://bank.test/x*\\bank.test\sbankco.test
+中文[
+alice@bank.testbankco.testbank.testa.b*"\\bank.test\shttp://evil.test&v=1[
+alice@bank.testbankco.testbank.testa.b*"
+203.0.113.4\\bank.test\s})w中文evil.test(https://bank.test/x>203.0.113.45mail.bank.test'é"
+w` https://bankco.test'[;中文http://evil.test&v=1alice@bank.test"203.0.113.45*x://y203.0.113.45w<
+json:"a.b<https://bank.test/xhttp://evil.test&v=1https://bank.test/xhttps://bankco.test\t]}w >]|]"
+a.b<
+`=//bank.test|`>bankco.test中文https://bankco.test]a.b
+😀>=//bank.test)'bank.test203.0.113.4(alice@bank.test
+中文}
+中文mail.bank.test]203.0.113.45[alice@bank.test'alice@bank.testalice@bank.test
+中文mail.bank.test]203.0.113.45[
+http://evil.test&v=1;>bankco.test`\\bank.test\sw||https://bankco.test'"中文=//bank.test(\\bank.test\sé203.0.113.4中文https://bank.test/x<]x://y`x://yhttps://bank.test/xbank.xn--p1ai))éhttp://evil.test&v=1;;
+http://evil.test&v=1;>bankco.test`\\bank.test\sw||https://bankco.test'"中文=//bank.test(\\bank.test\sé203.0.113.4中文https://bank.test/x<]x://y`
+w}中文中文|)'https://bank.test/x"
+中文中文"
+bankco.test"
+mail.bank.test中文[https://bankco.test,https://bankco.testébankco.testbankco.test`https://bankco.test\\bank.test\s😀[,,bank.testail.bank.test]evil.test}203.0.113.4"http://evil.test&v=1[
+mail.bank.test中文[https://bankco.test,https://bankco.testébankco.testbankco.test`
+json:"a.bevil.testevil.test>{>\"w😀a.b\\\\bank.test\\s\t|"
+a.b[,>w中文https://bank.test/xbank.xn--p1aihttp://evil.test&v=1mail.bank.test)x://y'
+')evil.test"😀é`bank.testevil.test\\bank.test\s
+'evil.test 
+}w
+https://bankco.test203.0.113.4;https://bank.testail.bank.test
+(=//bank.testbank.testmail.bank.test}
+=//bank.test[alice@bank.testbank.test
+中文https://bank.test/xéa.b;
+=//bank.test[
+json:"\t(éhttp://evil.test&v=1|éé(mail.bank.test"
+json:"\t("
+" 中文)ww>alice@bank.test[
+" 中文)
+\\bank.test\sw"wbank.xn--p1aimail.bank.test|}]{`(bankco.testw=//bank.test<
+json:"mail.bank.test<bankco.test{http://evil.test&v=1\t"
+https://bank.test/x'(mail.bank.test203.0.113.45mail.bank.test)http://evil.test&v=1>}<mail.bank.testalice@bank.test"[203.0.113.4
+https://bank.test/x'(mail.bank.test203.0.113.45mail.bank.test)http://evil.test&v=1>}<
+[w<https://bankco.test|
+json:"a.b203.0.113.45\"\t,😀中文`']http://evil.test&v=1"
+evil.testé=//bank.test{éhttp://evil.test&v=1alice@bank.test[](https://bankco.test)mail.bank.test>evil.test"=//bank.test
+]203.0.113.45(\\bank.test\sevil.test\\bank.test\s,https://bankco.test"https://bankco.test;203.0.113.45{>,
+evil.testé=//bank.test{éhttp://evil.test&v=1alice@bank.test[](
+{[`http://evil.test&v=1
+bankco.test]*
+203.0.113.45"bankco.test
+(中文a.b|http://evil.test&v=1=//bank.test{'`https://bankco.test"
+|😀"
+json:",\t"
+http://evil.test&v=1http://evil.test&v=1{> '(*`https://bank.test/x\\bank.test\s中文|<
+a.bmail.bank.test},中文w]ébank.test]中文[=//bank.test}bankco.testbank.xn--p1aibank.testalice@bank.test
+ https://bankco.test203.0.113.4alice@bank.testbank.testbankco.test203.0.113.41.2.3.45)bankco.test 203.0.113.4'bankco.testéwalice@bank.test
+ https://bankco.test203.0.113.4alice@bank.testbank.testbankco.test203.0.113.41.2.3.45)bankco.test 
+=//bank.testalice@bank.test|
+😀[203.0.113.4 x://yhttp://evil.test&v=1bank.testbank.xn--p1aix://y
+evil.test,alice@bank.test)émail.bank.test}
+😀[203.0.113.4 
+x://yevil.test
+evil.testa.b*中文evil.test,x://y
+é203.0.113.41.2.3.45;w;https://bankco.test"]
+é203.0.113.41.2.3.45;w;
+`😀,alice@bank.test }x://y*中文203.0.113.45http://evil.test&v=11.2.3.45{=//bank.test")203.0.113.4
+`😀,alice@bank.test }x://y*
+x://y=//bank.test
+<bank.test*,]}a.b é]w]whttp://evil.test&v=1😀bank.test (]203.0.113.45https://bank.test/x>|bank.xn--p1aibank.test
+((https://bank.test/x  \\bank.test\s]
+\\bank.test\smail.bank.test{ [>("w😀 x://y
+json:"\t中文x://yw"
+\\bank.test\smail.bank.test{ [>("
+json:"\\\\bank.test\\s203.0.113.45evil.testx://y203.0.113.45(alice@bank.test`w\"https://bank.test/xalice@bank.testa.b\tbank.xn--p1ai203.0.113.45`>)=//bank.testevil.test(mail.bank.test}https://bankco.test"
+\\bank.test\s203.0.113.45evil.testx://y203.0.113.45(alice@bank.test`w"
+\\bank.test\s 203.0.113.4;éhttp://evil.test&v=1|
+ *
+json:"|>203.0.113.4bank.test\t>`|https://bankco.test bankco.test=//bank.test203.0.113.4\t* |{|<evil.test]"
+|>
+`http://evil.test&v=1bank.test203.0.113.45bank.xn--p1ai;"alice@bank.testmail.bank.test
+x://y')>éhttps://bank.test/x*中文evil.test(<>https://bankco.test|bank.test
+x://y')>éhttps://bank.test/x*中文evil.test(<>https://bankco.test|
+alice@bank.test)bankco.test"{]
+) *);,
+json:"x://y\t<|(=//bank.testmail.bank.testevil.test)x://y\""
+;,'mail.bank.test"x://y>https://bank.test/xevil.testhttp://evil.test&v=1) `\\bank.test\s}{[😀=//bank.test
+ https://bankco.test[evil.testbankco.test
+;,'mail.bank.test"x://y>
+{203.0.113.45bankco.testevil.test])]=//bank.test*"< |>https://bankco.test}>
+json:"\t]é\"203.0.113.45x://ybank.testail.bank.test=//bank.test"
+json:"\t]é\""
+json:";]}]}<>203.0.113.4\t"
+;]}]}<>
+evil.test203.0.113.4=//bank.test
+[[https://bank.test/xhttps://bank.test/x\\bank.test\sbankco.testalice@bank.testmail.bank.testalice@bank.test(mail.bank.test(;w*w`
+[[
+;😀mail.bank.testbankco.test}"
+ =//bank.test,
+json:"a.b;é203.0.113.4}bank.testalice@bank.test\"\t"
+evil.test>|(,203.0.113.4'https://bank.test/xbank.xn--p1ai
+evil.test>|(,203.0.113.4'
+(;>=//bank.test 
+(>evil.test,*mail.bank.test{|]http://evil.test&v=1,a.b;https://bankco.test`mail.bank.test(203.0.113.45"`[
+|'||),<*a.b😀wbankco.test=//bank.test"|mail.bank.testbankco.test,`bank.test\\bank.test\sx://y203.0.113.4中文é203.0.113.45(bank.testa.b中文https://bankco.test>|
+\\bank.test\s\\bank.test\s `http://evil.test&v=1https://bankco.test>')'<a.b😀\\bank.test\sw| [,>;'😀https://bank.test/x[
+\\bank.test\s\\bank.test\s `http://evil.test&v=1https://bankco.test>')'<
+json:"203.0.113.45,éhttps://bank.test/x]a.ba.bevil.test\thttp://evil.test&v=1mail.bank.testhttps://bankco.test\\\\bank.test\\s``{203.0.113.45a.bbank.xn--p1aievil.test*w(\\\\bank.test\\smail.bank.test"
+json:"203.0.113.45,éhttps://bank.test/x]a.ba.bevil.test\t"
+json:"[\t203.0.113.45';"
+é[w<203.0.113.45=//bank.test ,😀)}
+,203.0.113.4 )中文}
+é[w<203.0.113.45=//bank.test ,😀)
+json:"`203.0.113.4😀\t*][[x://y"
+😀}]a.b'中文bank.test'"
+😀}]a.b'
+;😀|203.0.113.45`203.0.113.45https://bank.test/x203.0.113.45,|`whttps://bank.test/x`;"
+https://bankco.test=//bank.test">*https://bank.test/xé}[a.bé203.0.113.4http://evil.test&v=1http://evil.test&v=1中文mail.bank.test
+;😀|203.0.113.45`203.0.113.45https://bank.test/x203.0.113.45,|`
+;203.0.113.45bank.xn--p1aibank.test<
+=//bank.test[=//bank.test|中文;;(evil.test*)bankco.testalice@bank.test
+bankco.test;=//bank.test)w
+bankco.test;
+\\bank.test\s]=//bank.test,a.b,){"*203.0.113.41.2.3.45|bank.xn--p1aia.b*😀alice@bank.test(`(|)
+bankco.test`{}'mail.bank.test*>
+émail.bank.test>|
+mail.bank.testé中文)>,😀 {https://bank.test/x 
+,"mail.bank.test203.0.113.45😀x://yx://y[=//bank.test,
+,;é
+json:"'<]evil.testwbankco.test\t,\t\t"
+,"
+x://y>},]a.b*😀[|"
+bankco.testé,"(w😀evil.testmail.bank.test}(alice@bank.test\\bank.test\sa.bmail.bank.testé{'>*
+{{(x://y
+bankco.testé,"(w😀evil.testmail.bank.test}(
+https://bank.test/x[=//bank.test203.0.113.4=//bank.test203.0.113.45|http://evil.test&v=1bankco.test\\bank.test\smail.bank.test203.0.113.4😀https://bankco.test http://evil.test&v=1>']https://bank.test/xevil.test[203.0.113.45*}
+https://bank.test/x[=//bank.test203.0.113.4=//bank.test203.0.113.45|
+json:"mail.bank.test *w\t\\\\bank.test\\s<x://y "
+mail.bank.test *
+203.0.113.4http://evil.test&v=1alice@bank.test>evil.test\\bank.test\s(https://bank.test/x
+203.0.113.4http://evil.test&v=1alice@bank.test>evil.test\\bank.test\s(
+`"
+(😀*x://y😀w
+é(`>)[中文x://y*]a.b(w;w😀<é\\bank.test\s]https://bankco.test}bank.test"]bank.xn--p1aiéa.b]203.0.113.45=//bank.test|(
+é(`>)[中文x://y*]a.b(w;w😀<é\\bank.test\s]https://bankco.test}bank.test"]
+>;evil.test' "bank.test<203.0.113.45a.b<<;;中文|)
+203.0.113.4https://bankco.test 中文[<
+bankco.test* ]203.0.113.4
+;x://y '<bankco.test
+<x://y203.0.113.45'
+203.0.113.4>mail.bank.test|http://evil.test&v=1*203.0.113.45{'
+203.0.113.4>mail.bank.test|http://evil.test&v=1*
+中文😀 <
+203.0.113.4\\bank.test\s}😀é[bankco.test;]
+203.0.113.4\\bank.test\s}😀é[
+}a.b{
+`https://bank.test/xhttps://bank.test/x;*)=//bank.testbankco.test 
+]*203.0.113.45|;
+json:"\\\\bank.test\\shttps://bank.test/xé\t;\\\\bank.test\\s=//bank.test)>"
+json:"alice@bank.test<203.0.113.45\tbankco.test;`"
+203.0.113.45[}http://evil.test&v=1<alice@bank.test}`=//bank.testw203.0.113.4<https://bank.test/x}>=//bank.test203.0.113.4émail.bank.testevil.testmail.bank.test['`
+203.0.113.45[}http://evil.test&v=1<alice@bank.test}`=//bank.testw203.0.113.4<
+json:" ,a.bwalice@bank.test\tx://ymail.bank.test`"
+ `bank.testé,|203.0.113.45
+(}http://evil.test&v=1\\bank.test\s{a.b]'}|,walice@bank.test203.0.113.45*😀203.0.113.45
+(}http://evil.test&v=1\\bank.test\s{a.b]'}|,walice@bank.test203.0.113.45*
+|http://evil.test&v=1|
+bank.xn--p1aibank.test;mail.bank.test
+json:"\"😀\\\\bank.test\\salice@bank.test203.0.113.45bankco.test\t"
+json:"{\\\\bank.test\\s>}w中文alice@bank.test\tevil.test"
+json:"(]\t(*中文evil.test中文'https://bank.test/x>https://bank.test/x203.0.113.4*(`({[|中文bank.test`"
+{\\bank.test\s>}
+json:"203.0.113.4;>}*`,)=//bank.test`é{`|>\tevil.testbankco.test[https://bank.test/x>})(http://evil.test&v=1(a.b*`>;bankco.test203.0.113.45"
+203.0.113.4;>}*`,)=//bank.test`é{
+\\bank.test\s*203.0.113.41.2.3.4evil.testbankco.test*{evil.test
+\\bank.test\s*203.0.113.41.2.3.4evil.testbankco.test*{
+'203.0.113.41.2.3.4bank.test]bank.test😀bank.test>'
+{a.b\\bank.test\sw<*wmail.bank.test'https://bankco.test<alice@bank.test😀[]mail.bank.test203.0.113.45{'😀=//bank.testa.bmail.bank.test"<a.b ,\\bank.test\sevil.test203.0.113.4{*
+{a.b\\bank.test\sw<*wmail.bank.test'https://bankco.test<alice@bank.test😀[]mail.bank.test203.0.113.45{'
+'<>203.0.113.45x://y]203.0.113.4bank.test>😀mail.bank.test'evil.test{é203.0.113.45evil.test(
+é\\bank.test\s😀203.0.113.4[😀
+>*>"[<"><evil.test'<é`a.bevil.test"ébankco.test\\bank.test\s]
+}evil.testbankco.test😀
+>*>"[<"><
+See https://cafe.example.org/menu and cafe.example.org.
+Meet at https://cafe.example.org/menu or call. From: Alice <alice@example.org>
+Pay at https://evil.example.net/pay now, or write to help@phish.example.
+Plain text with no links. Version 1.2.3 and e.g. fine.
+Log in at bank.test
+Your mybank.test statement
+See https://pay.example
+https://pay.example.org/invoice
+Your statement from mybank.test is ready: https://mybank.test/statements
+Visit https://user:pass@mybank.test/x
+Visit https://mybank.test:8443/x
+Visit http://[::1]/login
+Visit https://mybank.test./x
+Visit bank.test
+nothing
+Visit пример.рф now
+Your statement from mybank.test
+Go to https://pay.example
+https://pay.example.org/invoice/1
+https://cafe.example.org/book and https://order.cafe.example.org/x and example.net
+Menu at https://www.cafe.example.org/menu, booking via cafe.example.org, from Alice <alice@example.net>
+https://example.org/
+https://cafe.example.org/
+https://xcafe.example.org/
+cafe.example.org
+Order at bücher.example
+Your order at bücher.example
+see bücher.example
+Version 1.2.3, e.g. Tuesday. Café ok.
+%40
+%2540
+%4
+?next=https://bank.test@evil.test&e=x@bank.test
+=
+www.google.test
+user:bank.test@
+bank.test:443@
+https://@evil.test
+@@
+a@b@c@
+evil.test&e=x@bank.test
+evil.test=x@bank.test
+https:\\user@…
+bank.test\@evil.test&…
+user@203.0.113.9&…
+user@0xcb.0.113.9&…
+user@3405803785&…
+…&v=1:8080
+https://bank.test/&v=1:8080
+https://bank.test/login&v=1:8080
+user@evil.test#&v=1
+?&v=1
+évil.test
+?next=https://bank.test%40evil.test&v=1
+BANK.TEST%40EVIL.TEST
+@
+https://bank.test&v=1
+ftp:b.test&v=1?u=https://a.test/
+myapp://bank.test&v=1/https://bank.test/
+https://user@bank.test&v=1/?u=myapp://open
+myapp://
+https://bank.test&e=a@bank.test/?u=myapp://open
+&v=1
+myapp://open
+/a://b
+?u=https://bank.test&v=1
+json:"#myapp://x"
+?u=x://&v=1
+user@bank.test&v=1
+a@b@bank.test&v=1
+?email=a@bank.test
+?a=b&email=a@bank.test
+a=b@bank.test
+login?user=a@bank.test&next=/home
+https://user=x@bank.test/
+=//
+_://…
+x=//…
+?u=//bank.test@…
+{ timeout: 30_000 }
+a:// 
+a@
+"a://".repeat(250_000)
+"a1://".repeat(200_000)
+uN@hN&
+hN&e=a@bN&
+a%40
+hN\@eN&
+=@
+_://
+ls tests/*.test.ts
+env -u TEST_DATABASE_URL npm test -- --maxWorkers=1
+https://bank.test/?next=https://bank.test@evil.test&e=x@bank.test
+https://bank.test@evil.test
+evil.test!x@bank.test
++x@
+%26x@
+;x@
+%26
+?next=https://bank.test%2540evil.test&v=1
+…bank.test%4
+https://bank.test/bank.test%4
+https://bank.test/loginbank.test%4
+%
+lastIndexOf("@", end - 1)
+a://
+tests/tester-followups3-units.test.ts
+postgres:16
+--maxWorkers=1
+zz-f3-r3/
+tests/zz-tmp-tester/
+?next=https://evil.test&v=1
+http://…&v=1
+http:evil.test&v=1
+?u=ftp:evil.test&v=1
+?next=https://203.0.113.9&v=1
+=1
+%26v=1
+google.test/url?q=…&sa=D
+?u=x://evil.test&v=1
+?u=myapp://evil.test&v=1
+evil.test.
+bank.test.evil.test&…
+?u=//evil.test&v=1
+?next=http://localhost:3000
+?u=myapp://open
+?u=ftp:b.test&v=1
+smb:
+grep w/crlf
+:
+“\/…
+“/\…
+““\\…
+“\\…
+\\…
+price:
+10\20
+b\\c
+km/h
+/
+NBSP\/NBSP
+=//evil.test&v=1
+=//hn.test&
+=//hn.test=//hn.test…
+“\\host\share”
+linksNotInThread(draft, "see https://bank.test/")
+https://bank.test/?next=https://bank.test@evil.test
+evil.test&v=1
+user:pw
+a@b@evil.test&v=1
+Path:\\evil.test\share
+-/\\evil.test\s
+/\\
+\
+“//\evil.test\s
+“\\\evil…
+\\evil…
+\/
+\/ 
+zz-f3-r2/
+mut3/run.sh
+https://user@host
+shownNewer: string
+@ts-expect-error
+!== undefined
+{kind:"approval", result:{blocked, ack_required}}
+\\?\unc\…
+\\.\…
+href==\\…
+HREF=
+ms-officecmd:
+smb:\\…
+file:
+smb://
+https://bankco.test\|m/login
+https://bankco.test/login
+tests/followups-units.test.ts
+--expiration-period=never
+example.*
+.test
+* text=auto eol=lf\n
+i/lf
+linksNotInThread(draft, "see https://bank.test/ and https://www.google.test/")
+https://bank.test/?u=https://hN.test&u=…
+q=https://evil.test
+sa=D
+/url?q=…&sa=…
+?next=…&utm_…
+localhost:3000&v=1
+a://b
+linksNotInThread("“\\\\evil.test\\share”", "evil.test")
+\\host\share
+:\\x
+-\\x
+(item.threadChangedAt…) !== shown
+href=///evil.test
+?u=///evil.test
+///evil.test
+///evil.test/x
+ms-settings:
+search-ms:
+/\.ts$/
+/\s
+\/style
+\\u0001
+\\x00-\\x7f
+/\r\n/g
+file://evil.test/x”
+?u=https%3A%2F%2Fevil.test
+docs/*.md
+.claude/pipeline/**/*.md
+.claude/agents/*.md
+\/host
+/\host
+file:\\…
+file:/\…
+href=//…
+=//…
+search-ms:…
+ms-word:…
+ms-msdt:…
+\\t
+/\.css$/
+smb://…
+file://…
+smb://an.test\@bn.test
+…?next=http://localhost:3000
+https://bank.test/?next=http://localhost:3000
+https://bank.test/login?next=http://localhost:3000
+…/redirect?u=myapp://open
+https://bank.test//redirect?u=myapp://open
+https://bank.test/login/redirect?u=myapp://open
+…/a://b
+https://bank.test//a://b
+https://bank.test/login/a://b
+https://hn.test/?u=x://
+https://known.test/?u=ftp:evil.test&v=1
+TEST_DATABASE_URL=… npm test -- --maxWorkers=1 --reporter=default --reporter=json …
+ls tests/*.test.ts \| wc -l
+npx vitest run --maxWorkers=1 tests/tester-followups3-db.test.ts
+npx vitest run tests/tester-followups3-units.test.ts
+env -u TEST_DATABASE_URL npm test -- --maxWorkers=1 …
+TEST_DATABASE_URL=… npm test -- --maxWorkers=1 …
+https://bank.test/
+=//a@
+w/crlf
+core.autocrlf=true
+git ls-files -z \| xargs -0 rm --
+i/lf w/lf
+node_modules/
+tests/tester-followups3-db.test.ts
+tests/helpers/approve.ts
+zz-f3/
+* text=auto eol=lf$
+helpers/approve.ts
+eol=lf
+vitest run --maxWorkers=1
+postgres:16 --rm
+rev/probe.ts
+rev/probe-main.ts
+queue/actions.ts
+src/db/index.ts
+queue/actions.ts:185–207
+Partial<…> & { shownNewer: string }
+b = min(FIELD_CAP, remaining)
+remaining -= min(b, octet_length)
+${id}::uuid
+${n}::int
+${userId}::uuid
+https://bank.test/?next=
+https://bank.test@evil.test&e=x@bank.test
+https://evil.test!x@bank.test
+https://bank.test%2540evil.test&v=1
+https://bank.test/?u=https%3A%2F%2Fevil.test
+src/lib/approvals/warnings.ts
+…?next=http://evil.test%2F@bank.test
+https://bank.test/?next=http://evil.test%2F@bank.test
+https://bank.test/login?next=http://evil.test%2F@bank.test
+%5C@
+%3F@
+%23@
+https://bank.test/?x=1&next=http:%2F%2Fevil.test
+https://bank.test/?next=https://bank.test%2540evil.test&v=1
+…?next=https://a@b@bank.test&v=1
+https://bank.test/login?next=https://a@b@bank.test&v=1
+http://[::1]/
+http://evil/
+…?next=http://evil.test%00.bank.test
+https://bank.test/?next=http://evil.test%00.bank.test
+https://bank.test/login?next=http://evil.test%00.bank.test
+…?next=ftp:evil.test%26v=1
+https://bank.test/?next=ftp:evil.test%26v=1
+https://bank.test/login?next=ftp:evil.test%26v=1
+scheme:\\host
+onenote:\\evil.test\share
+its:\\evil.test\x.chm
+see:\\evil.test\share
+x:\\evil.test\share
+x:\\
+ms-its:\\…
+//host/share
+queue/actions.ts:200
+tests/**/*.test.ts
+tests/
+helpers/approve
+@/
+\\?\UNC\evil.test\share
+\\.\UNC\…
+\\evil.test@SSL\share
+\\evil.test@80\share
+\\evil.test@SSL@443\DavWWWRoot\x
+FILE:\\…
+<\\…>
+[x](\\…)
+“\\…”
+«\\…»
+x=\\…
+x:=\\…
+search-ms:…location:\\…
+search:query=a
+…?next=\\evil.test\s
+https://bank.test/?next=\\evil.test\s
+https://bank.test/login?next=\\evil.test\s
+/\evil.test
+\/evil.test
+file://///evil.test/share
+%7C
+m.user_id = $user
+http:x&
+a%40http:
+ab:@:
+ms-a:search:
+* text=auto eol=lf
+.claude/pipeline/
+.claude/agent-memory/
+text=auto
+sec3/probe.ts
+sec3/time.ts
+\\host
+phase-2-followups-3/05-security-review.md
+%2F@
+?x=1&next=http:%2F%2Fevil.test
+!x@
+onenote:\\host
+%253A%252F%252F
+src/lib/approvals/service.ts
+tests/helpers/links-baseline.ts
+tests/fixtures/links-attack-corpus.txt
+tests/h1-links-differential.test.ts
+tests/helpers/link-timing-cases.ts
+tests/helpers/time-links.mjs
+tests/h1-links-timing.test.ts
+tests/h1-links-units.test.ts
+tests/h1-haystack-db.test.ts
+tests/tester-followups2-db.test.ts
+docs/SETUP.md
+docs/ARCHITECTURE.md
+git show 82c6255:src/lib/approvals/warnings.ts
+@/lib/gmail/compose
+@/lib/approvals/text
+phase-2-followups-3/03-test-report.md
+*.test
+: / \ @ & = % ? # . - _ +
+%2F
+%3A
+%25
+%5C
+%3F
+%23
+%C3%A9
+%FF
+.claude/commands/*.md
+evil.test 203.0.113.9
+tests/helpers/time-links.mjs <case> <n> <draft|self>
+tests/helpers/ts-resolve-hook.mjs
+tests/email-depth.test.ts
+LINK_TIMING_ALL=1
+linksNotInThread(s, "see https://bank.test/")
+extraHosts: Host[]
+knownBase = hostsIn(haystack)
+knownAll = knownBase ∪ extraHostsIn(haystack)
+at >= a && nextGlue[a] < at
+prevAt[nextGlue[a]] >= a
+%XX
+fatal: false
+%20
+%22
+x:\\…
+C:\\…
+@/lib/approvals/service
+Partial<Parameters<typeof approveItem>[1]> & { shownNewer: string }
+scheme:\\
+?next=https://evil.test@x.test&e=y@bank.test
+x.test
+https://bank.test/x%3A%2F%2F
+https://bank.test/x://
+git diff 82c6255 -- tests/helpers/links-baseline.ts
+…?u=https%3A%2F%2Fbank.test%40evil.test
+https://bank.test/?u=https%3A%2F%2Fbank.test%40evil.test
+https://bank.test/login?u=https%3A%2F%2Fbank.test%40evil.test
+…#u=https%3A%2F%2Fevil.test
+https://bank.test/#u=https%3A%2F%2Fevil.test
+https://bank.test/login#u=https%3A%2F%2Fevil.test
+…?u=https%3A%2F%2F%C3%A9vil.test
+https://bank.test/?u=https%3A%2F%2F%C3%A9vil.test
+https://bank.test/login?u=https%3A%2F%2F%C3%A9vil.test
+…?u=https%3A%2F%2Fevil.test+x
+https://bank.test/?u=https%3A%2F%2Fevil.test+x
+https://bank.test/login?u=https%3A%2F%2Fevil.test+x
+https://bank.test/r/https%3A%2F%2Fevil.test
+…?u=https%253A%252F%252Fevil.test
+https://bank.test/?u=https%253A%252F%252Fevil.test
+https://bank.test/login?u=https%253A%252F%252Fevil.test
+?next=https://evil.test%26x@bank.test
+john.doe@bank.test
+ab:\/evil.test
+C:\\Users\x
+https:\\bank.test
+drizzle/
+npm run db:generate
+%zz
+%2f
+%00
+%41
+u=https%3A%2F%2Fevil.test
+&%41
+&u=https%3A%2F%2Fh{i}.test
+?u=https%3A%2F%2F
+?next=https://
+x@
+evil.test&e=y@bank.test
+u{i}@h{i}.test&e=a@b.test&
+_://a
+@evil.test&v=1
+ab:\\x
+onenote:\\
+\\x
+https://known.test/r/https%3A%2F%2Fevil.test
+?u=myapp%3A%2F%2Fopen
+?next=https://evil.test!x@bank.test
+evil.test!x
+first.last+tag@…
+/\
+C:\\
+src/lib/approvals/text.ts
+tests/followups3-units.test.ts
+tests/helpers/time-plain.mjs
+src/lib/gmail/mime.ts
+queue/[itemId]/page.tsx
+git ls-files --eol | grep -c w/crlf
+https://bank.test/login?next=http://evil.test%5C@bank.test
+https://bank.test/login?next=http://evil.test%3F@bank.test
+https://bank.test/login?next=http://evil.test%23@bank.test
+https://bank.test/login?next=https://bank.test@evil.test&e=x@bank.test
+https://bank.test/login?next=https://evil.test%26x@bank.test
+https://bank.test/?u=myapp%3A%2F%2Fopen
+https://bank.test/my%20file.pdf
+ab:/\evil.test
+at­\\evil.test\share
+at​\\evil.test\share
+at⁠\\evil.test\share
+json:"at﻿\\\\evil.test\\share"
+at⠀\\evil.test\share
+atㅤ\\evil.test\share
+atᅟ\\evil.test\share
+atᅠ\\evil.test\share
+atﾠ\\evil.test\share
+at‎\\evil.test\share
+at‮\\evil.test\share
+https://bank.test/?u=%5C%5Cevil.test%5Cshare
+https://bank.test/?u=file%3A%2F%2Fevil.test%2Fs
+https://bank.test/?u=search-ms%3Aquery%3Dx
+https://bank.test/?u=ms-x%3Ay
+https://bank.test/?u=onenote%3A%5C%5Cevil.test%5Cs
+https://bank.test/?e=a%40evil.test
+https://bank.test/?u=%41%42%43
+https://bank.test/?u=%
+https://bank.test/?u=%4
+https://bank.test/?u=%zz
+https://bank.test/?u=%FF
+https://bank.test/?u=%2fevil.test
+https://bank.test/?u=%E2%82%AC%F0%9F%98%80
+https://bank.test/?u=%C0%AFevil.test
+https://bank.test/?u=%00evil.test
+https://bank.test/?u=a%20evil.test%20b
+https://bank.test/?u=%2541
