@@ -16,7 +16,7 @@ Alex is a personal executive assistant. It connects several Google accounts (per
 | Phase 2 follow-ups | Three hardening batches after 2a–2d (approval and AI safety, link warnings, bounded link checks) | Done |
 | 0 | Google OAuth publishing: public About, Privacy and Terms pages, and the app published unverified with every account reconnected ([SETUP §13](docs/SETUP.md)) | Done |
 | H1 | Link-warning hardening (percent-encoded links inside links and other gaps) and docs fixes | Done |
-| T | Tasks: to-dos with deadlines, "Add task" from a thread, in-app reminders | Planned |
+| T | Tasks: to-dos with a date or date-and-time deadline in your time zone (set in Settings) and a priority, "Add task" from a thread, in-app reminders only (a badge and a banner) | Done |
 | H2 | AI and approval hardening, and older nits | Planned |
 | C1 | Calendar, read side (formerly Phase 3): free/busy across accounts, agenda, pending invites, finding slots, proposing times in a reply | Planned |
 | C2 | Calendar, write side: creating events with invites and answering invites, only through the approval queue | Planned |

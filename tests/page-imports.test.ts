@@ -88,6 +88,12 @@ const PAGES = [
   // Phase 2d: the compose page and its form.
   "src/app/(app)/compose/page.tsx",
   "src/app/(app)/compose/compose-form.tsx",
+  // Phase T: the task and settings pages and their actions (the thread page imports the task form too).
+  "src/app/(app)/tasks/page.tsx",
+  "src/app/(app)/tasks/[id]/page.tsx",
+  "src/app/(app)/tasks/actions.ts",
+  "src/app/(app)/settings/page.tsx",
+  "src/app/(app)/settings/actions.ts",
 ];
 
 describe("18n: inbox pages never reach the sanitizer", () => {
@@ -101,7 +107,11 @@ describe("18n: inbox pages never reach the sanitizer", () => {
       );
       expect(reachedPackages).toEqual([]);
       // Sanity: the walk really followed the imports (each entry reaches some repo module).
-      const expected = page.includes("/ai-usage/")
+      const expected = page.includes("/tasks/")
+        ? path.join("lib", "tasks", "service.ts")
+        : page.includes("/settings/")
+          ? path.join("lib", "tasks", "time.ts")
+          : page.includes("/ai-usage/")
         ? path.join("lib", "ai-ledger", "ledger.ts")
         : page.includes("/inbox/[threadId]/ai-")
           ? path.join("lib", "session.ts")

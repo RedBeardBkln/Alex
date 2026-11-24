@@ -3,6 +3,7 @@ import {
   bigint,
   boolean,
   check,
+  date,
   index,
   integer,
   jsonb,
@@ -19,12 +20,21 @@ export const accountProvider = pgEnum("account_provider", ["google", "slack", "r
 export const accountStatus = pgEnum("account_status", ["active", "reauth_required", "revoked"]);
 
 /** The person who owns this Alex instance. Single-user today; kept as a table so data is scoped from day one. */
-export const users = pgTable("users", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  email: text("email").notNull().unique(),
-  name: text("name"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+export const users = pgTable(
+  "users",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    email: text("email").notNull().unique(),
+    name: text("name"),
+    /**
+     * Phase T: the owner's IANA time zone (canonical name, src/lib/tasks/time.ts), used for task
+     * deadlines and views. NULL means "not set": Alex uses UTC and says so.
+     */
+    timeZone: text("time_zone"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [check("users_time_zone_len_chk", sql`${t.timeZone} IS NULL OR char_length(${t.timeZone}) BETWEEN 1 AND 64`)],
+);
 
 /** Browser sessions. Only a SHA-256 hash of the cookie value is stored. */
 export const sessions = pgTable(
@@ -478,6 +488,58 @@ export const aiCalls = pgTable(
   ],
 );
 
+// ---------------------------------------------------------------------------------------------
+// Tasks (Phase T). The owner's to-dos, stored in Alex. Owner-created tasks are `open` at once;
+// `suggested` is reserved for machine proposers (later phases) and needs the owner's Accept.
+// A task from an email links to its thread and account, and keeps its title after a Disconnect
+// or a Gmail delete (the links are set null). No subject or other mail text is copied here except
+// the title the owner saved.
+// ---------------------------------------------------------------------------------------------
+
+export const taskStatus = pgEnum("task_status", ["suggested", "open", "done", "dismissed"]);
+export const taskPriority = pgEnum("task_priority", ["high", "normal", "low"]);
+export const taskSource = pgEnum("task_source", ["manual", "email"]);
+
+export const tasks = pgTable(
+  "tasks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    notes: text("notes"),
+    status: taskStatus("status").notNull().default("open"),
+    priority: taskPriority("priority").notNull().default("normal"),
+    /** Date-only deadline, kept as the `YYYY-MM-DD` string (never a JS Date). */
+    dueDate: date("due_date", { mode: "string" }),
+    /** Date-time deadline: an instant, with the zone it was entered in (`due_tz`). */
+    dueAt: timestamp("due_at", { withTimezone: true }),
+    dueTz: text("due_tz"),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    source: taskSource("source").notNull(),
+    sourceAccountId: uuid("source_account_id").references(() => connectedAccounts.id, { onDelete: "set null" }),
+    sourceThreadId: uuid("source_thread_id").references(() => mailThreads.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("tasks_user_status_idx").on(t.userId, t.status),
+    index("tasks_open_due_date_idx").on(t.userId, t.dueDate).where(sql`${t.status} = 'open' AND ${t.dueDate} IS NOT NULL`),
+    index("tasks_open_due_at_idx").on(t.userId, t.dueAt).where(sql`${t.status} = 'open' AND ${t.dueAt} IS NOT NULL`),
+    index("tasks_done_idx").on(t.userId, t.completedAt.desc()).where(sql`${t.status} = 'done'`),
+    // So the SET NULL cascades from a thread or account delete don't scan the table.
+    index("tasks_source_thread_idx").on(t.sourceThreadId),
+    index("tasks_source_account_idx").on(t.sourceAccountId),
+    check("tasks_title_len_chk", sql`char_length(${t.title}) BETWEEN 1 AND 500`),
+    check("tasks_notes_len_chk", sql`${t.notes} IS NULL OR char_length(${t.notes}) <= 20000`),
+    check("tasks_due_shape_chk", sql`NOT (${t.dueDate} IS NOT NULL AND ${t.dueAt} IS NOT NULL) AND ((${t.dueAt} IS NULL) = (${t.dueTz} IS NULL))`),
+    check("tasks_due_tz_len_chk", sql`${t.dueTz} IS NULL OR char_length(${t.dueTz}) BETWEEN 1 AND 64`),
+    check("tasks_completed_chk", sql`(${t.status} = 'done') = (${t.completedAt} IS NOT NULL)`),
+    check("tasks_manual_source_chk", sql`${t.source} <> 'manual' OR (${t.sourceAccountId} IS NULL AND ${t.sourceThreadId} IS NULL)`),
+  ],
+);
+
 export type User = typeof users.$inferSelect;
 export type ConnectedAccount = typeof connectedAccounts.$inferSelect;
 export type MailSyncState = typeof mailSyncState.$inferSelect;
@@ -488,3 +550,4 @@ export type MailAttachment = typeof mailAttachments.$inferSelect;
 export type ApprovalItem = typeof approvalItems.$inferSelect;
 export type MailTriage = typeof mailTriage.$inferSelect;
 export type AiCall = typeof aiCalls.$inferSelect;
+export type Task = typeof tasks.$inferSelect;

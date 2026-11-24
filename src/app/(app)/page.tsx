@@ -4,10 +4,13 @@ import { env } from "@/lib/env";
 import { mailStatusByAccount, type AccountMailStatus } from "@/lib/gmail/store";
 import { reconnectBy } from "@/lib/google";
 import { requireUser } from "@/lib/session";
+import { countDueForNav } from "@/lib/tasks/service";
+import { effectiveZone } from "@/lib/tasks/time";
 import { disconnect, updateLabel } from "./actions";
 import { TestConnectionButton } from "./test-connection-button";
 import { LocalTime } from "../local-time";
 import { MailStatusLine } from "./mail-status";
+import { DueBanner } from "./tasks/task-ui";
 
 const ERRORS: Record<string, string> = {
   cancelled: "Connecting the account was cancelled.",
@@ -24,11 +27,16 @@ export default async function AccountsPage({
 }) {
   const user = await requireUser();
   const params = await searchParams;
-  const [accounts, mailStatus] = await Promise.all([listAccounts(db(), user.id), mailStatusByAccount(db(), user.id)]);
+  const [accounts, mailStatus, due] = await Promise.all([
+    listAccounts(db(), user.id),
+    mailStatusByAccount(db(), user.id),
+    countDueForNav(db(), user.id, new Date(), effectiveZone(user).zone),
+  ]);
   const testingMode = env().GOOGLE_OAUTH_TESTING_MODE;
 
   return (
     <div className="space-y-6">
+      <DueBanner counts={due} />
       <section>
         <h1 className="text-2xl font-semibold">Connected accounts</h1>
         <p className="mt-1 text-sm text-[var(--muted)]">

@@ -31,6 +31,9 @@ export default function AboutPage() {
           a reply with AI.
         </li>
         <li>
+          <strong>Tasks.</strong> The owner keeps a to-do list in Alex, with deadlines, and can add a task from an email.
+        </li>
+        <li>
           <strong>Nothing is sent without approval.</strong> Every email Alex prepares goes into an approval queue. It is
           sent only after the owner reviews it and clicks approve. Every proposal, approval, rejection and send is
           recorded.

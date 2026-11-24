@@ -29,6 +29,8 @@ const CATEGORY_LABEL: Record<string, string> = {
 const NOTICES: Record<string, string> = {
   account_disconnected:
     "That thread is no longer available: its account was disconnected (or the thread was removed) while Alex was working on it. Nothing was saved. Any AI call already made still counts in AI usage.",
+  // Phase T: "Add task" on a thread that is gone by the time the form is saved.
+  task_thread_gone: "That conversation is no longer in Alex (its account was disconnected or the thread was removed), so the task wasn't saved.",
 };
 
 const cursorSchema = z.object({ at: z.iso.datetime({ offset: true }), id: z.uuid() });
