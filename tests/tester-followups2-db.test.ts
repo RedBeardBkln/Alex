@@ -15,7 +15,7 @@ import { draftReply } from "@/lib/ai/draft";
 import { runTriageStage, triageThreadNow } from "@/lib/ai/triage";
 import type { DraftOutcome, DraftProvider, TriageOutcome, TriageProvider } from "@/lib/ai/types";
 import { getItemView, getOwnItem, newerDigest, proposeReply } from "@/lib/approvals/service";
-import { approveItem } from "./helpers/approve";
+import { approveItem } from "@/lib/approvals/service";
 import { makeGoogleAccount, makeUser, openTestDb, testDbUrl } from "./test-db";
 
 // Tester, phase-2-followups-2 (Postgres only, disposable local database via TEST_DATABASE_URL).
@@ -310,7 +310,7 @@ describe.skipIf(!testDbUrl)("tester phase-2-followups-2 (Postgres)", () => {
     });
     const reload = async (id: string) => (await getOwnItem(database, userId, id))!;
     const view = async (itemId: string) => (await getItemView(database, userId, itemId, { newRecipientLimit: 10 }))!;
-    const approve = (item: ApprovalItem, over: Partial<Parameters<typeof approveItem>[1]>) =>
+    const approve = (item: ApprovalItem, over: Partial<Parameters<typeof approveItem>[1]> & { shownNewer: string }) =>
       approveItem(database, {
         userId,
         itemId: item.id,
