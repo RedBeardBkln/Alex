@@ -11,6 +11,10 @@ import { ReplyForm } from "./reply-form";
 import { AiPanel } from "./ai-panel";
 import { aiConfigured } from "@/lib/ai-ledger/config";
 import { capState } from "@/lib/ai-ledger/ledger";
+import { effectiveZone } from "@/lib/tasks/time";
+import { subjectPrefill, taskErrorMessage } from "@/lib/tasks/validate";
+import { createTaskFromThreadAction } from "../../tasks/actions";
+import { EMPTY_TASK_FIELDS, TaskFields } from "../../tasks/task-fields";
 
 export const dynamic = "force-dynamic";
 /** The AI draft action runs from this page: Opus with a 90 s timeout (plan §7). */
@@ -30,11 +34,11 @@ export default async function ThreadPage({
   searchParams,
 }: {
   params: Promise<{ threadId: string }>;
-  searchParams: Promise<{ remote?: string; reply?: string; error?: string; ai_error?: string; ai_triage?: string }>;
+  searchParams: Promise<{ remote?: string; reply?: string; error?: string; ai_error?: string; ai_triage?: string; task?: string; task_error?: string }>;
 }) {
   const user = await requireUser();
   const { threadId } = await params;
-  const { remote, reply, error, ai_error: aiError, ai_triage: aiTriage } = await searchParams;
+  const { remote, reply, error, ai_error: aiError, ai_triage: aiTriage, task, task_error: taskError } = await searchParams;
   if (!z.uuid().safeParse(threadId).success) notFound();
   const view = await getThreadView(db(), user.id, threadId);
   if (!view) notFound();
@@ -44,6 +48,10 @@ export default async function ThreadPage({
   const replyMode = reply === "all" ? "all" : reply ? "reply" : null;
   const ctx = replyMode ? await replyContext(db(), user.id, threadId) : null;
   const configured = aiConfigured();
+  // Phase T: "Add task" (owner-initiated, owner Q6). The title starts as the stripped subject.
+  const taskMode = task === "1";
+  const zone = effectiveZone(user).zone;
+  const taskErrorText = taskMode && typeof taskError === "string" ? taskErrorMessage(taskError, zone) : null;
   const [triage, draftCap] = await Promise.all([
     latestThreadTriage(db(), user.id, threadId),
     configured ? capState(db(), user.id, "draft", new Date()) : Promise.resolve({ capped: false as const }),
@@ -101,10 +109,35 @@ export default async function ThreadPage({
               <Link href={`/inbox/${view.thread.id}?reply=all#reply`} className="rounded-md border border-[var(--border)] px-3 py-1.5">
                 Reply all
               </Link>
+              <Link href={`/inbox/${view.thread.id}?task=1#task`} className="rounded-md border border-[var(--border)] px-3 py-1.5">
+                Add task
+              </Link>
             </p>
           )
         )}
       </div>
+
+      {taskMode && (
+        <div id="task" className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
+          <h2 className="mb-3 text-lg font-semibold">Add task</h2>
+          {taskErrorText && (
+            <p role="alert" className="mb-3 rounded-md bg-[var(--warn-bg)] px-3 py-2 text-sm">
+              {taskErrorText}
+            </p>
+          )}
+          <form action={createTaskFromThreadAction} className="space-y-3">
+            <input type="hidden" name="threadId" value={view.thread.id} />
+            <TaskFields defaults={{ ...EMPTY_TASK_FIELDS, title: subjectPrefill(view.thread.subject) }} zoneNote={`Time zone: ${zone}`} idPrefix="task" />
+            <p className="text-sm text-[var(--muted)]">The task links to this conversation. Check the title: it starts as the email's subject.</p>
+            <div className="flex gap-3">
+              <button className="rounded-md bg-[var(--accent)] px-3 py-1.5 text-sm font-medium text-[var(--bg)]">Save task</button>
+              <Link href={`/inbox/${view.thread.id}`} className="rounded-md border border-[var(--border)] px-3 py-1.5 text-sm">
+                Cancel
+              </Link>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

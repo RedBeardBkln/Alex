@@ -80,6 +80,11 @@ export default function PrivacyPage() {
           and text;
         </li>
         <li>
+          tasks the owner writes: title, notes, deadline and priority, and the owner&apos;s time-zone setting. A task the
+          owner creates from an email starts with that email&apos;s subject as its title (the owner can change it) and
+          links to the conversation;
+        </li>
+        <li>
           a usage log of AI calls: token counts, cost and timing, with <strong>no email content</strong>;
         </li>
         <li>
@@ -132,7 +137,8 @@ export default function PrivacyPage() {
         <li>
           <strong>Disconnecting</strong> an account in Alex asks Gmail to stop its new-mail notifications, asks Google to
           revoke Alex&apos;s access, and deletes the stored tokens and all of that account&apos;s stored mail, AI results and approval-queue
-          items.
+          items. Tasks stay: a task created from that account&apos;s email loses its link to the conversation but keeps its
+          title, which may be a copy of the email&apos;s subject. The owner can delete any task.
           <p className="mt-2">
             The activity log and the AI usage log stay, without the account link. They contain no message content. So
             does a daily count of first-time recipients.

@@ -12,7 +12,10 @@ import { describe, expect, it, vi } from "vitest";
 // - the privacy text's numbers and scope list stay tied to the code (plan risk R4);
 // - the Anthropic retention sentence depends on Alex not using a 30-day "Covered Model".
 
-const state = vi.hoisted(() => ({ user: null as null | { id: string; email: string; name: string | null } }));
+const state = vi.hoisted(() => ({
+  user: null as null | { id: string; email: string; name: string | null },
+  due: { overdue: 0, today: 0 },
+}));
 
 vi.mock("@/lib/session", () => ({
   SESSION_COOKIE: "alex_session",
@@ -31,6 +34,8 @@ vi.mock("@/db", async (orig) => ({ ...(await orig<object>()), db: () => ({}) }))
 vi.mock("@/lib/accounts", async (orig) => ({ ...(await orig<object>()), listAccounts: async () => [] }));
 vi.mock("@/lib/gmail/store", async (orig) => ({ ...(await orig<object>()), mailStatusByAccount: async () => new Map() }));
 vi.mock("@/lib/env", async (orig) => ({ ...(await orig<object>()), env: () => ({ GOOGLE_OAUTH_TESTING_MODE: true }) }));
+// Phase T: the Accounts page also reads the due-task counts for its banner (plan 9.2).
+vi.mock("@/lib/tasks/service", async (orig) => ({ ...(await orig<object>()), countDueForNav: async () => state.due }));
 
 const root = path.resolve(import.meta.dirname, "..");
 const appDir = path.join(root, "src", "app");
@@ -78,11 +83,25 @@ describe("Q5 login footer and Q6 Accounts notice", () => {
     state.user = null;
   });
 
-  it("the Accounts page shows the approved notice with a /privacy link directly above the two Connect buttons", async () => {
+  it.each([
+    ["no task banner", { overdue: 0, today: 0 }],
+    ["the Phase T due banner shown", { overdue: 2, today: 1 }],
+  ])("the Accounts page shows the approved notice with a /privacy link directly above the two Connect buttons (%s)", async (_label, due) => {
     state.user = { id: "u1", email: "owner@example.invalid", name: null };
+    state.due = due;
     const { default: AccountsPage } = (await import("@/app/(app)/page")) as Page<{ searchParams: Promise<Record<string, string>> }>;
     const html = renderToStaticMarkup((await AccountsPage({ searchParams: Promise.resolve({}) })) as never);
     state.user = null;
+    state.due = { overdue: 0, today: 0 };
+    // The banner (plan 9.2) is above the heading, never inside the pinned notice block.
+    if (due.overdue + due.today > 0) {
+      const banner = html.indexOf("2 tasks overdue · 1 due today");
+      expect(banner).toBeGreaterThan(-1);
+      expect(banner).toBeLessThan(html.indexOf("Connected accounts"));
+    } else {
+      expect(html).not.toContain("due today");
+      expect(html).not.toContain("overdue");
+    }
     const notice =
       "Connecting a Google account lets Alex read its mail (the last 30 days, then new mail), store it here, send it to Anthropic's Claude for sorting and for drafts you ask for, and send emails only after you approve them. It also requests Calendar and Drive access; today Calendar is used only to test the connection, and Drive isn't used. See the privacy policy.";
     const start = html.indexOf("<p", html.indexOf("Nothing is sent without your approval.") + 1);
@@ -125,7 +144,21 @@ describe("no entry point bypasses the (app) layout", () => {
     const pages = walk(path.join(appDir, "(app)"))
       .map(rel)
       .filter((f) => /\/page\.(tsx|ts|jsx|js)$/.test(f));
-    expect(pages.length).toBe(7);
+    // Exact list (Phase T added /settings, /tasks and /tasks/[id], all approved in phase-t-tasks 01a).
+    expect([...pages].sort()).toEqual(
+      [
+        "src/app/(app)/ai-usage/page.tsx",
+        "src/app/(app)/compose/page.tsx",
+        "src/app/(app)/inbox/[threadId]/page.tsx",
+        "src/app/(app)/inbox/page.tsx",
+        "src/app/(app)/page.tsx",
+        "src/app/(app)/queue/[itemId]/page.tsx",
+        "src/app/(app)/queue/page.tsx",
+        "src/app/(app)/settings/page.tsx",
+        "src/app/(app)/tasks/[id]/page.tsx",
+        "src/app/(app)/tasks/page.tsx",
+      ].sort(),
+    );
     for (const f of pages) expect(code(readFileSync(path.join(root, f), "utf8")), f).toMatch(/await requireUser\(\)/);
   });
 });

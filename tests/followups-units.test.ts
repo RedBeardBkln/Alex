@@ -255,6 +255,12 @@ describe("lock order: every audited transition locks the account first (AC-DL-1,
     expect(firstStatements(src("lib", "ai-ledger", "ledger.ts"))).toHaveLength(2);
     expect(firstStatements(src("lib", "db-locks.ts")).map((x) => locksFirst(x.first))).toEqual([true]);
     expect(firstStatements(src("lib", "ai", "triage.ts")).map((x) => locksFirst(x.first))).toEqual([true, true]);
+    // Phase T (plan 5.3): createTask locks the thread's account first (its task insert checks the
+    // account and thread FKs, which a Disconnect deletes); updateTask, the state transition and
+    // deleteTask don't: they change no FK column, and their audit rows carry a null account id.
+    expect(firstStatements(src("lib", "tasks", "service.ts")).map((x) => locksFirst(x.first))).toEqual([true, false, false, false]);
+    // setTimeZone updates only the users row (no account reference).
+    expect(firstStatements(src("lib", "settings.ts")).map((x) => locksFirst(x.first))).toEqual([false]);
     // Any new transaction in src must be added to these lists deliberately.
     const counts: Record<string, number> = {};
     const walk = (dir: string) => {
@@ -268,7 +274,7 @@ describe("lock order: every audited transition locks the account first (AC-DL-1,
       }
     };
     walk(path.resolve(import.meta.dirname, "..", "src"));
-    expect(counts).toEqual({ "lib/approvals/service.ts": 9, "lib/gmail/store.ts": 3, "lib/gmail/sync.ts": 1, "lib/ai-ledger/ledger.ts": 2, "lib/db-locks.ts": 1, "lib/ai/triage.ts": 2 });
+    expect(counts).toEqual({ "lib/approvals/service.ts": 9, "lib/gmail/store.ts": 3, "lib/gmail/sync.ts": 1, "lib/ai-ledger/ledger.ts": 2, "lib/db-locks.ts": 1, "lib/ai/triage.ts": 2, "lib/tasks/service.ts": 4, "lib/settings.ts": 1 });
   });
 
   it("the lock helper takes FOR KEY SHARE on the account row", () => {

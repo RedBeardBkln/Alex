@@ -224,6 +224,17 @@ describe("public pages render static content with no session or database", () =>
       "Server logs hold technical errors; Alex avoids writing message content to them, but an unexpected database error can include the data being saved at that moment.",
     );
     expect(t).not.toContain("Alex is written to keep message content out of them.");
+    // Phase T owner-approved wording (plan 11.1, Q11): tasks are stored, and they stay after a Disconnect.
+    expect(t).toContain(
+      "tasks the owner writes: title, notes, deadline and priority, and the owner's time-zone setting. A task the owner creates from an email starts with that email's subject as its title (the owner can change it) and links to the conversation;",
+    );
+    expect(t).toContain(
+      "Tasks stay: a task created from that account's email loses its link to the conversation but keeps its title, which may be a copy of the email's subject. The owner can delete any task.",
+    );
+  });
+
+  it("/about lists Tasks (Phase T, owner Q10)", () => {
+    expect(text.about).toContain("Tasks. The owner keeps a to-do list in Alex, with deadlines, and can add a task from an email.");
   });
 
   it("/terms has the date, the privacy link and the contact", () => {

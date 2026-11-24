@@ -433,3 +433,28 @@ Tokens granted while the app was in Testing are expected to keep their 7-day exp
     - Reconnect, and go back to weekly reconnects.
     - Tell the main session. Full verification (including the paid security assessment) is a separate decision.
 11. **Keep the pages current:** if Alex starts using Google data in a new way (for example Calendar events in a later phase), update `/privacy` **before** that ships, and change `LAST_UPDATED`. That PR's plan must list it.
+
+## 14. Tasks (Phase T)
+
+Tasks live in Alex's own database: there's no Google Tasks sync, no new Google scope, no new environment variable or secret, no cron job and no Google Cloud Console step. Reminders appear only inside the app (a badge on **Tasks** in the top bar and a line on the Accounts page); Alex doesn't email or notify you.
+
+### 14.1 Database migration (before merging)
+
+**Run this before merging Phase T to `main`.** Every signed-in page reads the new `users.time_zone` column, and the top bar counts tasks, so the new code fails on every signed-in page until the migration is applied. Apply 0001–0004 first if they aren't applied yet (sections 6.0, 8, 11.1 and 12.1); `npm run db:migrate` applies whatever is missing, in order. Migration `drizzle/0005_tasks.sql` only adds things, so the code already deployed keeps working after it:
+- three enum types: `task_status`, `task_priority` and `task_source`
+- the nullable column `users.time_zone` (no default, so the table isn't rewritten) and its length check `users_time_zone_len_chk`
+- the table `tasks`, with its foreign keys (`user_id` cascades; `source_account_id` and `source_thread_id` are set null when the account or thread is deleted), six check constraints and six indexes (three of them partial)
+
+It changes no existing column, type or row.
+
+```bash
+DATABASE_URL='<the pooled connection string>' npm run db:migrate
+```
+
+### 14.2 Set your time zone
+
+After the merge has deployed, open **Settings** (top right), pick your zone (or click **Use this browser's zone**, which only fills in the form), and click **Save**. Until you do, Alex uses UTC for deadlines and for what counts as "today", and the Tasks page says so.
+
+A task with a date and a time keeps the zone it was entered in, even if you change the setting later. If you travel and want such a task in your new zone, choose None for its deadline and save (the pre-filled date and time can stay), then enter it again.
+
+Time-zone names and daylight-saving rules come from the server's Node.js ICU data. The tests were written against tzdata 2026a; the Vercel runtime's version wasn't checked.
