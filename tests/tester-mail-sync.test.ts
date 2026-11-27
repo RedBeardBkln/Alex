@@ -134,6 +134,12 @@ describe.skipIf(!testDbUrl)("tester: mail sync edge cases (Postgres + fake Gmail
   it("a 404 resync during an unfinished backfill does not mark the backfill complete while backfill rows are still queued", async () => {
     for (let i = 0; i < 20; i++) gmail.seed(msg(`i${i}`, `t${i}`, ["INBOX"], (i + 1) * 3600_000));
     msPerCall = 50_000;
+    // Phase email-signatures, owner Round 4 (R-1 A): an account never read successfully reads its
+    // signature first, which here would spend one 50 s call before listing. This test is about
+    // ingestion within the budget, so the account starts with a stored signature row (read after
+    // ingestion, skipped when under 30 s remain). The first-read ordering is tested in the
+    // signatures tests.
+    await database.insert(schema.accountSignatures).values({ accountId: account.id, userId: account.userId, state: "none", signatureText: null, checkedAt: new Date(clock), fetchedAt: new Date(clock), changedAt: new Date(clock) });
     await syncAfterConnect(deps(), account.id); // lists everything, hydrates a little
     clock += 5 * 60_000;
     expect((await state()).backfillStatus).toBe("hydrating");

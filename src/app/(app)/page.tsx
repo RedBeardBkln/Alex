@@ -4,6 +4,7 @@ import { env } from "@/lib/env";
 import { mailStatusByAccount, type AccountMailStatus } from "@/lib/gmail/store";
 import { reconnectBy } from "@/lib/google";
 import { requireUser } from "@/lib/session";
+import { signaturesByAccount, type StoredSignature } from "@/lib/signatures/store";
 import { countDueForNav } from "@/lib/tasks/service";
 import { effectiveZone } from "@/lib/tasks/time";
 import { disconnect, updateLabel } from "./actions";
@@ -11,6 +12,7 @@ import { TestConnectionButton } from "./test-connection-button";
 import { LocalTime } from "../local-time";
 import { MailStatusLine } from "./mail-status";
 import { DueBanner } from "./tasks/task-ui";
+import { SignatureText } from "./signature-ui";
 
 const ERRORS: Record<string, string> = {
   cancelled: "Connecting the account was cancelled.",
@@ -27,10 +29,11 @@ export default async function AccountsPage({
 }) {
   const user = await requireUser();
   const params = await searchParams;
-  const [accounts, mailStatus, due] = await Promise.all([
+  const [accounts, mailStatus, due, signatures] = await Promise.all([
     listAccounts(db(), user.id),
     mailStatusByAccount(db(), user.id),
     countDueForNav(db(), user.id, new Date(), effectiveZone(user).zone),
+    signaturesByAccount(db(), user.id),
   ]);
   const testingMode = env().GOOGLE_OAUTH_TESTING_MODE;
 
@@ -57,8 +60,9 @@ export default async function AccountsPage({
       )}
 
       <p className="text-sm text-[var(--muted)]">
-        Connecting a Google account lets Alex read its mail (the last 30 days, then new mail), store it here, send it to
-        Anthropic&apos;s Claude for sorting and for drafts you ask for, and send emails only after you approve them. It
+        Connecting a Google account lets Alex read its mail (the last 30 days, then new mail) and its Gmail signature,
+        store them here, send the mail to Anthropic&apos;s Claude for sorting and for drafts you ask for, and send emails
+        only after you approve them. It
         also requests Calendar and Drive access; today Calendar is used only to test the connection, and Drive isn&apos;t
         used. See the{" "}
         <a href="/privacy" className="underline">
@@ -80,10 +84,54 @@ export default async function AccountsPage({
       ) : (
         <ul className="space-y-3">
           {accounts.map((a) => (
-            <AccountCard key={a.id} account={a} testingMode={testingMode} mail={mailStatus.get(a.id)} />
+            <AccountCard key={a.id} account={a} testingMode={testingMode} mail={mailStatus.get(a.id)} signature={signatures.get(a.id) ?? null} />
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+/** Phase email-signatures (owner Q4c): the signature's status and preview. Fixed text; the signature itself is React text in a <pre>. */
+function SignatureStatus({ signature: s }: { signature: StoredSignature | null }) {
+  const state = s?.state ?? null;
+  return (
+    <div className="mt-2 text-sm text-[var(--muted)]">
+      <p>
+        {state === "set" && s ? (
+          <>
+            {/* Review R-6: the last successful read (fetched_at), not a later failed attempt. */}
+            Signature: from Gmail, checked <LocalTime iso={(s.fetchedAt ?? s.checkedAt).toISOString()} />
+          </>
+        ) : state === "none" ? (
+          "Signature: none set in Gmail"
+        ) : state === "not_found" ? (
+          "Signature: not found for this address"
+        ) : state === "too_large" ? (
+          "Signature: too long to add (over 10,000 characters as text)"
+        ) : (
+          "Signature: not read yet"
+        )}
+      </p>
+      {s?.lastErrorCode && (
+        <p className="text-[var(--danger)]">
+          Couldn&apos;t read it at the last check (<span className="font-mono">{s.lastErrorCode}</span>);{" "}
+          {s.fetchedAt ? (
+            <>
+              using the copy from <LocalTime iso={s.fetchedAt.toISOString()} />
+            </>
+          ) : (
+            "no copy yet"
+          )}
+        </p>
+      )}
+      {state === "set" && s?.text && (
+        <details className="mt-1">
+          <summary className="cursor-pointer">Show the signature Alex adds</summary>
+          <SignatureText text={s.text} />
+        </details>
+      )}
+      <p className="text-xs">Alex sends it as plain text: no images or formatting; link addresses are written after the link text.</p>
     </div>
   );
 }
@@ -92,10 +140,12 @@ function AccountCard({
   account: a,
   testingMode,
   mail,
+  signature,
 }: {
   account: AccountSummary;
   testingMode: boolean;
   mail: AccountMailStatus | undefined;
+  signature: StoredSignature | null;
 }) {
   const deadline = reconnectBy(a.consentedAt, testingMode);
   const msLeft = deadline ? deadline.getTime() - Date.now() : null;
@@ -124,6 +174,7 @@ function AccountCard({
           Mail: <MailStatusLine account={a} status={mail} />
         </p>
       )}
+      {a.provider === "google" && <SignatureStatus signature={signature} />}
 
       {deadline && !needsReauth && (
         <p className={`mt-2 text-sm ${soon ? "text-[var(--danger)]" : "text-[var(--muted)]"}`}>

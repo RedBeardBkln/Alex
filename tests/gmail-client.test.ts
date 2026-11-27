@@ -164,3 +164,55 @@ describe("Gmail id validation (round 4, N2)", () => {
     expect(seen).toHaveLength(1);
   });
 });
+
+// Phase email-signatures, plan step 2: users.settings.sendAs.get for the account's own address.
+describe("getSendAs (settings.sendAs.get)", () => {
+  const me = "owner@example.com";
+  it("200 with a signature: one GET to settings/sendAs/{address}", async () => {
+    const { gmail, seen } = client([{ status: 200, body: { sendAsEmail: me, signature: "<div>Jane</div>", isPrimary: true, displayName: "Jane" } }]);
+    expect(await gmail.getSendAs(me)).toEqual({ kind: "found", signature: "<div>Jane</div>" });
+    expect(seen).toHaveLength(1);
+    expect(seen[0]!.url.href).toBe(`${BASE}/settings/sendAs/owner%40example.com`);
+    expect(seen[0]!.method).toBe("GET");
+    expect(seen[0]!.body).toBeUndefined();
+  });
+
+  it("200 without a signature, or with an empty one: signature null", async () => {
+    expect(await client([{ status: 200, body: { sendAsEmail: me } }]).gmail.getSendAs(me)).toEqual({ kind: "found", signature: null });
+    expect(await client([{ status: 200, body: { sendAsEmail: me, signature: "" } }]).gmail.getSendAs(me)).toEqual({ kind: "found", signature: null });
+  });
+
+  it("the returned address is compared ASCII case-insensitively; a different one is a shape error", async () => {
+    expect(await client([{ status: 200, body: { sendAsEmail: "Owner@Example.COM", signature: "x" } }]).gmail.getSendAs(me)).toEqual({ kind: "found", signature: "x" });
+    await expect(client([{ status: 200, body: { sendAsEmail: "other@example.com", signature: "x" } }]).gmail.getSendAs(me)).rejects.toBeInstanceOf(GmailShapeError);
+    // U+212A KELVIN SIGN lowercases to "k" with toLowerCase(); it must not match.
+    const kelvin = String.fromCharCode(0x212a);
+    await expect(client([{ status: 200, body: { sendAsEmail: `${kelvin}ate@example.com` } }]).gmail.getSendAs("kate@example.com")).rejects.toBeInstanceOf(GmailShapeError);
+  });
+
+  it("404 is not_found; 403, 429 and 5xx are GmailApiError; a malformed body is a shape error", async () => {
+    expect(await client([{ status: 404, body: { error: { errors: [{ reason: "notFound" }] } } }]).gmail.getSendAs(me)).toEqual({ kind: "not_found" });
+    for (const status of [403, 429, 500, 503]) {
+      const err = await client([{ status, body: { error: { errors: [{ reason: "someReason" }] } } }]).gmail.getSendAs(me).catch((e: unknown) => e);
+      expect(err, String(status)).toBeInstanceOf(GmailApiError);
+      expect((err as GmailApiError).status).toBe(status);
+    }
+    await expect(client([{ status: 200, body: { signature: "x" } }]).gmail.getSendAs(me)).rejects.toBeInstanceOf(GmailShapeError);
+    await expect(client([{ status: 200, body: { sendAsEmail: me, signature: 5 } }]).gmail.getSendAs(me)).rejects.toBeInstanceOf(GmailShapeError);
+  });
+
+  it("a + address is percent-encoded; an invalid address makes no request", async () => {
+    const { gmail, seen } = client([{ status: 200, body: { sendAsEmail: "a+b@example.com" } }]);
+    await gmail.getSendAs("a+b@example.com");
+    expect(seen[0]!.url.href).toBe(`${BASE}/settings/sendAs/a%2Bb%40example.com`);
+    // "/" and "%" are valid in a local part; they are percent-encoded, so the path stays one segment.
+    const slash = client([{ status: 200, body: { sendAsEmail: "a/b%c@example.com" } }]);
+    await slash.gmail.getSendAs("a/b%c@example.com");
+    expect(slash.seen[0]!.url.pathname).toBe("/gmail/v1/users/me/settings/sendAs/a%2Fb%25c%40example.com");
+    for (const bad of ["", "no-at", "../x@example.com", "a@b", "a b@example.com", "a@example.com/../../profile", "a@exa?mple.com"]) {
+      const c = client([]);
+      await expect(c.gmail.getSendAs(bad), bad).rejects.toBeInstanceOf(GmailShapeError);
+      expect(c.seen, bad).toEqual([]);
+    }
+  });
+});

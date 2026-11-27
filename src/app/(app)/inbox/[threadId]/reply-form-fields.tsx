@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { proposeReplyFormAction, type ReplyFormState } from "../../queue/actions";
+import { ReplySignaturePreview, type SignaturePreviewData } from "../../signature-ui";
 
 /**
  * The reply form's fields (Phase 2b). If the server refuses the save, the error is shown and the
@@ -27,9 +28,11 @@ export type ReplyFormFieldsProps = {
   mode: "reply" | "all";
   account: { email: string; label: "personal" | "business" };
   defaults: { to: string[]; cc: string[]; subject: string; unreadable: number; hasQuote: boolean };
+  /** Phase email-signatures: a preview only. The server adds the stored signature itself; the form sends no signature field. Omitted means not read yet. */
+  signature?: SignaturePreviewData;
 };
 
-export function ReplyFormFields({ threadId, parentMessageId, account, defaults }: ReplyFormFieldsProps) {
+export function ReplyFormFields({ threadId, parentMessageId, account, defaults, signature }: ReplyFormFieldsProps) {
   const [state, action, pending] = useActionState<ReplyFormState, FormData>(proposeReplyFormAction, null);
   const v = state?.values ?? { to: defaults.to.join("\n"), cc: defaults.cc.join("\n"), subject: defaults.subject, bodyText: "", includeQuote: true };
   const label = account.label === "business" ? "Business" : "Personal";
@@ -69,6 +72,7 @@ export function ReplyFormFields({ threadId, parentMessageId, account, defaults }
         <span className="text-[var(--muted)]">Message (plain text)</span>
         <textarea name="bodyText" rows={10} maxLength={100_000} defaultValue={v.bodyText} className="mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--bg)] p-2" />
       </label>
+      <ReplySignaturePreview signature={signature ?? { state: null, text: null }} />
       {defaults.hasQuote && (
         <label className="flex items-center gap-2">
           <input type="checkbox" name="includeQuote" defaultChecked={v.includeQuote} />

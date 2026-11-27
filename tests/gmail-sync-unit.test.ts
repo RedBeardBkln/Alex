@@ -136,6 +136,7 @@ describe("helpers", () => {
       getMessageMinimal: 20,
       getMessageFull: 60,
       getBodyPartData: 20,
+      getSendAs: 1,
     });
   });
 });

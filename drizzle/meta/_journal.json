@@ -43,6 +43,13 @@
       "when": 1795528121954,
       "tag": "0005_tasks",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1795784975367,
+      "tag": "0006_account_signatures",
+      "breakpoints": true
     }
   ]
 }

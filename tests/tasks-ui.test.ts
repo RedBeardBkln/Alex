@@ -35,6 +35,8 @@ vi.mock("next/headers", () => ({ headers: async () => new Headers() }));
 vi.mock("@/db", async (orig) => ({ ...(await orig<object>()), db: () => ({}) }));
 vi.mock("@/lib/accounts", async (orig) => ({ ...(await orig<object>()), listAccounts: async () => [] }));
 vi.mock("@/lib/gmail/store", async (orig) => ({ ...(await orig<object>()), mailStatusByAccount: async () => new Map() }));
+// Phase email-signatures: the Accounts page also reads the stored signatures.
+vi.mock("@/lib/signatures/store", async (orig) => ({ ...(await orig<object>()), signaturesByAccount: async () => new Map() }));
 vi.mock("@/lib/approvals/service", async (orig) => ({ ...(await orig<object>()), countNeedingOwner: async () => 0 }));
 vi.mock("@/lib/env", async (orig) => ({ ...(await orig<object>()), env: () => ({ GOOGLE_OAUTH_TESTING_MODE: true, APP_URL: "https://alex.example.com/" }) }));
 vi.mock("@/lib/tasks/service", async (orig) => {

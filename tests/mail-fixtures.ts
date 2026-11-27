@@ -1,4 +1,4 @@
-import { GmailApiError, type FullMessage, type GmailClient, type HistoryRecord, type MessagePart } from "@/lib/gmail/client";
+import { GmailApiError, type FullMessage, type GmailClient, type HistoryRecord, type MessagePart, type SendAsResult } from "@/lib/gmail/client";
 
 // Constructed fixtures (not captured from real Gmail). Addresses use example.com only.
 
@@ -84,6 +84,8 @@ export class FakeGmail implements GmailClient {
   /** Next call of an op throws this (once). */
   failures = new Map<keyof GmailClient, GmailApiError[]>();
   expiredBefore: bigint | null = null;
+  /** settings.sendAs.get result (phase email-signatures). Default: an entry with no signature. */
+  sendAs: SendAsResult = { kind: "found", signature: null };
 
   private record(op: keyof GmailClient, args: unknown[]) {
     this.calls.push({ op, args });
@@ -204,4 +206,10 @@ export class FakeGmail implements GmailClient {
     if (data === undefined) throw new GmailApiError(404, "notFound", "messages.attachments.get");
     return { data, size: Buffer.from(data, "base64url").length };
   }
+
+  // An own property (not a prototype method), so `{ ...fake }` spreads keep it (tester-mail-sync builds clients that way).
+  getSendAs = async (sendAsEmail: string): Promise<SendAsResult> => {
+    this.record("getSendAs", [sendAsEmail]);
+    return this.sendAs;
+  };
 }

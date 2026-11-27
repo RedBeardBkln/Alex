@@ -94,6 +94,8 @@ const PAGES = [
   "src/app/(app)/tasks/actions.ts",
   "src/app/(app)/settings/page.tsx",
   "src/app/(app)/settings/actions.ts",
+  // Phase email-signatures: the Accounts page now reads the stored signatures (lib/signatures/store.ts).
+  "src/app/(app)/page.tsx",
 ];
 
 describe("18n: inbox pages never reach the sanitizer", () => {

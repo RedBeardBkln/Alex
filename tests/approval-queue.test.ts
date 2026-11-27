@@ -163,7 +163,7 @@ describe.skipIf(!testDbUrl)("approval queue (Postgres + fake Gmail)", () => {
     expect(p.quote?.text).toContain("> Body of p1");
     expect(item.contentHash).toBe(contentHash("email.send", account.id, item.payload));
     expect(sends).toEqual([]);
-    expect((await audits()).map((a) => [a.action, a.detail])).toEqual([["approval.proposed", { itemId: item.id, kind: "email.send", source: "owner", recipients: 1 }]]);
+    expect((await audits()).map((a) => [a.action, a.detail])).toEqual([["approval.proposed", { itemId: item.id, kind: "email.send", source: "owner", recipients: 1, signature: false }]]);
     expect(await countNeedingOwner(database, userId)).toBe(1);
   });
 

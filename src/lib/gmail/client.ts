@@ -1,13 +1,16 @@
 import { z } from "zod";
+import { isValidAddress } from "@/lib/approvals/addresses";
 import { googleRequest, type FetchLike, type TokenProvider } from "@/lib/google-api";
 
 /**
  * Minimal Gmail REST client for ingestion. Shapes follow the Gmail API v1 reference and discovery
  * document (users.getProfile, users.watch, users.stop, users.history.list, users.messages.list,
- * users.messages.get, users.messages.attachments.get).
+ * users.messages.get, users.messages.attachments.get, users.settings.sendAs.get).
  *
  * Read-only apart from `watch` and `stop`, which only change push-notification configuration.
- * There is deliberately no send, modify, trash, delete, draft or label call here.
+ * There is deliberately no send, modify, trash, delete, draft or label call here. The one settings
+ * call is a GET of the account's own send-as entry, for its signature (phase email-signatures);
+ * nothing here writes Gmail settings.
  */
 
 export const GMAIL_BASE = "https://gmail.googleapis.com/gmail/v1/users/me";
@@ -124,6 +127,14 @@ const fullSchema = z.object({
   payload: partSchema.optional(),
 });
 
+// users.settings.sendAs resource: only the two fields Alex reads (other keys are stripped).
+const sendAsSchema = z.object({ sendAsEmail: z.string(), signature: z.string().optional() });
+
+const asciiLower = (s: string) => s.replace(/[A-Z]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 32));
+
+/** users.settings.sendAs.get result: the entry's HTML signature (null when missing or empty), or a 404. */
+export type SendAsResult = { kind: "found"; signature: string | null } | { kind: "not_found" };
+
 export type HistoryRecord = z.infer<typeof historySchema>;
 export type HistoryList = z.infer<typeof historyListSchema>;
 export type MessageList = z.infer<typeof messageListSchema>;
@@ -144,6 +155,8 @@ export interface GmailClient {
   getMessageFull(id: string): Promise<FullMessage>;
   /** Only for text/plain or text/html body parts delivered by attachmentId; see `isBodyPart` in mime.ts. */
   getBodyPartData(messageId: string, attachmentId: string): Promise<MessagePartBody>;
+  /** GET settings/sendAs/{address}: the signature of the account's own address (phase email-signatures). */
+  getSendAs(sendAsEmail: string): Promise<SendAsResult>;
 }
 
 export function createGmailClient(getToken: TokenProvider, fetchImpl: FetchLike = fetch): GmailClient {
@@ -208,5 +221,22 @@ export function createGmailClient(getToken: TokenProvider, fetchImpl: FetchLike 
         `${GMAIL_BASE}/messages/${id(messageId, "messages.attachments.get")}/attachments/${id(attachmentId, "messages.attachments.get", 4096)}`,
         bodySchema,
       ),
+
+    getSendAs: async (sendAsEmail) => {
+      // Only a valid bare address is ever put in the path (and it is percent-encoded), so it can't
+      // change the request path.
+      if (!isValidAddress(sendAsEmail)) throw new GmailShapeError("settings.sendAs.get");
+      let entry: z.infer<typeof sendAsSchema>;
+      try {
+        entry = await call("settings.sendAs.get", `${GMAIL_BASE}/settings/sendAs/${encodeURIComponent(sendAsEmail)}`, sendAsSchema);
+      } catch (err) {
+        // "Fails with an HTTP 404 error if the specified address is not a member of the collection."
+        if (err instanceof GmailApiError && err.status === 404) return { kind: "not_found" };
+        throw err;
+      }
+      // ASCII-only case folding: toLowerCase() would also fold non-ASCII lookalikes (U+212A KELVIN SIGN to "k").
+      if (asciiLower(entry.sendAsEmail) !== asciiLower(sendAsEmail)) throw new GmailShapeError("settings.sendAs.get");
+      return { kind: "found", signature: entry.signature ? entry.signature : null };
+    },
   };
 }

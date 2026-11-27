@@ -7,6 +7,7 @@ import { audit } from "@/lib/audit";
 import { lockAccountForWrite } from "@/lib/db-locks";
 import { MAX_BODY_CHARS, isValidSubject, replySubject, replyThreading } from "@/lib/gmail/compose";
 import { enqueueOutbound } from "@/lib/gmail/store";
+import { currentSignature, signatureSnapshot, type SignatureSnapshot } from "@/lib/signatures/store";
 import { extractAddresses, MAX_RECIPIENTS, parseRecipientInput, replyDefaults, replyToDiffers, type ParentHeaders } from "./addresses";
 import { contentHash, emailSendPayload, isNewMessage, quoteText, type EmailSendPayload } from "./payload";
 import { capAllows, capRemaining, confirmationMatches, idnDisplay, newRecipientLimit } from "./recipients";
@@ -161,7 +162,19 @@ export function replyFormDefaults(ctx: ReplyContext, mode: "reply" | "all") {
 export function buildEmailPayload(
   fields: { to: string; cc: string; subject: string; bodyText: string; includeQuote: boolean },
   /** `quote` is only called when the owner includes the quote (review D2: an excluded quote isn't computed or stored). */
-  base: { quote: () => string | null; threading: EmailSendPayload["threading"]; parent: ParentHeaders | null; previousNotice: boolean; newMessage?: boolean },
+  base: {
+    quote: () => string | null;
+    threading: EmailSendPayload["threading"];
+    parent: ParentHeaders | null;
+    previousNotice: boolean;
+    newMessage?: boolean;
+    /**
+     * Phase email-signatures (owner Q2b): the account's stored signature snapshot, read on the server
+     * by the caller. Never taken from the form: `fields` has no signature field. Every production
+     * caller passes it; omitted (unit tests only) leaves the key out, as on a pre-signature item.
+     */
+    signature?: SignatureSnapshot;
+  },
 ): { ok: true; payload: EmailSendPayload } | InputFailure {
   const to = parseRecipientInput(fields.to);
   const cc = parseRecipientInput(fields.cc);
@@ -191,6 +204,7 @@ export function buildEmailPayload(
     quote: quote ? { included: true, text: quote } : null,
     threading: base.threading,
     replyToNotice: base.parent ? replyToDiffers(base.parent, to.addresses) : base.previousNotice,
+    ...(base.signature !== undefined ? { signature: base.signature } : {}),
   };
   const parsed = emailSendPayload.safeParse(payload);
   if (!parsed.success) return { ok: false, error: "invalid_recipients" };
@@ -207,11 +221,14 @@ export async function proposeReply(ex: Executor, input: ReplyInput, source: Appr
   const ctx = await replyContext(ex, input.userId, input.threadId, input.parentMessageId);
   if (!ctx) return { ok: false, error: "not_found" };
   if (ctx.account.provider !== "google") return { ok: false, error: "account_not_google" };
+  // Phase email-signatures: always the account's current stored signature (no opt-out, owner Q2b).
+  const signature = signatureSnapshot(await currentSignature(ex, input.userId, ctx.account.id));
   const built = buildEmailPayload(input, {
     quote: () => parentQuote(ctx.parent),
     threading: replyThreading(ctx.thread.gmailThreadId, ctx.parent),
     parent: ctx.parent,
     previousNotice: false,
+    signature,
   });
   if (!built.ok) return built;
   const payload = built.payload;
@@ -246,7 +263,7 @@ export async function proposeReply(ex: Executor, input: ReplyInput, source: Appr
         userId: input.userId,
         accountId: ctx.account.id,
         action: "approval.proposed",
-        detail: { itemId: row!.id, kind: EMAIL_SEND, source, recipients: payload.to.length + payload.cc.length },
+        detail: { itemId: row!.id, kind: EMAIL_SEND, source, recipients: payload.to.length + payload.cc.length, signature: !!payload.signature },
       },
       tx,
     );
@@ -297,9 +314,10 @@ export async function proposeNewMessage(ex: Executor, input: NewMessageInput): P
   if (!account) return { ok: false, error: "not_found" };
   if (account.provider !== "google") return { ok: false, error: "account_not_google" };
   if (account.status !== "active") return { ok: false, error: "account_inactive" };
+  const signature = signatureSnapshot(await currentSignature(ex, input.userId, account.id));
   const built = buildEmailPayload(
     { to: input.to, cc: input.cc, subject: input.subject, bodyText: input.bodyText, includeQuote: false },
-    { quote: () => null, threading: null, parent: null, previousNotice: false, newMessage: true },
+    { quote: () => null, threading: null, parent: null, previousNotice: false, newMessage: true, signature },
   );
   if (!built.ok) return built;
   const payload = built.payload;
@@ -329,7 +347,7 @@ export async function proposeNewMessage(ex: Executor, input: NewMessageInput): P
         userId: input.userId,
         accountId: account.id,
         action: "approval.proposed",
-        detail: { itemId: row!.id, kind: EMAIL_SEND, source: "owner", recipients: payload.to.length + payload.cc.length, variant: "new" },
+        detail: { itemId: row!.id, kind: EMAIL_SEND, source: "owner", recipients: payload.to.length + payload.cc.length, variant: "new", signature: !!payload.signature },
       },
       tx,
     );
@@ -450,6 +468,9 @@ export async function editItem(ex: Executor, input: EditInput): Promise<{ ok: tr
     item.parentMessageId && !newMessage
       ? ((await ex.select(parentColumns).from(mailMessages).where(and(eq(mailMessages.id, item.parentMessageId), eq(mailMessages.userId, input.userId))).limit(1))[0] ?? null)
       : null;
+  // Phase email-signatures (owner Q5): an edit always takes a fresh snapshot of the account's current
+  // signature, so editing an item saved before signatures existed adds it.
+  const signature = item.accountId ? signatureSnapshot(await currentSignature(ex, input.userId, item.accountId)) : null;
   const built = buildEmailPayload(
     newMessage ? { ...input, includeQuote: false } : input,
     {
@@ -458,6 +479,7 @@ export async function editItem(ex: Executor, input: EditInput): Promise<{ ok: tr
       parent,
       previousNotice: current.replyToNotice,
       newMessage,
+      signature,
     },
   );
   if (!built.ok) return { ok: false, error: built.error };
@@ -491,7 +513,7 @@ export async function editItem(ex: Executor, input: EditInput): Promise<{ ok: tr
       )
       .returning({ revision: approvalItems.revision });
     if (!row) return { ok: false as const, error: "stale" as const };
-    await audit({ userId: input.userId, accountId: item.accountId, action: "approval.edited", detail: { itemId: input.itemId, revision: row.revision } }, tx);
+    await audit({ userId: input.userId, accountId: item.accountId, action: "approval.edited", detail: { itemId: input.itemId, revision: row.revision, signature: !!built.payload.signature } }, tx);
     return { ok: true as const, revision: row.revision };
   });
 }
@@ -974,6 +996,10 @@ export type ItemView = {
   cap: { limit: number; usedToday: number; remaining: number };
   /** Phase 2d: the stored thread of a sent new message (found by the Gmail thread id in the result), once synced. */
   sentThread: { id: string; subject: string | null; messageCount: number } | null;
+  /** Phase email-signatures: the account's current stored signature text (null unless its state is `set`). */
+  currentSignatureText: string | null;
+  /** Phase email-signatures: the account currently has a `set` signature. */
+  accountHasSignature: boolean;
 };
 
 /**
@@ -1166,6 +1192,7 @@ export async function getItemView(
           .where(and(eq(mailThreads.accountId, item.accountId), eq(mailThreads.gmailThreadId, sentGmailThreadId), eq(mailThreads.userId, userId)))
           .limit(1))[0] ?? null)
       : null;
+  const currentSig = account ? signatureSnapshot(await currentSignature(ex, userId, account.id)) : null;
   return {
     item,
     payload,
@@ -1184,5 +1211,7 @@ export async function getItemView(
     idn,
     cap: { limit, usedToday, remaining: capRemaining(usedToday, limit) },
     sentThread,
+    currentSignatureText: currentSig?.text ?? null,
+    accountHasSignature: currentSig !== null,
   };
 }

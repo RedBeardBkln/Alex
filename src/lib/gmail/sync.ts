@@ -9,6 +9,7 @@ import { RENDER_LIMIT_MS, renderEmailBody } from "@/lib/email/render";
 import type { RenderFields } from "@/lib/email/types";
 import { SANITIZER_VERSION } from "@/lib/email/version";
 import { runTriageStage } from "@/lib/ai/triage";
+import { needsFirstSignatureRead, refreshSignature } from "@/lib/signatures/refresh";
 import type { TriageProvider } from "@/lib/ai/types";
 import { describeError } from "./errors";
 import { REAUTH_MARK } from "./marks";
@@ -99,6 +100,7 @@ export const QUOTA_UNITS = {
   getMessageMinimal: 20,
   getMessageFull: 60,
   getBodyPartData: 20,
+  getSendAs: 1,
 } as const satisfies Record<keyof GmailClient, number>;
 
 const DAY_MS = 24 * 60 * 60_000;
@@ -888,8 +890,22 @@ export async function syncAccount(
     sanitizerVersion: deps.sanitizerVersion ?? SANITIZER_VERSION,
   };
 
+  // Phase email-signatures: at most one settings.sendAs.get per cron or connect run (1 unit), never
+  // on push. Normally after the ingestion stages, so it never uses their time budget, and on the
+  // error path too, so a failing ingest stage doesn't leave the signature unrefreshed. Owner Round 4
+  // (R-1 option A): an account that has never had a successful read reads it FIRST, so a long
+  // backfill (whose hydrate uses the whole budget) can't keep a new account without its signature.
+  // Its failures never fail the sync; only ReauthRequiredError comes out of it.
+  const signatureRun = mode === "cron" || mode === "connect";
+  let signatureDone = false;
   let stage = "setup";
   try {
+    if (signatureRun && (await needsFirstSignatureRead(db, account.id))) {
+      stage = "signature";
+      await refreshSignature({ db, gmail: ctx.gmail, now, remainingMs: ctx.remainingMs }, account);
+      signatureDone = true;
+      stage = "setup";
+    }
     if (mode !== "push") state = await setup(ctx, state, mode);
     stage = "history";
     state = await reconcileHistory(ctx, state);
@@ -914,6 +930,10 @@ export async function syncAccount(
       stage = "listing";
       await maybeCompleteListing(ctx, (await getSyncState(db, account.id))!);
     }
+    if (signatureRun && !signatureDone) {
+      stage = "signature";
+      await refreshSignature({ db, gmail: ctx.gmail, now, remainingMs: ctx.remainingMs }, account);
+    }
     const latest = await getSyncState(db, account.id);
     if (latest && (latest.lastError !== null || latest.consecutiveFailures > 0)) {
       await updateSyncState(db, account.id, { lastError: null, lastErrorAt: null, consecutiveFailures: 0 });
@@ -925,6 +945,10 @@ export async function syncAccount(
       return { accountId: account.id, outcome: "skipped_reauth", stage, renders };
     }
     await recordFailure(db, account, stage, err);
+    if (signatureRun && !signatureDone && stage !== "signature") {
+      // A reauth error here is left to the next run's normal skip path.
+      await refreshSignature({ db, gmail: ctx.gmail, now, remainingMs: ctx.remainingMs }, account).catch(() => undefined);
+    }
     return { accountId: account.id, outcome: "error", stage, renders };
   } finally {
     await releaseLease(db, account.id, owner);

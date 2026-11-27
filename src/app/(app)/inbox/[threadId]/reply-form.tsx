@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { REPLY_ERRORS, ReplyFormFields } from "./reply-form-fields";
+import type { SignaturePreviewData } from "../../signature-ui";
 
 /**
  * Reply form (Phase 2b, plan §7). Submitting creates a pending approval item and opens it;
@@ -14,10 +15,12 @@ export type ReplyFormProps = {
   account: { email: string; label: "personal" | "business" };
   mode: "reply" | "all";
   defaults: { to: string[]; cc: string[]; subject: string; unreadable: number; hasQuote: boolean };
+  /** Phase email-signatures: the stored signature of the thread's account, for the preview. */
+  signature?: SignaturePreviewData;
   error?: string;
 };
 
-export function ReplyForm({ threadId, parentMessageId, account, mode, defaults, error }: ReplyFormProps) {
+export function ReplyForm({ threadId, parentMessageId, account, mode, defaults, signature, error }: ReplyFormProps) {
   return (
     <section className="rounded-lg border border-[var(--border)] bg-[var(--surface)] p-4">
       <div className="mb-3 flex flex-wrap items-center gap-3 text-sm">
@@ -34,7 +37,7 @@ export function ReplyForm({ threadId, parentMessageId, account, mode, defaults, 
           {REPLY_ERRORS[error] ?? "The reply couldn't be saved."}
         </p>
       )}
-      <ReplyFormFields threadId={threadId} parentMessageId={parentMessageId} mode={mode} account={account} defaults={defaults} />
+      <ReplyFormFields threadId={threadId} parentMessageId={parentMessageId} mode={mode} account={account} defaults={defaults} signature={signature} />
     </section>
   );
 }

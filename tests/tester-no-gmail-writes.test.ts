@@ -91,7 +91,7 @@ describe("no Gmail write paths (AC 15, narrowed for 2b's one approved send)", ()
       /\/labels\b/,
       /\/threads\b/,
       /messages\/import/i,
-      /\/settings\//,
+      // Phase email-signatures: the `/settings/` ban moved to the narrower settings rule at the end of this file.
       /method:\s*["']DELETE["']/,
       /method:\s*["']PUT["']/,
       /method:\s*["']PATCH["']/,
@@ -127,5 +127,39 @@ describe("attachments endpoint (AC 14)", () => {
     const at = sync.indexOf(".getBodyPartData(");
     const before = sync.slice(Math.max(0, at - 400), at);
     expect(before).toMatch(/if \(!isBodyPart\(pending\.part\)\) continue;/);
+  });
+});
+
+// Phase email-signatures (coder, per the approved plan step 12): the global `/settings/` ban is
+// replaced by this narrower rule. Exactly one settings path in src: the GET of settings/sendAs/ in
+// lib/gmail/client.ts (no method, so GET). Any POST, PUT or PATCH to settings fails it.
+function settingsProblems(list: { file: string; text: string }[]): string[] {
+  const problems: string[] = [];
+  const withSettings = list.filter((s) => /\/settings\//.test(code(s.text)));
+  if (withSettings.map((s) => s.file).join(",") !== "lib/gmail/client.ts") problems.push(`files: ${withSettings.map((s) => s.file).join(",")}`);
+  for (const s of withSettings) {
+    const c = code(s.text);
+    const hits = c.match(/\/settings\//g) ?? [];
+    if (hits.length !== 1) problems.push(`${s.file}: ${hits.length} settings paths`);
+    const line = c.split("\n").find((l) => /\/settings\//.test(l)) ?? "";
+    if (!/call\("settings\.sendAs\.get", `\$\{GMAIL_BASE\}\/settings\/sendAs\/\$\{encodeURIComponent\(sendAsEmail\)\}`, sendAsSchema\)/.test(line)) problems.push(`${s.file}: not the sendAs GET: ${line.trim()}`);
+    if (/method:/.test(line)) problems.push(`${s.file}: settings call has a method`);
+  }
+  return problems;
+}
+
+describe("Gmail settings: one read, no writes (phase email-signatures)", () => {
+  it("settings/sendAs/ is read once, with GET, in lib/gmail/client.ts, and no other /settings/ path exists in src", () => {
+    expect(settingsProblems(sources)).toEqual([]);
+  });
+
+  it("positive controls: a POST, PUT or PATCH to settings, or a second settings path, fails the rule", () => {
+    const client = sources.find((s) => s.file === "lib/gmail/client.ts")!;
+    for (const method of ["POST", "PUT", "PATCH"]) {
+      const text = client.text.replace("sendAsSchema)", `sendAsSchema, { method: "${method}" })`);
+      expect(settingsProblems([{ file: client.file, text }]).length, method).toBeGreaterThan(0);
+    }
+    expect(settingsProblems([...sources, { file: "lib/other.ts", text: 'const u = "/settings/filters";' }]).length).toBeGreaterThan(0);
+    expect(settingsProblems([{ file: client.file, text: `${client.text}\nconst x = "/settings/filters";` }]).length).toBeGreaterThan(0);
   });
 });

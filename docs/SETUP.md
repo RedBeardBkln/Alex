@@ -458,3 +458,37 @@ After the merge has deployed, open **Settings** (top right), pick your zone (or 
 A task with a date and a time keeps the zone it was entered in, even if you change the setting later. If you travel and want such a task in your new zone, choose None for its deadline and save (the pre-filled date and time can stay), then enter it again.
 
 Time-zone names and daylight-saving rules come from the server's Node.js ICU data. The tests were written against tzdata 2026a; the Vercel runtime's version wasn't checked.
+
+## 15. Email signatures
+
+Every email Alex sends gets a plain-text copy of the Gmail signature of the sending account's own address (see "Signatures" in `docs/ARCHITECTURE.md`). Alex reads it with the Gmail permission the accounts already granted (`gmail.modify`), so there's no new scope, no reconnect, no new environment variable or secret, and no Google Cloud Console step.
+
+### 15.1 Database migration (before merging)
+
+**Run this before merging to `main`.** Saving any reply or new email, the Accounts page, the thread page's reply form and every approval-queue item page read the new table, so the new code fails there until the migration is applied (the sync's signature read also fails, but that is caught and logged). Apply 0001–0005 first if they aren't applied yet (sections 6.0, 8, 11.1, 12.1 and 14.1); `npm run db:migrate` applies whatever is missing, in order. Migration `drizzle/0006_account_signatures.sql` only adds things, so the code already deployed keeps working after it:
+- one enum type: `signature_state`
+- the table `account_signatures`, with its two foreign keys (both cascade: to the account and to the user) and four check constraints
+
+It changes no existing table, column, type or row.
+
+Git Bash:
+
+```bash
+DATABASE_URL='<the pooled connection string>' npm run db:migrate
+```
+
+PowerShell:
+
+```powershell
+$env:DATABASE_URL = '<the pooled connection string>'; npm run db:migrate; Remove-Item Env:DATABASE_URL
+```
+
+### 15.2 After merging: live checks
+
+These are the only proof of the parts that couldn't be tested without Gmail.
+
+- **(a) The read works with the current grant.** Within about 5 minutes of the deploy (one cron run), each Google account's card on the Accounts page shows a signature line ("from Gmail, checked …", "none set in Gmail", "not found for this address" or "too long to add"), not "not read yet". If a card says "Couldn't read it at the last check (http_403…)", the `gmail.modify` grant isn't enough after all: stop and tell the developer. Open "Show the signature Alex adds" and compare it with the signature in Gmail's settings; if you have several signatures in Gmail, note which one Alex shows (Google doesn't document which one the API returns).
+- **(b) One signature, in the right place.** Approve a reply (with the quoted text included) and a new message to one of your own addresses. Each should arrive with exactly one signature, after a blank line below your text, before the quoted text, with link addresses written after the link text in `<…>`. This also checks something the API documentation doesn't say: whether Gmail adds a signature of its own to mail sent through the API. If a message arrives with two signatures, stop and tell the developer.
+- **(c) Changes reach Alex.** Change the signature in Gmail. Within about 5 minutes the Accounts page shows the new text (longer while a backfill, resync or re-render is using each sync run's whole time budget: those runs skip the read and keep the last copy), and an item that was waiting for approval from before the change shows "Your Gmail signature has changed since this was saved". Edit and save it to use the new one.
+
+Items that were already in the queue before this change have no signature and are sent without one; their page says so, and editing and saving one adds the current signature.

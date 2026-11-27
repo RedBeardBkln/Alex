@@ -233,6 +233,24 @@ describe("public pages render static content with no session or database", () =>
     );
   });
 
+  it("/privacy has the owner-approved signature sentences (phase email-signatures, plan 9.1, Round 2)", () => {
+    const t = text.privacy!;
+    expect(site.LAST_UPDATED).toBe("2026-11-27");
+    expect(t).toContain(
+      "reads the signature set in Gmail's settings for each connected address (every 5 minutes) and adds a plain-text copy of it to every email Alex sends: its text, with link addresses written out, but no images or formatting;",
+    );
+    expect(t).toContain("for each connected account, a plain-text copy of its Gmail signature (not the original formatting) and when Alex last checked it;");
+    expect(t).toContain("emails waiting for approval, approved, sent, rejected or cancelled, with their recipients and text, including the signature;");
+    expect(t).toContain(
+      "along with any instruction the owner types. Alex doesn't send its stored copy of the owner's signature; a signature that is part of a message in the conversation (including emails Alex sent) is sent as part of that text.",
+    );
+    expect(t).toContain("and all of that account's stored mail, AI results, approval-queue items and signature copy. Tasks stay:");
+  });
+
+  it("/about says the signature is added (phase email-signatures, plan 9.3, Q-A)", () => {
+    expect(text.about).toContain("or ask Alex to draft a reply with AI. Alex adds the signature set in Gmail to each one, as plain text.");
+  });
+
   it("/about lists Tasks (Phase T, owner Q10)", () => {
     expect(text.about).toContain("Tasks. The owner keeps a to-do list in Alex, with deadlines, and can add a task from an email.");
   });

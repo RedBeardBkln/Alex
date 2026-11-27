@@ -26,3 +26,14 @@ export function loginDeniedDetail(email: string): Record<string, unknown> {
   const domain = at >= 0 ? email.slice(at + 1).trim().toLowerCase() : "";
   return { domain: domain.length > 0 && !domain.includes("@") ? domain : null };
 }
+
+/** The `state` reported by `account.signature_updated`: the stored state, or "unread" (never read successfully). */
+export type SignatureAuditState = "set" | "none" | "not_found" | "too_large" | "unread";
+
+/**
+ * `account.signature_updated` (phase email-signatures, owner Q6): only the state, what changed and a
+ * content-free error code. Never any signature text, HTML, hash or length of it, link or address.
+ */
+export function signatureUpdatedDetail(entry: { state: SignatureAuditState; changed: "text" | "state" | "error"; code?: string }): Record<string, unknown> {
+  return entry.code === undefined ? { state: entry.state, changed: entry.changed } : { state: entry.state, changed: entry.changed, code: entry.code };
+}

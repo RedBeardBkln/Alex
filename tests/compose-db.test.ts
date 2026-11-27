@@ -168,8 +168,8 @@ describe.skipIf(!testDbUrl)("compose new messages (Postgres + fake Gmail)", () =
   it("propose: pending, no thread, no parent, threading and quote null, audited with counts and variant only, nothing sent", async () => {
     const item = await compose({ to: "bob@example.org\nAmy@example.net", cc: "carl@example.net", bodyText: "Hi\r\nthere" });
     expect(item).toMatchObject({ status: "pending", kind: "email.send", source: "owner", accountId: accountA.id, threadId: null, parentMessageId: null, parentInternalDate: null, threadChangedAt: null, newRecipientCount: null, revision: 1 });
-    expect(emailSendPayload.parse(item.payload)).toEqual({ to: ["bob@example.org", "Amy@example.net"], cc: ["carl@example.net"], subject: "Hello", bodyText: "Hi\nthere", quote: null, threading: null, replyToNotice: false });
-    expect((await audits()).map((a) => [a.action, a.detail])).toEqual([["approval.proposed", { itemId: item.id, kind: "email.send", source: "owner", recipients: 3, variant: "new" }]]);
+    expect(emailSendPayload.parse(item.payload)).toEqual({ to: ["bob@example.org", "Amy@example.net"], cc: ["carl@example.net"], subject: "Hello", bodyText: "Hi\nthere", quote: null, threading: null, replyToNotice: false, signature: null });
+    expect((await audits()).map((a) => [a.action, a.detail])).toEqual([["approval.proposed", { itemId: item.id, kind: "email.send", source: "owner", recipients: 3, variant: "new", signature: false }]]);
     expect(sends).toEqual([]);
   });
 

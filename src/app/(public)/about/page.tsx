@@ -28,7 +28,7 @@ export default function AboutPage() {
         </li>
         <li>
           <strong>Reply drafts and new emails.</strong> The owner can write replies and new emails, or ask Alex to draft
-          a reply with AI.
+          a reply with AI. Alex adds the signature set in Gmail to each one, as plain text.
         </li>
         <li>
           <strong>Tasks.</strong> The owner keeps a to-do list in Alex, with deadlines, and can add a task from an email.
