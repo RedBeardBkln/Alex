@@ -2,10 +2,12 @@ import { createHash } from "node:crypto";
 import { z } from "zod";
 import { isValidAddress, MAX_RECIPIENTS } from "./addresses";
 import { isValidSubject, MAX_BODY_CHARS, MSG_ID_RE } from "@/lib/gmail/compose";
-import { sliceOnCodePoint, stripDisallowedControls, wellFormed } from "./text";
+import { hasDisallowedControl, sliceOnCodePoint, stripDisallowedControls, wellFormed } from "./text";
 
 /** Longest quoted text included in a reply (owner Q7). */
 export const MAX_QUOTE_CHARS = 20_000;
+/** Longest signature snapshot (phase email-signatures; the converter refuses longer signatures). */
+export const MAX_SIGNATURE_CHARS = 10_000;
 
 const address = z.string().refine(isValidAddress, "invalid address");
 
@@ -25,6 +27,16 @@ export const emailSendPayload = z
       })
       .nullable(),
     replyToNotice: z.boolean(),
+    /**
+     * Phase email-signatures: the account's plain-text Gmail signature, frozen when the item was saved
+     * or edited (`null`: none was available). Absent on items saved before signatures existed, so
+     * their content hash is unchanged (canonicalJson drops undefined). Covered by the hash.
+     */
+    signature: z
+      .object({ text: z.string().min(1).max(MAX_SIGNATURE_CHARS).refine((t) => !hasDisallowedControl(t), "invalid signature") })
+      .strict()
+      .nullable()
+      .optional(),
   })
   .strict()
   .refine((p) => p.to.length + p.cc.length <= MAX_RECIPIENTS, "too many recipients");
@@ -57,10 +69,19 @@ export function contentHash(kind: string, accountId: string | null, payload: unk
   return createHash("sha256").update(canonicalJson({ kind, accountId, payload })).digest("hex");
 }
 
-/** The text that is sent: the owner's text, then the quoted text if it is included. */
+/**
+ * The text that is sent: the owner's text, then the signature (after one blank line, with no `-- `
+ * line; owner Q2a), then the quoted text if it is included (owner Q4). Without a signature this is
+ * exactly the pre-signature body. The approval page and the MIME body both use this function.
+ */
 export function outgoingBody(p: EmailSendPayload): string {
-  if (!p.quote || !p.quote.included || p.quote.text === "") return p.bodyText;
-  return `${p.bodyText}\n\n${p.quote.text}`;
+  const quote = p.quote && p.quote.included && p.quote.text !== "" ? p.quote.text : null;
+  if (!p.signature) return quote === null ? p.bodyText : `${p.bodyText}\n\n${quote}`;
+  let end = p.bodyText.length;
+  while (end > 0 && p.bodyText.charCodeAt(end - 1) === 10) end--;
+  const head = p.bodyText.slice(0, end);
+  const signed = head === "" ? p.signature.text : `${head}\n\n${p.signature.text}`;
+  return quote === null ? signed : `${signed}\n\n${quote}`;
 }
 
 /**

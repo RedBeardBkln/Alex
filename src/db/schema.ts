@@ -540,6 +540,45 @@ export const tasks = pgTable(
   ],
 );
 
+// ---------------------------------------------------------------------------------------------
+// Email signatures (phase email-signatures). One row per connected account: the plain-text form of
+// the Gmail signature of the account's own send-as address, converted by src/lib/signatures/convert.ts.
+// No HTML and no address is stored. Refreshed by every cron and connect sync run; deleted with the
+// account (Disconnect).
+// ---------------------------------------------------------------------------------------------
+
+export const signatureState = pgEnum("signature_state", ["set", "none", "not_found", "too_large"]);
+
+export const accountSignatures = pgTable(
+  "account_signatures",
+  {
+    accountId: uuid("account_id")
+      .primaryKey()
+      .references(() => connectedAccounts.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** Result of the last successful read; NULL means never read successfully. */
+    state: signatureState("state"),
+    /** The converted plain text; set exactly when `state` is `set`. */
+    signatureText: text("signature_text"),
+    /** Content-free code of the most recent failed read; cleared by the next success. */
+    lastErrorCode: text("last_error_code"),
+    /** Last attempt. */
+    checkedAt: timestamp("checked_at", { withTimezone: true }).notNull(),
+    /** Last success. */
+    fetchedAt: timestamp("fetched_at", { withTimezone: true }),
+    /** Last change of `state`, the text or `last_error_code`. */
+    changedAt: timestamp("changed_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [
+    check("account_signatures_text_state_chk", sql`(${t.state} IS NOT DISTINCT FROM 'set') = (${t.signatureText} IS NOT NULL)`),
+    check("account_signatures_text_len_chk", sql`${t.signatureText} IS NULL OR char_length(${t.signatureText}) BETWEEN 1 AND 10000`),
+    check("account_signatures_error_code_chk", sql`${t.lastErrorCode} IS NULL OR ${t.lastErrorCode} ~ '^[A-Za-z0-9_.:-]{1,80}$'`),
+    check("account_signatures_fetched_chk", sql`(${t.state} IS NULL) = (${t.fetchedAt} IS NULL)`),
+  ],
+);
+
 export type User = typeof users.$inferSelect;
 export type ConnectedAccount = typeof connectedAccounts.$inferSelect;
 export type MailSyncState = typeof mailSyncState.$inferSelect;
@@ -551,3 +590,4 @@ export type ApprovalItem = typeof approvalItems.$inferSelect;
 export type MailTriage = typeof mailTriage.$inferSelect;
 export type AiCall = typeof aiCalls.$inferSelect;
 export type Task = typeof tasks.$inferSelect;
+export type AccountSignature = typeof accountSignatures.$inferSelect;

@@ -28,6 +28,9 @@ export function googleTokenProvider(account: ConnectedAccount): TokenProvider {
   };
 }
 
+/** Default timeout of one Google API request, in ms. */
+export const GOOGLE_REQUEST_TIMEOUT_MS = 30_000;
+
 export type GoogleResponse = { status: number; ok: boolean; body: unknown };
 
 export type FetchLike = (input: string, init?: RequestInit) => Promise<Response>;
@@ -49,7 +52,7 @@ export async function googleRequest(
     headers,
     body: init.json === undefined ? undefined : JSON.stringify(init.json),
     cache: "no-store",
-    signal: AbortSignal.timeout(init.timeoutMs ?? 30_000),
+    signal: AbortSignal.timeout(init.timeoutMs ?? GOOGLE_REQUEST_TIMEOUT_MS),
   });
   const text = await res.text().catch(() => "");
   let body: unknown = null;

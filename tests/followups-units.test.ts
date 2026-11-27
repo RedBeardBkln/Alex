@@ -261,6 +261,8 @@ describe("lock order: every audited transition locks the account first (AC-DL-1,
     expect(firstStatements(src("lib", "tasks", "service.ts")).map((x) => locksFirst(x.first))).toEqual([true, false, false, false]);
     // setTimeZone updates only the users row (no account reference).
     expect(firstStatements(src("lib", "settings.ts")).map((x) => locksFirst(x.first))).toEqual([false]);
+    // Phase email-signatures: the signature upsert (and its audit) locks the account first.
+    expect(firstStatements(src("lib", "signatures", "refresh.ts")).map((x) => locksFirst(x.first))).toEqual([true]);
     // Any new transaction in src must be added to these lists deliberately.
     const counts: Record<string, number> = {};
     const walk = (dir: string) => {
@@ -274,7 +276,7 @@ describe("lock order: every audited transition locks the account first (AC-DL-1,
       }
     };
     walk(path.resolve(import.meta.dirname, "..", "src"));
-    expect(counts).toEqual({ "lib/approvals/service.ts": 9, "lib/gmail/store.ts": 3, "lib/gmail/sync.ts": 1, "lib/ai-ledger/ledger.ts": 2, "lib/db-locks.ts": 1, "lib/ai/triage.ts": 2, "lib/tasks/service.ts": 4, "lib/settings.ts": 1 });
+    expect(counts).toEqual({ "lib/approvals/service.ts": 9, "lib/gmail/store.ts": 3, "lib/gmail/sync.ts": 1, "lib/ai-ledger/ledger.ts": 2, "lib/db-locks.ts": 1, "lib/ai/triage.ts": 2, "lib/tasks/service.ts": 4, "lib/settings.ts": 1, "lib/signatures/refresh.ts": 1 });
   });
 
   it("the lock helper takes FOR KEY SHARE on the account row", () => {

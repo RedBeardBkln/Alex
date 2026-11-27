@@ -41,6 +41,11 @@ export default function PrivacyPage() {
             </li>
             <li>reads sent messages, but only in conversations Alex already holds, plus emails Alex itself sent;</li>
             <li>
+              reads the signature set in Gmail&apos;s settings for each connected address (every 5 minutes) and adds a
+              plain-text copy of it to every email Alex sends: its text, with link addresses written out, but no images
+              or formatting;
+            </li>
+            <li>
               sends an email <strong>only after the owner approves it</strong> in Alex&apos;s approval queue.
             </li>
           </ul>
@@ -71,13 +76,17 @@ export default function PrivacyPage() {
           the access and refresh tokens, <strong>encrypted</strong> (AES-256-GCM);
         </li>
         <li>
+          for each connected account, a plain-text copy of its Gmail signature (not the original formatting) and when
+          Alex last checked it;
+        </li>
+        <li>
           the email it reads: headers (sender, recipients, subject, date), the text and HTML of the message, a cleaned-up
           copy for safe display, Gmail&apos;s labels, and attachment names, types and sizes;
         </li>
         <li>AI results: each message&apos;s category and a summary of up to 200 characters;</li>
         <li>
           the approval queue: emails waiting for approval, approved, sent, rejected or cancelled, with their recipients
-          and text;
+          and text, including the signature;
         </li>
         <li>
           tasks the owner writes: title, notes, deadline and priority, and the owner&apos;s time-zone setting. A task the
@@ -107,7 +116,9 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>Drafting</strong> happens only when the owner clicks &quot;Draft reply with AI&quot;. The text of that one
-          conversation is sent (cut to a fixed size), along with any instruction the owner types.
+          conversation is sent (cut to a fixed size), along with any instruction the owner types. Alex doesn&apos;t send
+          its stored copy of the owner&apos;s signature; a signature that is part of a message in the conversation
+          (including emails Alex sent) is sent as part of that text.
         </li>
       </ul>
       <p>
@@ -136,8 +147,8 @@ export default function PrivacyPage() {
         </li>
         <li>
           <strong>Disconnecting</strong> an account in Alex asks Gmail to stop its new-mail notifications, asks Google to
-          revoke Alex&apos;s access, and deletes the stored tokens and all of that account&apos;s stored mail, AI results and approval-queue
-          items. Tasks stay: a task created from that account&apos;s email loses its link to the conversation but keeps its
+          revoke Alex&apos;s access, and deletes the stored tokens and all of that account&apos;s stored mail, AI results,
+          approval-queue items and signature copy. Tasks stay: a task created from that account&apos;s email loses its link to the conversation but keeps its
           title, which may be a copy of the email&apos;s subject. The owner can delete any task.
           <p className="mt-2">
             The activity log and the AI usage log stay, without the account link. They contain no message content. So

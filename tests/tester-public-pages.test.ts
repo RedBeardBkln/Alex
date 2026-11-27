@@ -36,6 +36,8 @@ vi.mock("@/lib/gmail/store", async (orig) => ({ ...(await orig<object>()), mailS
 vi.mock("@/lib/env", async (orig) => ({ ...(await orig<object>()), env: () => ({ GOOGLE_OAUTH_TESTING_MODE: true }) }));
 // Phase T: the Accounts page also reads the due-task counts for its banner (plan 9.2).
 vi.mock("@/lib/tasks/service", async (orig) => ({ ...(await orig<object>()), countDueForNav: async () => state.due }));
+// Phase email-signatures (coder, per the approved plan): the Accounts page also reads the stored signatures.
+vi.mock("@/lib/signatures/store", async (orig) => ({ ...(await orig<object>()), signaturesByAccount: async () => new Map() }));
 
 const root = path.resolve(import.meta.dirname, "..");
 const appDir = path.join(root, "src", "app");
@@ -103,7 +105,8 @@ describe("Q5 login footer and Q6 Accounts notice", () => {
       expect(html).not.toContain("overdue");
     }
     const notice =
-      "Connecting a Google account lets Alex read its mail (the last 30 days, then new mail), store it here, send it to Anthropic's Claude for sorting and for drafts you ask for, and send emails only after you approve them. It also requests Calendar and Drive access; today Calendar is used only to test the connection, and Drive isn't used. See the privacy policy.";
+      // Phase email-signatures (owner Round 2, Q-A): the notice now names the Gmail signature read (plan 9.3).
+      "Connecting a Google account lets Alex read its mail (the last 30 days, then new mail) and its Gmail signature, store them here, send the mail to Anthropic's Claude for sorting and for drafts you ask for, and send emails only after you approve them. It also requests Calendar and Drive access; today Calendar is used only to test the connection, and Drive isn't used. See the privacy policy.";
     const start = html.indexOf("<p", html.indexOf("Nothing is sent without your approval.") + 1);
     const p = html.slice(start, html.indexOf("</p>", start) + 4);
     expect(textOf(p)).toBe(notice);
@@ -193,6 +196,8 @@ describe("the privacy text stays tied to the code (plan risk R4)", () => {
     const crons = (JSON.parse(readFileSync(path.join(root, "vercel.json"), "utf8")) as { crons: { path: string; schedule: string }[] }).crons;
     expect(crons.find((c) => c.path === "/api/cron/gmail-sync")?.schedule).toBe("*/5 * * * *");
     expect(text).toContain("with a check every 5 minutes");
+    // Phase email-signatures: the signature read runs in the same 5-minute sync.
+    expect(text).toContain("for each connected address (every 5 minutes)");
   });
 
   it("tripwire: the model ids changed, so re-check the /privacy AI section before shipping", async () => {

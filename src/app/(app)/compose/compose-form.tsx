@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { proposeNewMessageFormAction, type ComposeFormState } from "../queue/actions";
+import { COMPOSE_SIGNATURE_NOTE } from "../signature-ui";
 
 /**
  * The compose form (Phase 2d, plan §6.1), following the reply form's useActionState pattern. A
@@ -77,6 +78,7 @@ export function ComposeForm({ accounts }: { accounts: ComposeAccount[] }) {
         <span className="text-[var(--muted)]">Message (plain text)</span>
         <textarea name="bodyText" rows={12} required maxLength={100_000} defaultValue={v.bodyText} className="mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--bg)] p-2" />
       </label>
+      <p className="text-[var(--muted)]">{COMPOSE_SIGNATURE_NOTE}</p>
       <button disabled={pending} className="rounded-md bg-[var(--accent)] px-3 py-2 font-medium text-[var(--bg)]">
         Save for approval
       </button>

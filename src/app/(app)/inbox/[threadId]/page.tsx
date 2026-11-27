@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { replyContext, replyFormDefaults } from "@/lib/approvals/service";
 import { getThreadView, latestThreadTriage, type ThreadView } from "@/lib/gmail/store";
+import { currentSignature } from "@/lib/signatures/store";
 import { requireUser } from "@/lib/session";
 import { LocalTime } from "../../../local-time";
 import { MessageBody } from "./message-body";
@@ -52,9 +53,11 @@ export default async function ThreadPage({
   const taskMode = task === "1";
   const zone = effectiveZone(user).zone;
   const taskErrorText = taskMode && typeof taskError === "string" ? taskErrorMessage(taskError, zone) : null;
-  const [triage, draftCap] = await Promise.all([
+  const [triage, draftCap, signature] = await Promise.all([
     latestThreadTriage(db(), user.id, threadId),
     configured ? capState(db(), user.id, "draft", new Date()) : Promise.resolve({ capped: false as const }),
+    // Phase email-signatures: the reply form's preview of the account's stored signature.
+    ctx ? currentSignature(db(), user.id, ctx.account.id) : Promise.resolve(null),
   ]);
 
   return (
@@ -98,6 +101,7 @@ export default async function ThreadPage({
             account={view.account}
             mode={replyMode}
             defaults={replyFormDefaults(ctx, replyMode)}
+            signature={{ state: signature?.state ?? null, text: signature?.text ?? null }}
             error={error}
           />
         ) : (

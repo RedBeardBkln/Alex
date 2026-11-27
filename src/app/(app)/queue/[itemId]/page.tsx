@@ -10,6 +10,7 @@ import { getItemView, MARK_NOT_SENT_AFTER_MS, STUCK_EXECUTING_MS } from "@/lib/a
 import { requireUser } from "@/lib/session";
 import { LocalTime } from "../../../local-time";
 import { MessageBody } from "../../inbox/[threadId]/message-body";
+import { EDIT_SIGNATURE_NOTE } from "../../signature-ui";
 import {
   approveItemAction,
   cancelItemAction,
@@ -73,6 +74,13 @@ const EDIT_ERRORS: Record<string, string> = {
 
 /** S3 (phase-2-followups-3): shown on AI items when the link check saw only the newest part of the thread. Fixed text. */
 const HAYSTACK_TRUNCATED_NOTE = "This thread is very long, so only its newest part was checked: a link may be flagged even if it appears in an older message.";
+
+/** Phase email-signatures: the fixed signature lines under the message (plan step 10). */
+const SIGNATURE_INCLUDED = "Includes your Gmail signature (plain text).";
+const SIGNATURE_NONE = "No signature: none was available for this account when this was saved.";
+const SIGNATURE_LEGACY = "Saved before Alex added signatures, so none will be sent.";
+const SIGNATURE_LEGACY_EDIT = "Edit and save to add your current one.";
+const SIGNATURE_CHANGED = "Your Gmail signature has changed since this was saved. Edit and save to use the current one.";
 
 /** Phase 2d: the account_mismatch notice for a new message, which has no thread. */
 const NEW_MESSAGE_ACCOUNT_MISMATCH = "This message's account is no longer one of your connected accounts, or the item was changed, so it can't be sent.";
@@ -152,6 +160,10 @@ export default async function QueueItemPage({
   const unknownRecipients = isNew ? [] : newRecipients([...shown.to, ...shown.cc], view.threadAddresses, view.ownAccounts);
   const bodyInvisible = invisibleCharacters(shown.bodyText);
   const quoteInvisible = invisibleCharacters(shown.quote?.included ? shown.quote.text : "");
+  // Phase email-signatures: the snapshot is `{ text }`, null (none was available), or absent (saved before signatures).
+  const signatureInvisible = invisibleCharacters(shown.signature?.text ?? "");
+  // Q3d (advisory, no tick): the account's current signature differs from the one saved with this item.
+  const signatureChanged = open && shown.signature !== undefined && (shown.signature?.text ?? null) !== view.currentSignatureText;
   const unknownLinks = isAi ? linksNotInThread(shown.bodyText, view.threadHaystack) : [];
   // S3 (phase-2-followups-3): only the newest part of a very long thread was checked for links.
   const haystackTruncated = isAi && view.threadHaystackTruncated;
@@ -262,6 +274,8 @@ export default async function QueueItemPage({
           ))}
           {bodyInvisible.count > 0 && <InvisibleWarning where="message" finding={bodyInvisible} />}
           {quoteInvisible.count > 0 && <InvisibleWarning where="quoted text" finding={quoteInvisible} />}
+          {signatureInvisible.count > 0 && <InvisibleWarning where="signature" finding={signatureInvisible} />}
+          {signatureChanged && <Warning>{SIGNATURE_CHANGED}</Warning>}
           {unknownLinks.length > 0 && (
             <Warning>
               The AI draft mentions links or domains that don&apos;t appear in this thread: <span className="font-mono">{unknownLinks.join(", ")}</span>. Check them before sending.
@@ -312,6 +326,15 @@ export default async function QueueItemPage({
 
         <h2 className="mt-4 font-medium">Message (exactly as it will be sent)</h2>
         <pre className="mt-1 max-w-full whitespace-pre-wrap break-words rounded-md border border-[var(--border)] bg-[var(--bg)] p-3 font-mono text-sm">{outgoingBody(shown)}</pre>
+        <p className="mt-1 text-xs text-[var(--muted)]">
+          {shown.signature
+            ? SIGNATURE_INCLUDED
+            : shown.signature === null
+              ? SIGNATURE_NONE
+              : open && view.accountHasSignature
+                ? `${SIGNATURE_LEGACY} ${SIGNATURE_LEGACY_EDIT}`
+                : SIGNATURE_LEGACY}
+        </p>
         {shown.quote && !shown.quote.included && <p className="mt-1 text-xs text-[var(--muted)]">The quoted message is not included.</p>}
       </section>
 
@@ -400,6 +423,7 @@ export default async function QueueItemPage({
               <span className="text-[var(--muted)]">Message (plain text)</span>
               <textarea name="bodyText" rows={10} required={isNew} maxLength={100_000} defaultValue={view.payload.bodyText} className="mt-1 w-full rounded-md border border-[var(--border)] bg-[var(--bg)] p-2" />
             </label>
+            <p className="text-[var(--muted)]">{EDIT_SIGNATURE_NOTE}</p>
             {isNew && <p className="text-[var(--muted)]">The sending account can&apos;t be changed. To send from another account, cancel this and compose again.</p>}
             {!isNew && (view.payload.quote || parentHasText) && (
               <label className="flex items-center gap-2">
